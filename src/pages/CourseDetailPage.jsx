@@ -6,12 +6,16 @@ import { useCourses } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
 
-const getBunnyUrl = (url) => {
+const getBunnyEmbedUrl = (url, opts = {}) => {
   if (!url) return null;
   try {
-    const u = new URL(url);
-    u.searchParams.set('autoplay', 'true');
-    u.searchParams.set('controls', 'true');
+    let embedUrl = url
+      .replace('player.mediadelivery.net/play/', 'iframe.mediadelivery.net/embed/')
+      .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
+    const u = new URL(embedUrl);
+    u.searchParams.set('autoplay', opts.autoplay !== false ? 'true' : 'false');
+    u.searchParams.set('muted',    opts.muted    !== false ? 'true' : 'false');
+    u.searchParams.set('controls', opts.controls !== false ? 'true' : 'false');
     return u.toString();
   } catch { return url; }
 };
