@@ -27,7 +27,7 @@ const CoursePlayerPage = () => {
   const { id }           = useParams();
   const navigate         = useNavigate();
   const { currentUser }  = useAuth();
-  const { courses }      = useCourses();
+  const { courses, loading: coursesLoading } = useCourses();
   const course           = courses.find(c => c.id === id);
 
   const [activeLesson,     setActiveLesson]     = useState(null);
@@ -127,6 +127,13 @@ const CoursePlayerPage = () => {
   const totalLessons  = allLessons.length;
   const progressPct   = totalLessons ? Math.round((completedLessons.length / totalLessons) * 100) : 0;
   const activeSection = course?.sections?.find(s => s.lessons?.some(l => l.id === activeLesson?.id));
+
+  if (coursesLoading) return (
+    <div style={{ minHeight:'100vh', background:'#0f1117', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ width:32, height:32, borderRadius:'50%', border:'2px solid #4a9b8e', borderTopColor:'transparent', animation:'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   if (!course) return (
     <div style={{ minHeight:'100vh', background:'#0f1117', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontFamily:'system-ui' }}>
