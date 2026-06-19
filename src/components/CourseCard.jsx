@@ -22,25 +22,23 @@ const CourseCard = ({ course }) => {
   const navigate  = useNavigate();
   const { isAr } = useLanguage();
 
-  const [showIframe,    setShowIframe]    = useState(false);
-  const [videoReady,    setVideoReady]    = useState(false); // iframe loaded
-  const [showVideo,     setShowVideo]     = useState(false); // thumbnail hidden (after 1s delay)
-  const [muted,         setMuted]         = useState(true);
+  const [showIframe, setShowIframe] = useState(false); // mount iframe in DOM
+  const [showVideo,  setShowVideo]  = useState(false); // fade thumbnail out
+  const [muted,      setMuted]      = useState(true);
 
   const iframeRef  = useRef(null);
   const hoverRef   = useRef(false);
-  const hoverTimer = useRef(null); // delay before showing iframe
-  const videoTimer = useRef(null); // delay before hiding thumbnail
+  const hoverTimer = useRef(null);
+  const videoTimer = useRef(null);
 
   const hasBunny = !!course.previewVideo;
 
   const handleMouseEnter = () => {
     hoverRef.current = true;
     if (!hasBunny) return;
-    // Start loading iframe after 800ms hover
     hoverTimer.current = setTimeout(() => {
       if (hoverRef.current) setShowIframe(true);
-    }, 800);
+    }, 600);
   };
 
   const handleMouseLeave = () => {
@@ -48,7 +46,6 @@ const CourseCard = ({ course }) => {
     clearTimeout(hoverTimer.current);
     clearTimeout(videoTimer.current);
     setShowIframe(false);
-    setVideoReady(false);
     setShowVideo(false);
     setMuted(true);
   };
@@ -58,29 +55,25 @@ const CourseCard = ({ course }) => {
     clearTimeout(videoTimer.current);
   }, []);
 
-  // When iframe loads → wait 1 extra second before hiding thumbnail
+  // iframe onLoad → wait 1.2s then reveal video (thumbnail fades out)
   const onIframeLoad = () => {
-    setVideoReady(true);
     videoTimer.current = setTimeout(() => {
-      setShowVideo(true);
-    }, 1000); // ← 1 ثانية بعد ما الفيديو يكون جاهز
+      if (hoverRef.current) setShowVideo(true);
+    }, 1200);
   };
 
-  // Unmute via postMessage — no iframe remount
   const toggleMute = useCallback((e) => {
     e.stopPropagation();
     const newMuted = !muted;
     setMuted(newMuted);
-    if (iframeRef.current?.contentWindow) {
-      try {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }), '*'
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ method: 'setVolume', value: newMuted ? 0 : 1 }), '*'
-        );
-      } catch (_) {}
-    }
+    try {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }), '*'
+      );
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ method: 'setVolume', value: newMuted ? 0 : 1 }), '*'
+      );
+    } catch (_) {}
   }, [muted]);
 
   return (
@@ -92,29 +85,13 @@ const CourseCard = ({ course }) => {
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
 
-        {/* Thumbnail — يظهر دايماً حتى بعد ما الفيديو يبدأ بثانية */}
-        {course.image && (
-          <img
-            src={course.image}
-            alt={course.title}
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-            style={{ opacity: showVideo ? 0 : 1, zIndex: 1 }}
-          />
-        )}
-        {!course.image && (
-          <div
-            className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10"
-            style={{ opacity: showVideo ? 0 : 1, zIndex: 1, transition: 'opacity 0.7s' }}
-          />
-        )}
-
-        {/* Iframe — يـload بصمت، الثامبنيل تفضل فوق لحد ما showVideo يبقى true */}
+        {/* ── iframe loads silently in background (zIndex 1) ── */}
         {showIframe && hasBunny && (
           <iframe
             ref={iframeRef}
             src={getBunnyUrl(course.previewVideo)}
             className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-            style={{ zIndex: 2 }}
+            style={{ zIndex: 1 }}
             allow="autoplay; encrypted-media; picture-in-picture"
             referrerPolicy="origin"
             allowFullScreen
@@ -123,12 +100,23 @@ const CourseCard = ({ course }) => {
           />
         )}
 
-        {/* Mute/Unmute — يظهر بس لما الفيديو ظهر فعلاً */}
+        {/* ── Thumbnail stays ON TOP (zIndex 2) and fades away only after video ready ── */}
+        <div
+          className="absolute inset-0 transition-opacity duration-700"
+          style={{ zIndex: 2, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
+        >
+          {course.image
+            ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+            : <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
+          }
+        </div>
+
+        {/* ── Mute button (zIndex 10) — only when video is showing ── */}
         {showVideo && (
           <button
             onClick={toggleMute}
-            style={{ zIndex: 10 }}
             className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors border border-white/20"
+            style={{ zIndex: 10 }}
           >
             {muted
               ? <VolumeX className="w-4 h-4 text-white" />
@@ -137,7 +125,7 @@ const CourseCard = ({ course }) => {
           </button>
         )}
 
-        {/* Badges */}
+        {/* ── Badges (always visible, zIndex 10) ── */}
         {course.new && (
           <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-black px-2 py-0.5 rounded-sm uppercase z-10">New</span>
         )}
@@ -156,7 +144,11 @@ const CourseCard = ({ course }) => {
               <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
               {Number(course.rating).toFixed(1)}
               {course.students_count && (
-                <span className="text-gray-500">({course.students_count >= 1000 ? `${(course.students_count/1000).toFixed(1)}K` : course.students_count})</span>
+                <span className="text-gray-500">
+                  ({course.students_count >= 1000
+                    ? `${(course.students_count / 1000).toFixed(1)}K`
+                    : course.students_count})
+                </span>
               )}
             </span>
           )}
