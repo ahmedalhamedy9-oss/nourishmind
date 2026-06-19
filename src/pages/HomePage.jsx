@@ -55,7 +55,7 @@ const HomePage = () => {
       <Header />
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen overflow-hidden flex items-center">
+      <section className="relative min-h-screen flex items-center" style={{ overflow:'hidden' }}>
         {/* Background image */}
         <div className="absolute inset-0">
           <img src={HERO_BG} alt="Hero" className="w-full h-full object-cover object-center" />
@@ -69,50 +69,43 @@ const HomePage = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className={`max-w-3xl ${isAr ? 'mr-0 ml-auto text-right' : 'max-w-2xl'}`}
+            className="max-w-2xl w-full"
           >
-            {/* Subtitle tag — hide in Arabic */}
-            {!isAr && (
-              <p className="text-primary font-bold text-sm uppercase tracking-widest mb-4">
-                NOURISHMIND · Wellness Learning Platform
-              </p>
-            )}
+            <p className="text-primary font-bold text-xs sm:text-sm uppercase tracking-widest mb-4">
+              NOURISHMIND · Wellness Learning Platform
+            </p>
 
             {/* Main title */}
-            <h1 className={`font-extrabold text-white leading-[1.15] mb-6 ${isAr ? 'text-5xl sm:text-6xl' : 'text-5xl sm:text-7xl'}`}>
-              {isAr ? (
-                <>استثمر في مستقبلك،{' '}<span className="text-primary">تعلم في أي وقت</span></>
-              ) : (
-                <>Nourish Your Mind,{' '}<span className="text-primary">Elevate Your Life</span></>
-              )}
+            <h1 className="font-extrabold text-white leading-[1.15] mb-6 text-4xl sm:text-6xl lg:text-7xl">
+              Nourish Your Mind,{' '}<span className="text-primary">Elevate Your Life</span>
             </h1>
 
             {/* Description */}
             <p className="text-gray-300 text-lg mb-10 max-w-xl leading-relaxed">
-              {tr('heroDesc', lang)}
+              {"Expert-led courses in mental health, psychology & nutrition."}
             </p>
 
             {/* CTA Buttons */}
-            <div className={`flex items-center gap-4 mb-12 flex-wrap ${isAr ? 'flex-row-reverse justify-start' : 'justify-start'}`}>
+            <div className="flex items-center gap-4 mb-12 flex-wrap justify-start">
               <button
                 onClick={() => navigate('/courses')}
                 className="flex items-center gap-2 bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-white/90 transition-all text-base shadow-lg"
               >
-                <Play className="w-5 h-5 fill-black" /> {tr('startLearning', lang)}
+                <Play className="w-5 h-5 fill-black" /> {"Start Learning"}
               </button>
               <button
                 onClick={() => navigate('/courses')}
                 className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-all text-base"
               >
-                <Info className="w-5 h-5" /> {tr('browseCourses', lang)}
+                <Info className="w-5 h-5" /> {"Browse Courses"}
               </button>
             </div>
 
             {/* Stats row */}
-            <div className={`flex items-center gap-8 text-sm text-gray-300 flex-wrap ${isAr ? 'flex-row-reverse justify-start' : 'justify-start'}`}>
+            <div className="flex items-center gap-6 text-sm text-gray-300 flex-wrap justify-start">
               <span className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
-                {tr('students', lang)}
+                {"50,000+ Students"}
               </span>
               <span className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-primary" />
@@ -120,7 +113,7 @@ const HomePage = () => {
               </span>
               <span className="flex items-center gap-2">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                {tr('rating', lang)}
+                {"4.8 Rating"}
               </span>
             </div>
           </motion.div>
