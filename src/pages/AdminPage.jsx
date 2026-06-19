@@ -993,6 +993,21 @@ const AdminPage = () => {
           onClose={() => setModal(null)}
         />
       )}
+
+      {lessonEditor && (
+        <LessonEditor
+          course={lessonEditor}
+          onClose={(updatedSections) => {
+            if (updatedSections) {
+              // Update local courses list with new sections
+              setCourses(prev => prev.map(c =>
+                c.id === lessonEditor.id ? { ...c, sections: updatedSections } : c
+              ));
+            }
+            setLessonEditor(null);
+          }}
+        />
+      )}
     </div>
   );
 };
