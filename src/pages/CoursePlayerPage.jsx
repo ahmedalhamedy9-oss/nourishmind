@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ChevronLeft, CheckCircle, Circle, Lock, Play, List, X,
-  ChevronDown, ChevronUp, SkipForward, SkipBack, Volume2,
-  Settings, Maximize, BookOpen,
+  ChevronLeft, CheckCircle, Circle, Lock, Play, List,
+  ChevronDown, ChevronUp, SkipForward, SkipBack, BookOpen,
 } from 'lucide-react';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -200,13 +199,7 @@ const CoursePlayerPage = () => {
           {/* ── Video player ── */}
           <div style={{ position:'relative', background:'#000', flexShrink:0, aspectRatio:'16/9', maxHeight:'65vh' }}>
 
-            {/* "Now Playing" overlay */}
-            {activeLesson && canWatchLesson(activeLesson) && (
-              <div style={{ position:'absolute', top:16, left:16, zIndex:10, pointerEvents:'none' }}>
-                <p style={{ color:'rgba(200,220,215,0.7)', fontSize:11, fontWeight:500, lineHeight:1, marginBottom:4 }}>Now Playing</p>
-                <p style={{ color:'#fff', fontWeight:700, fontSize:15, lineHeight:1.3 }}>{activeLesson.title}</p>
-              </div>
-            )}
+
 
             {activeLesson ? (
               canWatchLesson(activeLesson) ? (
