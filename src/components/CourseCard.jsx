@@ -11,10 +11,9 @@ const getBunnyUrl = (url) => {
       .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
     const u = new URL(embedUrl);
     u.searchParams.set('autoplay', 'true');
-    u.searchParams.set('muted',    'false');
+    u.searchParams.set('muted',    'true');  // start muted (browser policy)
     u.searchParams.set('loop',     'true');
-    u.searchParams.set('controls', 'false');
-    u.searchParams.set('preload',  'none');
+    u.searchParams.set('controls', 'true');  // show controls so user can unmute
     return u.toString();
   } catch { return url; }
 };
