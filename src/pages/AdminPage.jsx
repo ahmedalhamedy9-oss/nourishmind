@@ -99,30 +99,57 @@ const EMPTY = {
   image: '', previewVideo: '', instructor: '', instructor_image: '', tags: '',
 };
 
-const safe = (course) => ({
-  ...EMPTY,
-  ...course,
-  title:           course.title            || '',
-  description:     course.description      || '',
-  category:        course.category         || '',
-  level:           course.level            || 'Beginner',
-  duration_hours:  course.duration_hours   != null ? String(course.duration_hours) : '',
-  students_count:  course.students_count   != null ? String(course.students_count) : '',
-  rating:          course.rating           != null ? String(course.rating) : '4.5',
-  price:           course.price            != null ? String(course.price) : '',
-  image:           course.image            || '',
-  previewVideo:    course.previewVideo     || '',
-  instructor:      course.instructor       || '',
-  instructor_image: course.instructor_image || '',
-  tags:            Array.isArray(course.tags) ? course.tags.join(', ') : (course.tags || ''),
-  top10_rank:      course.top10_rank       != null ? String(course.top10_rank) : '',
-  featured:        !!course.featured,
-  new:             course.new != null ? !!course.new : true,
-  top10:           !!course.top10,
-});
+const safe = (course) => {
+  if (!course) return { ...EMPTY };
+  return {
+    ...EMPTY,
+    title:            String(course.title            ?? ''),
+    description:      String(course.description      ?? ''),
+    category:         String(course.category         ?? ''),
+    level:            String(course.level            ?? 'Beginner'),
+    duration_hours:   course.duration_hours  != null ? String(course.duration_hours)  : '',
+    students_count:   course.students_count  != null ? String(course.students_count)  : '',
+    rating:           course.rating          != null ? String(course.rating)          : '4.5',
+    price:            course.price           != null ? String(course.price)           : '',
+    image:            String(course.image            ?? ''),
+    previewVideo:     String(course.previewVideo     ?? ''),
+    instructor:       String(course.instructor       ?? ''),
+    instructor_image: String(course.instructor_image ?? ''),
+    tags:             Array.isArray(course.tags)
+                        ? course.tags.join(', ')
+                        : String(course.tags ?? ''),
+    top10_rank:       course.top10_rank != null ? String(course.top10_rank) : '',
+    featured:         Boolean(course.featured),
+    new:              course.new != null ? Boolean(course.new) : true,
+    top10:            Boolean(course.top10),
+  };
+};
+
+// ── Error Boundary ────────────────────────────────────────────────────────────
+class ModalErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-[#0d1a17] border border-red-500/30 rounded-2xl p-8 max-w-md w-full text-center">
+            <p className="text-red-400 font-bold text-lg mb-2">Modal Error</p>
+            <p className="text-gray-400 text-sm mb-4">{this.state.error?.message}</p>
+            <button
+              onClick={this.props.onClose}
+              className="px-6 py-2 bg-primary text-white rounded-lg text-sm font-semibold"
+            >Close</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const CourseModal = ({ course, categories, onSave, onClose }) => {
-  const [form, setForm]     = useState(course ? safe(course) : EMPTY);
+  const [form, setForm]     = useState(() => safe(course));
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -174,7 +201,7 @@ const CourseModal = ({ course, categories, onSave, onClose }) => {
               <select value={form.category} onChange={e => set('category', e.target.value)}
                 className="w-full bg-[#0a1412] border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary">
                 <option value="">Select category</option>
-                {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                {(categories || []).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
               </select>
             </Field>
 
@@ -222,7 +249,7 @@ const CourseModal = ({ course, categories, onSave, onClose }) => {
 
           <Field label="Preview Video URL (Bunny Stream)">
             <Input value={form.previewVideo} onChange={e => set('previewVideo', e.target.value)}
-              placeholder="https://player.mediadelivery.net/play/LIBRARY_ID/VIDEO_ID" />
+              placeholder="https://iframe.mediadelivery.net/embed/LIBRARY_ID/VIDEO_ID" />
           </Field>
 
           <Field label="Tags (comma separated)">
@@ -278,8 +305,8 @@ const AdminPage = () => {
   const [reviews,   setReviews]       = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [pricingPlans, setPricingPlans] = useState([]);
-  const [modal,     setModal]         = useState(null);   // null | 'add' | course obj
-  const [lessonEditor, setLessonEditor] = useState(null); // null | course obj
+  const [modal,     setModal]         = useState(null);
+  const [lessonEditor, setLessonEditor] = useState(null);
   const [newCat,    setNewCat]        = useState({ id: '', label: '' });
   const [certName,  setCertName]      = useState('');
   const [certUploading, setCertUploading] = useState(false);
@@ -293,7 +320,6 @@ const AdminPage = () => {
 
   // ── Firestore listeners ──
   useEffect(() => {
-    // Categories
     const unsubCats = onSnapshot(
       doc(db, 'settings', 'categories'),
       snap => {
@@ -303,12 +329,10 @@ const AdminPage = () => {
       () => setCategories(DEFAULT_CATS)
     );
 
-    // Courses
     const qCourses = query(collection(db, 'courses'), orderBy('createdAt', 'desc'));
     const unsubCourses = onSnapshot(qCourses,
       snap => setCourses(snap.empty ? PLACEHOLDER_COURSES : snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       () => {
-        // fallback without orderBy if index missing
         const unsubFallback = onSnapshot(collection(db, 'courses'),
           snap => setCourses(snap.empty ? PLACEHOLDER_COURSES : snap.docs.map(d => ({ id: d.id, ...d.data() }))),
           () => setCourses(PLACEHOLDER_COURSES)
@@ -317,26 +341,22 @@ const AdminPage = () => {
       }
     );
 
-    // Users
     const unsubUsers = onSnapshot(
       query(collection(db, 'users'), orderBy('createdAt', 'desc')),
       snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       () => {}
     );
 
-    // Reviews
     const unsubReviews = onSnapshot(collection(db, 'reviews'),
       snap => setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       () => {}
     );
 
-    // Certificates
     const unsubCerts = onSnapshot(collection(db, 'certificates'),
       snap => setCertificates(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       () => {}
     );
 
-    // Pricing
     const unsubPricing = onSnapshot(doc(db, 'settings', 'pricing'),
       snap => {
         if (snap.exists() && snap.data().plans?.length) setPricingPlans(snap.data().plans);
@@ -406,13 +426,11 @@ const AdminPage = () => {
     await deleteDoc(doc(db, 'certificates', id));
   };
 
-  // ── Review CRUD ──
   const deleteReview = async (id) => {
     if (!confirm('Delete this review?')) return;
     await deleteDoc(doc(db, 'reviews', id));
   };
 
-  // ── Pricing save ──
   const savePricing = async () => {
     setSavingPricing(true);
     try { await setDoc(doc(db, 'settings', 'pricing'), { plans: pricingPlans, updatedAt: serverTimestamp() }); }
@@ -420,7 +438,6 @@ const AdminPage = () => {
     finally { setSavingPricing(false); }
   };
 
-  // ── Render helpers ──
   const sectionTitle = (title, action) => (
     <div className="flex items-center justify-between mb-6">
       <h1 className="text-2xl font-extrabold text-white">{title}</h1>
@@ -432,7 +449,6 @@ const AdminPage = () => {
     !userSearch || u.email?.toLowerCase().includes(userSearch.toLowerCase()) || u.name?.toLowerCase().includes(userSearch.toLowerCase())
   );
 
-  // ── JSX ──
   return (
     <div className="min-h-screen flex flex-col bg-[#0a1412] font-sans">
 
@@ -488,7 +504,6 @@ const AdminPage = () => {
                 {courses.map(course => (
                   <div key={course.id}
                     className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4 hover:border-primary/30 transition-colors">
-                    {/* Thumbnail */}
                     <div className="w-16 h-10 rounded-lg overflow-hidden bg-white/5 shrink-0">
                       {course.image
                         ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
@@ -496,7 +511,6 @@ const AdminPage = () => {
                       }
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <p className="text-white font-semibold text-sm truncate">{course.title}</p>
@@ -512,7 +526,6 @@ const AdminPage = () => {
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0">
                       <Btn variant="ghost" onClick={() => setLessonEditor(course)} className="text-xs px-3 py-1.5">
                         📚 Lessons
@@ -555,8 +568,6 @@ const AdminPage = () => {
           {activeTab === 'categories' && (
             <div>
               {sectionTitle('Categories')}
-
-              {/* Add new */}
               <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 mb-6">
                 <p className="text-white font-semibold text-sm mb-4">Add New Category</p>
                 <div className="flex gap-3 flex-wrap">
@@ -567,8 +578,6 @@ const AdminPage = () => {
                   <Btn onClick={addCategory}><Plus className="w-4 h-4" /> Add</Btn>
                 </div>
               </div>
-
-              {/* List */}
               <div className="flex flex-col gap-2">
                 {categories.map((cat, i) => (
                   <div key={cat.id}
@@ -594,8 +603,6 @@ const AdminPage = () => {
           {activeTab === 'certificates' && (
             <div>
               {sectionTitle('Certificates')}
-
-              {/* Upload */}
               <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 mb-6">
                 <p className="text-white font-semibold text-sm mb-4">Upload New Certificate</p>
                 <div className="flex gap-3 flex-wrap items-end">
@@ -612,8 +619,6 @@ const AdminPage = () => {
                   </label>
                 </div>
               </div>
-
-              {/* Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {certificates.map(cert => (
                   <div key={cert.id} className="relative group rounded-xl overflow-hidden border border-white/10 aspect-video bg-white/5">
@@ -667,7 +672,6 @@ const AdminPage = () => {
                   <Check className="w-4 h-4" /> {savingPricing ? 'Saving…' : 'Save Pricing'}
                 </Btn>
               ))}
-
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {pricingPlans.map((plan, i) => (
                   <div key={plan.id} className="bg-[#0d1a17] border border-white/10 rounded-2xl p-6 flex flex-col gap-4">
@@ -728,14 +732,11 @@ const AdminPage = () => {
           {activeTab === 'users' && (
             <div>
               {sectionTitle(`Users`)}
-
-              {/* Search */}
               <div className="relative mb-6 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input value={userSearch} onChange={e => setUserSearch(e.target.value)}
                   placeholder="Search by email or name…" className="pl-9" />
               </div>
-
               <div className="flex flex-col gap-3">
                 {filteredUsers.map(user => (
                   <div key={user.id}
@@ -766,14 +767,16 @@ const AdminPage = () => {
         </main>
       </div>
 
-      {/* ── Course Modal ── */}
+      {/* ── Course Modal wrapped in Error Boundary ── */}
       {modal && (
-        <CourseModal
-          course={modal === 'add' ? null : modal}
-          categories={categories}
-          onSave={saveCourse}
-          onClose={() => setModal(null)}
-        />
+        <ModalErrorBoundary onClose={() => setModal(null)}>
+          <CourseModal
+            course={modal === 'add' ? null : modal}
+            categories={categories}
+            onSave={saveCourse}
+            onClose={() => setModal(null)}
+          />
+        </ModalErrorBoundary>
       )}
 
       {/* ── Lesson Editor ── */}
@@ -795,4 +798,3 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-// force rebuild Fri Jun 19 01:22:05 UTC 2026
