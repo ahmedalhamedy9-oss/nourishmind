@@ -42,25 +42,32 @@ const CoursePlayerPage = () => {
   const [isEnrolled,        setIsEnrolled]         = useState(false);
   const iframeKey = useRef(0);
 
-  /* ── load user data ── */
+  /* ── expand all sections when course/sections load ── */
   useEffect(() => {
-    if (!course) return;
+    if (!course?.sections?.length) return;
     const expanded = {};
-    course.sections?.forEach(s => { expanded[s.id] = true; });
+    course.sections.forEach(s => { expanded[s.id] = true; });
     setExpandedSections(expanded);
+    // Set first lesson only if none selected yet
+    setActiveLesson(prev => {
+      if (prev) return prev;
+      const first = course.sections[0]?.lessons?.[0];
+      if (first) setAutoplayNext(true);
+      return first || null;
+    });
+  }, [course?.sections]);
 
-    const firstLesson = course.sections?.[0]?.lessons?.[0];
-    if (firstLesson) { setActiveLesson(firstLesson); setAutoplayNext(true); }
-
-    if (!currentUser) return;
+  /* ── load user progress ── */
+  useEffect(() => {
+    if (!currentUser || !course) return;
     const load = async () => {
       const snap = await getDoc(doc(db, 'users', currentUser.uid));
       if (!snap.exists()) return;
       const d = snap.data();
       setIsEnrolled(d.enrolledCourses?.includes(id));
-      const saved = d.progress?.[`${id}_completed`] || [];
+      const saved = d.progress?.[id + '_completed'] || [];
       setCompletedLessons(saved);
-      const lastId = d.progress?.[`${id}_lastLesson`];
+      const lastId = d.progress?.[id + '_lastLesson'];
       if (lastId && course.sections) {
         for (const section of course.sections) {
           const found = section.lessons?.find(l => l.id === lastId);
