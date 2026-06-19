@@ -75,7 +75,23 @@ const CloudinaryUpload = ({ onUpload, folder = 'nourishmind', label = 'Upload Im
 
 // ── Course Modal ──────────────────────────────────────────────────────────────
 const CourseModal = ({ course, categories, onSave, onClose }) => {
-  const [form, setForm] = useState(course || EMPTY);
+  const [form, setForm] = useState(course ? {
+    ...EMPTY,
+    ...course,
+    previewVideo: course.previewVideo || '',
+    description:  course.description  || '',
+    image:        course.image        || '',
+    instructor:   course.instructor   || '',
+    instructor_image: course.instructor_image || '',
+    tags:         Array.isArray(course.tags) ? course.tags.join(', ') : (course.tags || ''),
+    top10_rank:   course.top10_rank   || '',
+    duration_hours: course.duration_hours || '',
+    price:        course.price        || '',
+    rating:       course.rating       || 4.5,
+    students_count: course.students_count || '',
+    level:        course.level        || 'Beginner',
+    category:     course.category     || '',
+  } : EMPTY);
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
