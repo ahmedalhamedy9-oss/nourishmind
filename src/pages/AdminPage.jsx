@@ -103,6 +103,7 @@ const safe = (course) => {
   if (!course) return { ...EMPTY };
   return {
     ...EMPTY,
+    id:               course.id ?? null,
     title:            String(course.title            ?? ''),
     description:      String(course.description      ?? ''),
     category:         String(course.category         ?? ''),
@@ -158,6 +159,7 @@ const CourseModal = ({ course, categories, onSave, onClose }) => {
     setSaving(true);
     try {
       await onSave({
+        id: course?.id ?? null,
         ...form,
         duration_hours:  parseFloat(form.duration_hours)  || 0,
         price:           parseFloat(form.price)           || 0,
