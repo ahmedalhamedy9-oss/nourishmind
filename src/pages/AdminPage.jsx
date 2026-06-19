@@ -734,42 +734,134 @@ const AdminPage = () => {
             </div>
           )}
 
-          {/* ══ USERS ════════════════════════════════════════════════════════ */}
+          {/* USERS TAB */}
           {activeTab === 'users' && (
             <div>
-              {sectionTitle(`Users`)}
+              {sectionTitle('Users')}
               <div className="relative mb-6 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <Input value={userSearch} onChange={e => setUserSearch(e.target.value)}
-                  placeholder="Search by email or name…" className="pl-9" />
+                  placeholder="Search by email or name..." className="pl-9" />
               </div>
               <div className="flex flex-col gap-3">
                 {filteredUsers.map(user => (
-                  <div key={user.id}
-                    className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4">
-                    <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-                      {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold text-sm truncate">{user.name || '—'}</p>
-                      <p className="text-gray-500 text-xs truncate">{user.email}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full
-                        ${user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-white/5 text-gray-400'}`}>
-                        {user.role || 'student'}
-                      </span>
+                  <details key={user.id} className="bg-[#0d1a17] border border-white/10 rounded-xl overflow-hidden">
+                    <summary className="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-white/5 transition-colors">
+                      {user.avatar
+                        ? <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover shrink-0 border border-white/10" />
+                        : <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">
+                            {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+                          </div>
+                      }
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-sm truncate">{user.name || 'No name'}</p>
+                        <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
+                          <span>{user.email}</span>
+                          {user.phone && <span>{user.phone}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user.status === 'suspended' ? 'bg-red-500/20 text-red-400' : user.role === 'admin' ? 'bg-primary/20 text-primary' : 'bg-white/5 text-gray-400'}`}>
+                          {user.status === 'suspended' ? 'Suspended' : user.role || 'student'}
+                        </span>
+                        <span className="text-xs text-gray-500">{user.enrolledCourses?.length || 0} courses</span>
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      </div>
+                    </summary>
+                    <div className="border-t border-white/10 p-5 flex flex-col gap-5">
                       {user.enrolledCourses?.length > 0 && (
-                        <span className="text-xs text-gray-500">{user.enrolledCourses.length} courses</span>
+                        <div>
+                          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Course Progress</p>
+                          <div className="flex flex-col gap-2">
+                            {user.enrolledCourses.map(cid => {
+                              const c = courses.find(x => x.id === cid);
+                              const pct = user.progress?.[cid] || 0;
+                              return (
+                                <div key={cid} className="flex items-center gap-3">
+                                  <p className="text-gray-300 text-sm flex-1 truncate">{c?.title || cid}</p>
+                                  <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary rounded-full" style={{ width: pct + '%' }} />
+                                  </div>
+                                  <span className="text-xs text-gray-500 w-8 text-right">{pct}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       )}
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Edit Name</p>
+                        <div className="flex gap-2">
+                          <Input defaultValue={user.name || ''} id={`name-${user.id}`} placeholder="Full name" className="max-w-xs" />
+                          <Btn onClick={async () => {
+                            const val = document.getElementById('name-' + user.id)?.value;
+                            if (!val) return;
+                            await updateDoc(doc(db, 'users', user.id), { name: val });
+                          }}><Check className="w-4 h-4" /> Save</Btn>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Enrolled Courses</p>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {user.enrolledCourses?.map(cid => {
+                            const c = courses.find(x => x.id === cid);
+                            return (
+                              <div key={cid} className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs px-2 py-1 rounded-lg">
+                                {c?.title || cid}
+                                <button onClick={async () => {
+                                  const updated = (user.enrolledCourses || []).filter(id => id !== cid);
+                                  await updateDoc(doc(db, 'users', user.id), { enrolledCourses: updated });
+                                }} className="text-red-400 hover:text-red-300 ml-1 font-bold">x</button>
+                              </div>
+                            );
+                          })}
+                          {!user.enrolledCourses?.length && <p className="text-gray-600 text-xs">No courses enrolled</p>}
+                        </div>
+                        <div className="flex gap-2">
+                          <select id={`enroll-${user.id}`}
+                            className="bg-[#0a1412] border border-white/10 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary">
+                            <option value="">Add to course...</option>
+                            {courses.filter(c => !user.enrolledCourses?.includes(c.id)).map(c => (
+                              <option key={c.id} value={c.id}>{c.title}</option>
+                            ))}
+                          </select>
+                          <Btn variant="ghost" className="text-xs py-1.5" onClick={async () => {
+                            const sel = document.getElementById('enroll-' + user.id);
+                            if (!sel?.value) return;
+                            const updated = [...(user.enrolledCourses || []), sel.value];
+                            await updateDoc(doc(db, 'users', user.id), { enrolledCourses: updated });
+                            sel.value = '';
+                          }}><Plus className="w-3 h-3" /> Enroll</Btn>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Password</p>
+                        <Btn variant="ghost" className="text-xs" onClick={async () => {
+                          const { sendPasswordResetEmail } = await import('firebase/auth');
+                          const { auth: fbAuth } = await import('@/lib/firebase');
+                          await sendPasswordResetEmail(fbAuth, user.email);
+                          alert('Reset email sent to ' + user.email);
+                        }}>Send Password Reset Email</Btn>
+                      </div>
+                      <div className="flex gap-2 pt-2 border-t border-white/10">
+                        {user.status === 'suspended' ? (
+                          <Btn variant="ghost" className="text-xs" onClick={async () => {
+                            await updateDoc(doc(db, 'users', user.id), { status: 'active' });
+                          }}>Activate Account</Btn>
+                        ) : (
+                          <Btn variant="danger" className="text-xs" onClick={async () => {
+                            if (!confirm('Suspend ' + (user.name || user.email) + '?')) return;
+                            await updateDoc(doc(db, 'users', user.id), { status: 'suspended' });
+                          }}>Suspend Account</Btn>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </details>
                 ))}
                 {!filteredUsers.length && <p className="text-gray-600 text-sm">No users found.</p>}
               </div>
             </div>
           )}
-
         </main>
       </div>
 
