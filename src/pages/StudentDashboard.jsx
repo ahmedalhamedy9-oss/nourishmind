@@ -94,23 +94,33 @@ const StudentDashboard = () => {
         <div className="flex items-center gap-4 mb-8">
           <div className="relative">
             {avatar
-              ? <img src={avatar} alt={name} className="w-16 h-16 rounded-full object-cover border-2 border-primary/30" />
-              : <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl font-bold border-2 border-primary/30">
+              ? <img src={avatar} alt={name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-primary/30" />
+              : <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl font-bold border-2 border-primary/30">
                   {name?.[0] || '?'}
                 </div>
             }
           </div>
           <div>
-            <h1 className="text-2xl font-extrabold text-white">{name || currentUser.email}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white">{name || currentUser.email}</h1>
             <p className="text-gray-400 text-sm">@{username}</p>
           </div>
           <button onClick={() => { logout(); navigate('/'); }} className="ml-auto flex items-center gap-2 text-sm text-gray-400 hover:text-red-400 transition-colors">
-            <LogOut className="w-4 h-4" /> Logout
+            <LogOut className="w-4 h-4" /> <span className="hidden sm:inline">Logout</span>
           </button>
         </div>
 
+        {/* Mobile tab selector */}
+        <div className="flex sm:hidden gap-1 mb-6 bg-white/5 rounded-xl p-1">
+          {TABS.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-colors ${tab === t.id ? 'bg-primary/20 text-white border border-primary/20' : 'text-gray-400'}`}>
+              <t.icon className="w-3.5 h-3.5" /> {t.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex gap-8">
-          {/* Sidebar */}
+          {/* Sidebar — desktop only */}
           <aside className="w-48 shrink-0 hidden sm:block">
             {TABS.map(t => (
               <button key={t.id} onClick={() => setTab(t.id)}
@@ -143,19 +153,21 @@ const StudentDashboard = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {enrolledCourses.map(course => {
                       const progress = userData?.progress?.[course.id] || 0;
                       return (
                         <div key={course.id} onClick={() => navigate(`/course/${course.id}`)}
                           className="bg-card border border-border rounded-xl overflow-hidden cursor-pointer hover:border-primary/40 transition-all">
-                          <div className="relative aspect-video">
-                            {course.image
-                              ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
-                              : <div className="w-full h-full bg-primary/10" />
-                            }
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-                              <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                            <div className="absolute inset-0">
+                              {course.image
+                                ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+                                : <div className="w-full h-full bg-primary/10" />
+                              }
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
+                                <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                              </div>
                             </div>
                           </div>
                           <div className="p-3">
