@@ -9,7 +9,6 @@ import { LoginPage, SignupPage } from '@/pages/AuthPages';
 import AboutPage from '@/pages/AboutPage';
 import PricingPage from '@/pages/PricingPage';
 import MyCoursesPage from '@/pages/MyCoursesPage';
-import StudentDashboard from '@/pages/StudentDashboard';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import AdminPage from '@/pages/AdminPage';
 
@@ -34,7 +33,6 @@ const App = () => (
         <Route path="/about" element={<AboutPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/my-courses" element={<MyCoursesPage />} />
-        <Route path="/dashboard" element={<StudentDashboard />} />
         <Route path="/course/:id/learn" element={<CoursePlayerPage />} />
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" />} />
