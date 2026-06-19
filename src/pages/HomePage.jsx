@@ -20,7 +20,7 @@ const HERO_BG = 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { courses } = useCourses();
+  const { courses, loading: coursesLoading } = useCourses();
   const { lang, isAr } = useLanguage();
   const { currentUser } = useAuth();
   const [userProgress, setUserProgress] = useState({});
@@ -132,28 +132,41 @@ const HomePage = () => {
 
       {/* ── COURSE ROWS ── */}
       <section className="relative z-10 pb-8">
-        {/* Top 10 row */}
-        <CourseRow
-          title="🏆 Top 10 Courses Today"
-          courses={[...courses.filter(c => c.top10)].sort((a,b) => (a.top10_rank||99) - (b.top10_rank||99)).slice(0,10).concat(courses.filter(c=>!c.top10)).slice(0,10)}
-          variant="top10"
-          seeAllPath="/courses"
-        />
-
-        {/* Continue Learning - only for logged in users */}
-        {currentUser && enrolledIds.length > 0 && (
-          <CourseRow
-            title="▶ Continue Learning"
-            courses={courses.filter(c => enrolledIds.includes(c.id))}
-            variant="continue"
-            userProgress={userProgress}
-          />
+        {coursesLoading ? (
+          // Skeleton loading state — مش بيبان placeholders
+          <div className="px-4 sm:px-12 py-8">
+            <div className="h-6 w-48 bg-white/5 rounded-lg mb-6 animate-pulse" />
+            <div className="flex gap-4 overflow-hidden">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex-shrink-0 w-[280px] animate-pulse">
+                  <div className="aspect-video rounded-xl bg-white/5 mb-3" />
+                  <div className="h-4 bg-white/5 rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-white/5 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <CourseRow
+              title="🏆 Top 10 Courses Today"
+              courses={[...courses.filter(c => c.top10)].sort((a,b) => (a.top10_rank||99) - (b.top10_rank||99)).slice(0,10).concat(courses.filter(c=>!c.top10)).slice(0,10)}
+              variant="top10"
+              seeAllPath="/courses"
+            />
+            {currentUser && enrolledIds.length > 0 && (
+              <CourseRow
+                title="▶ Continue Learning"
+                courses={courses.filter(c => enrolledIds.includes(c.id))}
+                variant="continue"
+                userProgress={userProgress}
+              />
+            )}
+            {ROWS.filter(r => r.id !== 'featured').map(row => (
+              <CourseRow key={row.id} title={row.title} courses={getRow(row)} />
+            ))}
+          </>
         )}
-
-        {/* Other rows */}
-        {ROWS.filter(r => r.id !== 'featured').map(row => (
-          <CourseRow key={row.id} title={row.title} courses={getRow(row)} />
-        ))}
       </section>
 
       <ReviewsSection />
