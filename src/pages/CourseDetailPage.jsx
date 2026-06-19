@@ -51,6 +51,7 @@ const VideoBox = ({ src, title, fallbackImage, onPlayClick }) => {
               height="100%"
               style={{ display:'block', border:'none' }}
               allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              referrerPolicy="origin"
               allowFullScreen
               title={title}
             />

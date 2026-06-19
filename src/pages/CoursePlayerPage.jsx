@@ -209,6 +209,7 @@ const CoursePlayerPage = () => {
                     src={getBunnyEmbedUrl(activeLesson.videoUrl, { autoplay: autoplayNext, muted: false })}
                     style={{ width:'100%', height:'100%', border:'none' }}
                     allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    referrerPolicy="origin"
                     allowFullScreen
                     title={activeLesson.title}
                   />

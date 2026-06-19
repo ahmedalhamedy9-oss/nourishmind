@@ -78,6 +78,7 @@ const CourseCard = ({ course }) => {
             className="absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-700"
             style={{ opacity: iframeLoaded ? 1 : 0, zIndex: 2 }}
             allow="autoplay; encrypted-media; picture-in-picture"
+            referrerPolicy="origin"
             allowFullScreen
             title={course.title}
             onLoad={() => setIframeLoaded(true)}
