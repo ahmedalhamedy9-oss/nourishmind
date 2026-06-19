@@ -379,7 +379,9 @@ const AdminPage = () => {
   // ── Course CRUD ──
   const saveCourse = async (data) => {
     const { id, ...rest } = data;
-    if (id && id.length > 10) {
+    const PLACEHOLDER_IDS = ['1','2','3','4','5','6','7','8','9','10'];
+    const isFirestoreDoc = id && !PLACEHOLDER_IDS.includes(String(id));
+    if (isFirestoreDoc) {
       await updateDoc(doc(db, 'courses', id), { ...rest, updatedAt: serverTimestamp() });
     } else {
       await addDoc(collection(db, 'courses'), { ...rest, createdAt: serverTimestamp() });
@@ -388,7 +390,9 @@ const AdminPage = () => {
 
   const deleteCourse = async (id) => {
     if (!confirm('Delete this course?')) return;
-    if (id && id.length > 10) await deleteDoc(doc(db, 'courses', id));
+    const PLACEHOLDER_IDS = ['1','2','3','4','5','6','7','8','9','10'];
+    const isFirestoreDoc = id && !PLACEHOLDER_IDS.includes(String(id));
+    if (isFirestoreDoc) await deleteDoc(doc(db, 'courses', id));
     else setCourses(prev => prev.filter(c => c.id !== id));
   };
 
