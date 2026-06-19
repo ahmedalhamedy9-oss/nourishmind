@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 
 const AuthContext = createContext(null);
@@ -21,17 +21,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    let unsubUser = null;
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      // Unsubscribe previous user listener
+      if (unsubUser) { unsubUser(); unsubUser = null; }
+
       if (user) {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        setUserData(snap.exists() ? snap.data() : null);
+        // Live listener on user doc — picks up avatar/name changes immediately
+        unsubUser = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+          setUserData(snap.exists() ? snap.data() : null);
+          setLoading(false);
+        }, () => setLoading(false));
       } else {
         setUserData(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return unsub;
+
+    return () => {
+      unsubAuth();
+      if (unsubUser) unsubUser();
+    };
   }, []);
 
   const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
