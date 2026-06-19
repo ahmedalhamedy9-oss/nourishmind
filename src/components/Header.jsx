@@ -2,22 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Search, Bell, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { tr } from '@/lib/translations';
+
+const NAV_LINKS = [
+  { path: '/',        label: 'Home' },
+  { path: '/courses', label: 'Courses' },
+  { path: '/about',   label: 'About' },
+  { path: '/pricing', label: 'Pricing' },
+];
 
 const Logo = () => (
   <Link to="/" className="flex items-center shrink-0">
-    <img src="/logo.svg" alt="NourishMind" style={{ height: '44px', width: 'auto' }} />
+    <img src="/logo.svg" alt="NourishMind" style={{ height: '40px', width: 'auto' }} />
   </Link>
 );
 
 const Header = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled,  setScrolled]  = useState(false);
+  const [menuOpen,  setMenuOpen]  = useState(false);
   const { currentUser, logout, isAdmin } = useAuth();
-  const { lang, isAr, toggle } = useLanguage();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -27,39 +31,36 @@ const Header = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <>
       <header
         className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center transition-all duration-500"
         style={{
-          background: scrolled ? 'rgba(10, 20, 18, 0.55)' : 'rgba(10, 20, 18, 0.25)',
+          background: scrolled ? 'rgba(10,20,18,0.75)' : 'rgba(10,20,18,0.35)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: scrolled ? '1px solid rgba(74, 155, 142, 0.15)' : '1px solid rgba(74, 155, 142, 0.08)',
+          borderBottom: scrolled ? '1px solid rgba(74,155,142,0.2)' : '1px solid rgba(74,155,142,0.08)',
           boxShadow: scrolled ? '0 4px 32px rgba(0,0,0,0.3)' : 'none',
         }}
       >
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 flex items-center gap-6">
+        <div className="w-full px-4 sm:px-6 flex items-center gap-4">
+
+          {/* Logo */}
           <Logo />
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-            {[
-              { path: '/', label: tr('home', lang) },
-              { path: '/courses', label: tr('courses', lang) },
-              { path: '/about', label: tr('about', lang) },
-              { path: '/pricing', label: tr('pricing', lang) },
-            ].map(({ path, label }) => (
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-4">
+            {NAV_LINKS.map(({ path, label }) => (
               <Link
                 key={path}
                 to={path}
                 className="relative transition-colors duration-200"
                 style={{
-                  color: isActive(path) ? '#5fbfb0' : 'rgba(200, 230, 225, 0.75)',
+                  color: isActive(path) ? '#5fbfb0' : 'rgba(200,230,225,0.75)',
                   fontWeight: isActive(path) ? '600' : '400',
                 }}
-                onMouseEnter={e => { if (!isActive(path)) e.target.style.color = '#a8ddd7'; }}
-                onMouseLeave={e => { if (!isActive(path)) e.target.style.color = 'rgba(200, 230, 225, 0.75)'; }}
               >
                 {label}
                 {isActive(path) && (
@@ -70,63 +71,54 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className={`${isAr ? 'mr-auto' : 'ml-auto'} flex items-center gap-3`}>
+          {/* Right side */}
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
 
-            {/* Language toggle */}
+            {/* Search — desktop only */}
             <button
-              onClick={toggle}
-              className="text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200"
-              style={{
-                border: '1px solid rgba(74, 155, 142, 0.35)',
-                color: '#5fbfb0',
-                background: 'rgba(74, 155, 142, 0.08)',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(74, 155, 142, 0.18)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(74, 155, 142, 0.08)'; }}
-            >
-              {isAr ? 'EN' : 'عر'}
-            </button>
-
-            <button className="transition-colors" style={{ color: 'rgba(180,220,215,0.6)' }}
+              className="hidden sm:flex transition-colors"
+              style={{ color: 'rgba(180,220,215,0.6)', background:'none', border:'none', cursor:'pointer', padding:4 }}
               onMouseEnter={e => e.currentTarget.style.color = '#5fbfb0'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,220,215,0.6)'}>
-              <Search className="w-4.5 h-4.5" />
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,220,215,0.6)'}
+            >
+              <Search size={18} />
             </button>
 
+            {/* Bell — only when logged in, desktop only */}
             {currentUser && (
-              <button className="transition-colors" style={{ color: 'rgba(180,220,215,0.6)' }}
+              <button
+                className="hidden sm:flex transition-colors"
+                style={{ color: 'rgba(180,220,215,0.6)', background:'none', border:'none', cursor:'pointer', padding:4 }}
                 onMouseEnter={e => e.currentTarget.style.color = '#5fbfb0'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,220,215,0.6)'}>
-                <Bell className="w-4.5 h-4.5" />
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,220,215,0.6)'}
+              >
+                <Bell size={18} />
               </button>
             )}
 
+            {/* Logged in */}
             {currentUser ? (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Link to="/dashboard"
                   className="hidden md:block text-sm transition-colors"
-                  style={{ color: 'rgba(200, 230, 225, 0.7)' }}
+                  style={{ color: 'rgba(200,230,225,0.7)' }}
                   onMouseEnter={e => e.target.style.color = '#5fbfb0'}
-                  onMouseLeave={e => e.target.style.color = 'rgba(200, 230, 225, 0.7)'}
+                  onMouseLeave={e => e.target.style.color = 'rgba(200,230,225,0.7)'}
                 >
-                  {tr('myCourses', lang)}
+                  My Courses
                 </Link>
                 {isAdmin && (
                   <Link to="/admin"
                     className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all"
-                    style={{
-                      border: '1px solid rgba(74,155,142,0.4)',
-                      color: '#5fbfb0',
-                      background: 'rgba(74,155,142,0.08)',
-                    }}
+                    style={{ border:'1px solid rgba(74,155,142,0.4)', color:'#5fbfb0', background:'rgba(74,155,142,0.08)' }}
                   >
-                    <Shield className="w-3 h-3" /> {tr('admin', lang)}
+                    <Shield size={12} /> Admin
                   </Link>
                 )}
                 <button
                   onClick={() => { logout(); navigate('/'); }}
-                  className="text-sm transition-colors"
-                  style={{ color: 'rgba(200,230,225,0.6)' }}
+                  className="text-sm transition-colors hidden sm:block"
+                  style={{ color:'rgba(200,230,225,0.6)', background:'none', border:'none', cursor:'pointer' }}
                   onMouseEnter={e => e.currentTarget.style.color = '#5fbfb0'}
                   onMouseLeave={e => e.currentTarget.style.color = 'rgba(200,230,225,0.6)'}
                 >
@@ -134,32 +126,35 @@ const Header = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Link to="/login"
-                  className="text-sm transition-colors"
+                  className="hidden sm:block text-sm transition-colors"
                   style={{ color: 'rgba(200,230,225,0.7)' }}
                   onMouseEnter={e => e.target.style.color = '#a8ddd7'}
                   onMouseLeave={e => e.target.style.color = 'rgba(200,230,225,0.7)'}
                 >
-                  {tr('signIn', lang)}
+                  Sign In
                 </Link>
                 <Link to="/signup"
-                  className="text-sm font-semibold px-5 py-2 rounded-full transition-all"
+                  className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all"
                   style={{
                     background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)',
                     color: '#fff',
-                    boxShadow: '0 0 20px rgba(74,155,142,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+                    boxShadow: '0 0 20px rgba(74,155,142,0.3)',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 30px rgba(74,155,142,0.5), inset 0 1px 0 rgba(255,255,255,0.15)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(74,155,142,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'; }}
                 >
-                  {tr('startFree', lang)}
+                  Start Free
                 </Link>
               </div>
             )}
 
-            <button className="md:hidden" style={{ color: '#5fbfb0' }} onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {/* Hamburger — mobile only */}
+            <button
+              className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+              style={{ color:'#5fbfb0', background: menuOpen ? 'rgba(74,155,142,0.12)' : 'transparent', border:'none', cursor:'pointer' }}
+              onClick={() => setMenuOpen(o => !o)}
+            >
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -168,32 +163,66 @@ const Header = () => {
       {/* Mobile menu */}
       {menuOpen && (
         <div
-          className="md:hidden fixed top-16 left-0 right-0 z-40 p-4 flex flex-col gap-3"
+          className="md:hidden fixed top-16 left-0 right-0 z-40 flex flex-col"
           style={{
-            background: 'rgba(8,18,16,0.92)',
+            background: 'rgba(8,18,16,0.97)',
             backdropFilter: 'blur(20px)',
             borderBottom: '1px solid rgba(74,155,142,0.15)',
           }}
         >
-          {[
-            { path: '/', label: tr('home', lang) },
-            { path: '/courses', label: tr('courses', lang) },
-            { path: '/about', label: tr('about', lang) },
-            { path: '/pricing', label: tr('pricing', lang) },
-          ].map(({ path, label }) => (
-            <Link key={path} to={path} onClick={() => setMenuOpen(false)}
-              style={{ color: isActive(path) ? '#5fbfb0' : 'rgba(200,230,225,0.8)', fontWeight: isActive(path) ? '600' : '400' }}>
-              {label}
-            </Link>
-          ))}
-          {currentUser && <Link to="/my-courses" onClick={() => setMenuOpen(false)} style={{ color: 'rgba(200,230,225,0.8)' }}>{tr('myCourses', lang)}</Link>}
-          {isAdmin && <Link to="/admin" onClick={() => setMenuOpen(false)} style={{ color: '#5fbfb0', fontWeight: '700' }}>{tr('admin', lang)}</Link>}
-          {!currentUser && <Link to="/login" onClick={() => setMenuOpen(false)} style={{ color: 'rgba(200,230,225,0.8)' }}>{tr('signIn', lang)}</Link>}
-          {!currentUser && <Link to="/signup" onClick={() => setMenuOpen(false)} style={{ color: '#5fbfb0', fontWeight: '700' }}>{tr('startFree', lang)}</Link>}
-          {currentUser && <button onClick={() => { logout(); setMenuOpen(false); }} style={{ color: '#ef4444', textAlign: 'left' }}>Logout</button>}
-          <button onClick={toggle} style={{ color: '#5fbfb0', border: '1px solid rgba(74,155,142,0.3)', borderRadius: '8px', padding: '8px 12px', width: 'fit-content', background: 'rgba(74,155,142,0.08)' }}>
-            {isAr ? '🌐 English' : '🌐 العربية'}
-          </button>
+          {/* Nav links */}
+          <div className="flex flex-col px-4 pt-3 pb-2 gap-0.5">
+            {NAV_LINKS.map(({ path, label }) => (
+              <Link key={path} to={path} onClick={closeMenu}
+                className="py-3 px-2 text-sm font-medium border-b border-white/5 transition-colors"
+                style={{ color: isActive(path) ? '#5fbfb0' : 'rgba(200,230,225,0.8)' }}
+              >
+                {label}
+              </Link>
+            ))}
+            {currentUser && (
+              <Link to="/my-courses" onClick={closeMenu}
+                className="py-3 px-2 text-sm border-b border-white/5"
+                style={{ color: 'rgba(200,230,225,0.8)' }}>
+                My Courses
+              </Link>
+            )}
+          </div>
+
+          {/* Auth actions */}
+          <div className="px-4 py-4 flex flex-col gap-3">
+            {currentUser ? (
+              <>
+                {isAdmin && (
+                  <Link to="/admin" onClick={closeMenu}
+                    className="flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl text-center justify-center"
+                    style={{ border:'1px solid rgba(74,155,142,0.4)', color:'#5fbfb0', background:'rgba(74,155,142,0.08)' }}>
+                    <Shield size={14} /> Admin Panel
+                  </Link>
+                )}
+                <button
+                  onClick={() => { logout(); navigate('/'); closeMenu(); }}
+                  className="text-sm py-2.5 px-4 rounded-xl text-center"
+                  style={{ color:'#ef4444', border:'1px solid rgba(239,68,68,0.2)', background:'rgba(239,68,68,0.05)', cursor:'pointer' }}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={closeMenu}
+                  className="text-sm py-2.5 px-4 rounded-xl text-center"
+                  style={{ color:'rgba(200,230,225,0.8)', border:'1px solid rgba(255,255,255,0.1)' }}>
+                  Sign In
+                </Link>
+                <Link to="/signup" onClick={closeMenu}
+                  className="text-sm font-bold py-2.5 px-4 rounded-xl text-center"
+                  style={{ background:'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color:'#fff' }}>
+                  Start Free
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       )}
     </>
