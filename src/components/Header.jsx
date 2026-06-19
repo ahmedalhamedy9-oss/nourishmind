@@ -19,7 +19,7 @@ const Logo = () => (
 const Header = () => {
   const [scrolled,  setScrolled]  = useState(false);
   const [menuOpen,  setMenuOpen]  = useState(false);
-  const { currentUser, logout, isAdmin } = useAuth();
+  const { currentUser, userData, logout, isAdmin } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -120,19 +120,19 @@ const Header = () => {
                   to="/dashboard"
                   className="hidden sm:flex items-center gap-2 transition-opacity hover:opacity-80"
                 >
-                  {currentUser.photoURL ? (
+                  {(userData?.avatar || currentUser.photoURL) ? (
                     <img
-                      src={currentUser.photoURL}
+                      src={userData?.avatar || currentUser.photoURL}
                       alt="avatar"
                       className="w-8 h-8 rounded-full object-cover border border-primary/40"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm">
-                      {(currentUser.displayName?.[0] || currentUser.email?.[0] || 'U').toUpperCase()}
+                      {(userData?.name?.[0] || currentUser.displayName?.[0] || currentUser.email?.[0] || 'U').toUpperCase()}
                     </div>
                   )}
                   <span className="text-sm font-medium" style={{ color:'rgba(200,230,225,0.85)' }}>
-                    {currentUser.displayName?.split(' ')[0] || 'Account'}
+                    {userData?.name?.split(' ')[0] || currentUser.displayName?.split(' ')[0] || 'Account'}
                   </span>
                 </Link>
               </div>
