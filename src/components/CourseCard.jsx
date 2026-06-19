@@ -1,17 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, Clock, Volume2, VolumeX } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const getBunnyUrl = (url, muted) => {
+const getBunnyUrl = (url) => {
   if (!url) return null;
   try {
     let embedUrl = url
       .replace('player.mediadelivery.net/play/', 'iframe.mediadelivery.net/embed/')
       .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
     const u = new URL(embedUrl);
+    // Always start muted so browser allows autoplay
     u.searchParams.set('autoplay', 'true');
-    u.searchParams.set('muted',    muted ? 'true' : 'false');
+    u.searchParams.set('muted',    'true');
     u.searchParams.set('loop',     'true');
     u.searchParams.set('controls', 'false');
     return u.toString();
@@ -24,9 +25,10 @@ const CourseCard = ({ course }) => {
   const [showIframe,   setShowIframe]   = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [muted,        setMuted]        = useState(true);
-  const hoverRef = useRef(false);
-  const timerRef = useRef(null);
-  const hasBunny = !!course.previewVideo;
+  const iframeRef = useRef(null);
+  const hoverRef  = useRef(false);
+  const timerRef  = useRef(null);
+  const hasBunny  = !!course.previewVideo;
 
   const handleMouseEnter = () => {
     hoverRef.current = true;
@@ -41,17 +43,32 @@ const CourseCard = ({ course }) => {
     clearTimeout(timerRef.current);
     setShowIframe(false);
     setIframeLoaded(false);
-    setMuted(true); // reset mute on leave
+    setMuted(true);
   };
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const toggleMute = (e) => {
+  // Send postMessage to Bunny player to toggle mute — no iframe remount needed
+  const toggleMute = useCallback((e) => {
     e.stopPropagation();
-    setMuted(m => !m);
-    // remount iframe with new muted param
-    setIframeLoaded(false);
-  };
+    const newMuted = !muted;
+    setMuted(newMuted);
+
+    // Bunny Stream supports postMessage volume control
+    if (iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }),
+          '*'
+        );
+        // Also try setting volume directly
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ method: 'setVolume', value: newMuted ? 0 : 1 }),
+          '*'
+        );
+      } catch (_) {}
+    }
+  }, [muted]);
 
   return (
     <div
@@ -75,11 +92,11 @@ const CourseCard = ({ course }) => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" style={{ zIndex: 1 }} />
         )}
 
-        {/* Iframe */}
+        {/* Iframe — loads once, stays mounted, no remount on mute toggle */}
         {showIframe && hasBunny && (
           <iframe
-            key={`${course.previewVideo}-${muted}`}
-            src={getBunnyUrl(course.previewVideo, muted)}
+            ref={iframeRef}
+            src={getBunnyUrl(course.previewVideo)}
             className="absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-700"
             style={{ opacity: iframeLoaded ? 1 : 0, zIndex: 2 }}
             allow="autoplay; encrypted-media; picture-in-picture"
@@ -90,7 +107,7 @@ const CourseCard = ({ course }) => {
           />
         )}
 
-        {/* Mute/Unmute button — يظهر بس لما الفيديو شغال */}
+        {/* Mute/Unmute button */}
         {iframeLoaded && (
           <button
             onClick={toggleMute}
