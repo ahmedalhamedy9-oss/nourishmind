@@ -1,34 +1,35 @@
 import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import CourseCard from '@/components/CourseCard';
 
 // Top 10 style card with big number behind
 const Top10Card = ({ course, rank }) => {
   const navigate = useNavigate();
   return (
+    // paddingLeft reserves space for the number bleeding behind the card
     <div
       className="relative flex-shrink-0 cursor-pointer group"
-      style={{ width: '160px', paddingLeft: rank > 1 ? '30px' : '0' }}
+      style={{ width: '190px', paddingLeft: '50px' }}
       onClick={() => navigate(`/course/${course.id}`)}
     >
-      {/* Big rank number */}
+      {/* Big rank number — positioned inside padded area, never clipped */}
       <span
-        className="absolute bottom-2 font-black select-none pointer-events-none leading-none"
+        className="absolute bottom-4 font-black select-none pointer-events-none leading-none"
         style={{
-          left: rank === 1 ? '-10px' : '-5px',
-          fontSize: '120px',
+          left: '0px',
+          fontSize: '110px',
+          lineHeight: 1,
           color: 'transparent',
-          WebkitTextStroke: '2px rgba(255,255,255,0.15)',
+          WebkitTextStroke: '2px rgba(255,255,255,0.18)',
           fontFamily: 'Georgia, serif',
           zIndex: 0,
         }}
       >
         {rank}
       </span>
-      {/* Card */}
-      <div className="relative rounded-xl overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-all group-hover:scale-105 duration-300 shadow-lg" style={{ aspectRatio: '3/4', zIndex: 1 }}>
+      {/* Card sits to the right of the number */}
+      <div className="relative rounded-xl overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-all group-hover:scale-105 duration-300 shadow-lg" style={{ aspectRatio: '2/3', zIndex: 1 }}>
         {course.image
           ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
           : <div className="w-full h-full bg-primary/10" />
@@ -109,10 +110,9 @@ const ContinueCard = ({ course, progress = 0 }) => {
 
 const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgress = {} }) => {
   const ref = useRef(null);
-  const { isAr } = useLanguage();
 
   const scroll = (dir) => {
-    if (ref.current) ref.current.scrollBy({ left: (isAr ? -dir : dir) * 450, behavior: 'smooth' });
+    if (ref.current) ref.current.scrollBy({ left: dir * 450, behavior: 'smooth' });
   };
 
   if (!courses?.length) return null;
@@ -120,7 +120,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
   return (
     <div className="mb-10 group/row">
       {/* Header */}
-      <div className={`flex items-center gap-3 mb-4 px-4 sm:px-12 ${isAr ? 'flex-row-reverse' : ''}`}>
+      <div className={"flex items-center gap-3 mb-4 px-4 sm:px-12"}>
         <h2 className="text-white font-bold text-xl">{title}</h2>
         {seeAllPath && (
           <a href={seeAllPath} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
