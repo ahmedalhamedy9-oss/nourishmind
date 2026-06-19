@@ -23,12 +23,18 @@ const getBunnyEmbedUrl = (url, opts = {}) => {
 const CourseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { courses } = useCourses();
+  const { courses, loading: coursesLoading } = useCourses();
   const { categories } = useCategories();
   const { currentUser } = useAuth();
   const course = courses.find(c => c.id === id);
   const [expandedSections, setExpandedSections] = useState({});
   const [showCurriculum, setShowCurriculum] = useState(false);
+
+  if (coursesLoading) return (
+    <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+    </div>
+  );
 
   if (!course) return (
     <div className="min-h-screen bg-[#0f1117] flex items-center justify-center text-white">
