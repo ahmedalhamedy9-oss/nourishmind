@@ -115,10 +115,10 @@ const Header = () => {
                     <Shield size={12} /> Admin
                   </Link>
                 )}
-                {/* User avatar + name → links to dashboard */}
+                {/* User avatar + name → always visible when logged in */}
                 <Link
                   to="/dashboard"
-                  className="hidden sm:flex items-center gap-2 transition-opacity hover:opacity-80"
+                  className="flex items-center gap-2 transition-opacity hover:opacity-80"
                 >
                   {(userData?.avatar || currentUser.photoURL) ? (
                     <img
@@ -131,7 +131,7 @@ const Header = () => {
                       {(userData?.name?.[0] || currentUser.displayName?.[0] || currentUser.email?.[0] || 'U').toUpperCase()}
                     </div>
                   )}
-                  <span className="text-sm font-medium" style={{ color:'rgba(200,230,225,0.85)' }}>
+                  <span className="hidden sm:block text-sm font-medium" style={{ color:'rgba(200,230,225,0.85)' }}>
                     {userData?.name?.split(' ')[0] || currentUser.displayName?.split(' ')[0] || 'Account'}
                   </span>
                 </Link>
@@ -181,6 +181,34 @@ const Header = () => {
             borderBottom: '1px solid rgba(74,155,142,0.15)',
           }}
         >
+          {/* User info on mobile when logged in */}
+          {currentUser && (
+            <Link to="/dashboard" onClick={closeMenu}
+              className="flex items-center gap-3 px-4 py-4 border-b"
+              style={{ borderColor: 'rgba(74,155,142,0.15)' }}
+            >
+              {(userData?.avatar || currentUser.photoURL) ? (
+                <img
+                  src={userData?.avatar || currentUser.photoURL}
+                  alt="avatar"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-primary/40"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center text-primary font-bold">
+                  {(userData?.name?.[0] || currentUser.displayName?.[0] || currentUser.email?.[0] || 'U').toUpperCase()}
+                </div>
+              )}
+              <div>
+                <p className="text-white font-semibold text-sm">
+                  {userData?.name || currentUser.displayName || 'My Account'}
+                </p>
+                <p className="text-xs" style={{ color: 'rgba(200,230,225,0.5)' }}>
+                  {currentUser.email}
+                </p>
+              </div>
+            </Link>
+          )}
+
           {/* Nav links */}
           <div className="flex flex-col px-4 pt-3 pb-2 gap-0.5">
             {NAV_LINKS.map(({ path, label }) => (
@@ -192,7 +220,7 @@ const Header = () => {
               </Link>
             ))}
             {currentUser && (
-              <Link to="/my-courses" onClick={closeMenu}
+              <Link to="/dashboard" onClick={closeMenu}
                 className="py-3 px-2 text-sm border-b border-white/5"
                 style={{ color: 'rgba(200,230,225,0.8)' }}>
                 My Courses
