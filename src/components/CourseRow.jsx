@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import CourseCard from '@/components/CourseCard';
 
 // Top 10 style card with big number behind
 const Top10Card = ({ course, rank }) => {
@@ -147,7 +148,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
               ? <Top10Card key={course.id} course={course} rank={i + 1} />
               : variant === 'continue'
               ? <ContinueCard key={course.id} course={course} progress={userProgress[course.id] || 0} />
-              : <NormalCard key={course.id} course={course} />
+              : <CourseCard key={course.id} course={course} />
           ))}
         </div>
 
