@@ -10,7 +10,6 @@ const getBunnyUrl = (url) => {
       .replace('player.mediadelivery.net/play/', 'iframe.mediadelivery.net/embed/')
       .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
     const u = new URL(embedUrl);
-    // Always start muted so browser allows autoplay
     u.searchParams.set('autoplay', 'true');
     u.searchParams.set('muted',    'true');
     u.searchParams.set('loop',     'true');
@@ -22,49 +21,63 @@ const getBunnyUrl = (url) => {
 const CourseCard = ({ course }) => {
   const navigate  = useNavigate();
   const { isAr } = useLanguage();
-  const [showIframe,   setShowIframe]   = useState(false);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [muted,        setMuted]        = useState(true);
-  const iframeRef = useRef(null);
-  const hoverRef  = useRef(false);
-  const timerRef  = useRef(null);
-  const hasBunny  = !!course.previewVideo;
+
+  const [showIframe,    setShowIframe]    = useState(false);
+  const [videoReady,    setVideoReady]    = useState(false); // iframe loaded
+  const [showVideo,     setShowVideo]     = useState(false); // thumbnail hidden (after 1s delay)
+  const [muted,         setMuted]         = useState(true);
+
+  const iframeRef  = useRef(null);
+  const hoverRef   = useRef(false);
+  const hoverTimer = useRef(null); // delay before showing iframe
+  const videoTimer = useRef(null); // delay before hiding thumbnail
+
+  const hasBunny = !!course.previewVideo;
 
   const handleMouseEnter = () => {
     hoverRef.current = true;
     if (!hasBunny) return;
-    timerRef.current = setTimeout(() => {
+    // Start loading iframe after 800ms hover
+    hoverTimer.current = setTimeout(() => {
       if (hoverRef.current) setShowIframe(true);
     }, 800);
   };
 
   const handleMouseLeave = () => {
     hoverRef.current = false;
-    clearTimeout(timerRef.current);
+    clearTimeout(hoverTimer.current);
+    clearTimeout(videoTimer.current);
     setShowIframe(false);
-    setIframeLoaded(false);
+    setVideoReady(false);
+    setShowVideo(false);
     setMuted(true);
   };
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  useEffect(() => () => {
+    clearTimeout(hoverTimer.current);
+    clearTimeout(videoTimer.current);
+  }, []);
 
-  // Send postMessage to Bunny player to toggle mute — no iframe remount needed
+  // When iframe loads → wait 1 extra second before hiding thumbnail
+  const onIframeLoad = () => {
+    setVideoReady(true);
+    videoTimer.current = setTimeout(() => {
+      setShowVideo(true);
+    }, 1000); // ← 1 ثانية بعد ما الفيديو يكون جاهز
+  };
+
+  // Unmute via postMessage — no iframe remount
   const toggleMute = useCallback((e) => {
     e.stopPropagation();
     const newMuted = !muted;
     setMuted(newMuted);
-
-    // Bunny Stream supports postMessage volume control
     if (iframeRef.current?.contentWindow) {
       try {
         iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }),
-          '*'
+          JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }), '*'
         );
-        // Also try setting volume directly
         iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ method: 'setVolume', value: newMuted ? 0 : 1 }),
-          '*'
+          JSON.stringify({ method: 'setVolume', value: newMuted ? 0 : 1 }), '*'
         );
       } catch (_) {}
     }
@@ -79,36 +92,39 @@ const CourseCard = ({ course }) => {
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
 
-        {/* Thumbnail */}
+        {/* Thumbnail — يظهر دايماً حتى بعد ما الفيديو يبدأ بثانية */}
         {course.image && (
           <img
             src={course.image}
             alt={course.title}
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-            style={{ opacity: iframeLoaded ? 0 : 1, zIndex: 1 }}
+            style={{ opacity: showVideo ? 0 : 1, zIndex: 1 }}
           />
         )}
         {!course.image && (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" style={{ zIndex: 1 }} />
+          <div
+            className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10"
+            style={{ opacity: showVideo ? 0 : 1, zIndex: 1, transition: 'opacity 0.7s' }}
+          />
         )}
 
-        {/* Iframe — loads once, stays mounted, no remount on mute toggle */}
+        {/* Iframe — يـload بصمت، الثامبنيل تفضل فوق لحد ما showVideo يبقى true */}
         {showIframe && hasBunny && (
           <iframe
             ref={iframeRef}
             src={getBunnyUrl(course.previewVideo)}
-            className="absolute inset-0 w-full h-full border-0 pointer-events-none transition-opacity duration-700"
-            style={{ opacity: iframeLoaded ? 1 : 0, zIndex: 2 }}
+            className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+            style={{ zIndex: 2 }}
             allow="autoplay; encrypted-media; picture-in-picture"
             referrerPolicy="origin"
             allowFullScreen
             title={course.title}
-            onLoad={() => setIframeLoaded(true)}
+            onLoad={onIframeLoad}
           />
         )}
 
-        {/* Mute/Unmute button */}
-        {iframeLoaded && (
+        {/* Mute/Unmute — يظهر بس لما الفيديو ظهر فعلاً */}
+        {showVideo && (
           <button
             onClick={toggleMute}
             style={{ zIndex: 10 }}
@@ -144,7 +160,9 @@ const CourseCard = ({ course }) => {
               )}
             </span>
           )}
-          {course.duration_hours && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{course.duration_hours}h</span>}
+          {course.duration_hours && (
+            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{course.duration_hours}h</span>
+          )}
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
