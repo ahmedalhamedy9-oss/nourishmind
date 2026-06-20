@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-// Detect mobile once — no hover video on touch devices
+// Detect touch devices — no hover video on mobile
 const IS_TOUCH = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
 const getBunnyUrl = (url, muted = true) => {
@@ -29,7 +29,6 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
   const [wishlisted,   setWishlisted]   = useState(wishlistedProp);
   const [wishlistBusy, setWishlistBusy] = useState(false);
 
-  // Sync if parent passes down wishlist state
   useEffect(() => { setWishlisted(wishlistedProp); }, [wishlistedProp]);
 
   const toggleWishlist = async (e) => {
@@ -38,23 +37,23 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
     if (wishlistBusy) return;
     setWishlistBusy(true);
     const next = !wishlisted;
-    setWishlisted(next); // optimistic update
+    setWishlisted(next);
     try {
       const snap = await getDoc(doc(db, 'users', currentUser.uid));
       const current = snap.exists() ? (snap.data().wishlist || []) : [];
       const updated = wishlisted ? current.filter(x => x !== course.id) : [...current, course.id];
       await updateDoc(doc(db, 'users', currentUser.uid), { wishlist: updated });
       if (onWishlistToggle) onWishlistToggle(course.id, next);
-    } catch (_) { setWishlisted(!next); } // revert on error
+    } catch (_) { setWishlisted(!next); }
     finally { setWishlistBusy(false); }
   };
 
-  // Video preview — disabled on touch/mobile devices
-  const [showIframe,   setShowIframe]   = useState(false);
-  const [videoReady,   setVideoReady]   = useState(false);
-  const [showVideo,    setShowVideo]    = useState(false);
-  const [muted,        setMuted]        = useState(true);
-  const [iframeSrc,    setIframeSrc]    = useState('');
+  // Video preview — desktop only
+  const [showIframe, setShowIframe] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [showVideo,  setShowVideo]  = useState(false);
+  const [muted,      setMuted]      = useState(true);
+  const [iframeSrc,  setIframeSrc]  = useState('');
 
   const iframeRef  = useRef(null);
   const hoverRef   = useRef(false);
@@ -136,7 +135,7 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
 
-        {/* iframe only on desktop */}
+        {/* iframe — desktop only */}
         {showIframe && hasBunny && (
           <iframe
             ref={iframeRef}
@@ -151,7 +150,7 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
           />
         )}
 
-        {/* Thumbnail */}
+        {/* Thumbnail — always eager, never lazy */}
         <div
           className="absolute inset-0 transition-opacity duration-700"
           style={{ zIndex: 4, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
@@ -161,7 +160,7 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
                 src={course.image}
                 alt={course.title}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
                 onError={e => { e.currentTarget.style.display = 'none'; }}
               />
@@ -177,25 +176,19 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
             className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors border border-white/20"
             style={{ zIndex: 10 }}
           >
-            {muted
-              ? <VolumeX className="w-4 h-4 text-white" />
-              : <Volume2 className="w-4 h-4 text-white" />
-            }
+            {muted ? <VolumeX className="w-4 h-4 text-white" /> : <Volume2 className="w-4 h-4 text-white" />}
           </button>
         )}
 
-        {/* Wishlist button */}
+        {/* Wishlist */}
         <button
           onClick={toggleWishlist}
           disabled={wishlistBusy}
-          title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
           className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all"
           style={{
             zIndex: 10,
             background: wishlisted ? 'rgba(239,68,68,0.85)' : 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(4px)',
-            border: 'none',
-            cursor: 'pointer',
+            border: 'none', cursor: 'pointer',
           }}
         >
           <Heart size={13} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
@@ -235,7 +228,7 @@ const CourseCard = ({ course, wishlisted: wishlistedProp = false, onWishlistTogg
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {course.instructor_image
-              ? <img src={course.instructor_image} alt={course.instructor} className="w-6 h-6 rounded-full object-cover" loading="lazy" />
+              ? <img src={course.instructor_image} alt={course.instructor} className="w-6 h-6 rounded-full object-cover" />
               : <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold">{course.instructor?.[0] || 'N'}</div>
             }
             <p className="text-gray-400 text-xs truncate max-w-[120px]">{course.instructor || 'NourishMind'}</p>
