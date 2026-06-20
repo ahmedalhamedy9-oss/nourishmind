@@ -97,8 +97,8 @@ const HomePage = () => {
         {/* ── HERO — renders immediately, no Firebase wait ── */}
         <section
           aria-label="Welcome to NourishMind"
-          className="relative min-h-screen flex items-center"
-          style={{ overflow: 'hidden' }}>
+          className="relative flex items-center"
+          style={{ overflow: 'hidden', minHeight: '100svh' }}>
           <div className="absolute inset-0" aria-hidden="true">
             <img
               src={hero.backgroundImage}
@@ -200,4 +200,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
 
