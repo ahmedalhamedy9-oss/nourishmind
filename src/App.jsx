@@ -11,33 +11,42 @@ import PricingPage from '@/pages/PricingPage';
 import MyCoursesPage from '@/pages/MyCoursesPage';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import AdminPage from '@/pages/AdminPage';
+import CertificatePage from '@/pages/CertificatePage';
 
 const AdminRoute = ({ children }) => {
   const { isAdmin, currentUser, loading } = useAuth();
   if (loading) return null;
   if (!currentUser) return <Navigate to="/login" />;
-  if (!isAdmin) return <Navigate to="/" />;
+  if (!isAdmin)    return <Navigate to="/" />;
+  return children;
+};
+
+const PrivateRoute = ({ children }) => {
+  const { currentUser, loading } = useAuth();
+  if (loading) return null;
+  if (!currentUser) return <Navigate to="/login" />;
   return children;
 };
 
 const App = () => (
   <BrowserRouter>
     <LanguageProvider>
-    <AuthProvider>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/courses" element={<CoursesPage />} />
-        <Route path="/course/:id" element={<CourseDetailPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/my-courses" element={<MyCoursesPage />} />
-        <Route path="/course/:id/learn" element={<CoursePlayerPage />} />
-        <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </AuthProvider>
+      <AuthProvider>
+        <Routes>
+          <Route path="/"                element={<HomePage />} />
+          <Route path="/courses"         element={<CoursesPage />} />
+          <Route path="/course/:id"      element={<CourseDetailPage />} />
+          <Route path="/login"           element={<LoginPage />} />
+          <Route path="/signup"          element={<SignupPage />} />
+          <Route path="/about"           element={<AboutPage />} />
+          <Route path="/pricing"         element={<PricingPage />} />
+          <Route path="/my-courses"      element={<MyCoursesPage />} />
+          <Route path="/course/:id/learn" element={<CoursePlayerPage />} />
+          <Route path="/certificates"    element={<PrivateRoute><CertificatePage /></PrivateRoute>} />
+          <Route path="/admin"           element={<AdminRoute><AdminPage /></AdminRoute>} />
+          <Route path="*"               element={<Navigate to="/" />} />
+        </Routes>
+      </AuthProvider>
     </LanguageProvider>
   </BrowserRouter>
 );
