@@ -13,10 +13,12 @@ const getBunnyUrl = (url) => {
       .replace('player.mediadelivery.net/play/', 'iframe.mediadelivery.net/embed/')
       .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
     const u = new URL(embedUrl);
-    u.searchParams.set('autoplay', 'true');
-    u.searchParams.set('muted',    'true');
-    u.searchParams.set('loop',     'true');
-    u.searchParams.set('controls', 'false');
+    u.searchParams.set('autoplay',        'true');
+    u.searchParams.set('muted',            'true');
+    u.searchParams.set('loop',             'true');
+    u.searchParams.set('controls',         'false');
+    u.searchParams.set('ui',               'false');
+    u.searchParams.set('chromeless',       '1');
     return u.toString();
   } catch { return url; }
 };
@@ -84,11 +86,11 @@ const CourseCard = ({ course }) => {
     clearTimeout(videoTimer.current);
   }, []);
 
-  // iframe onLoad → wait 1.2s then reveal video (thumbnail fades out)
+  // iframe onLoad → wait 2.5s then reveal video (thumbnail fades out)
   const onIframeLoad = () => {
     videoTimer.current = setTimeout(() => {
       if (hoverRef.current) setShowVideo(true);
-    }, 1200);
+    }, 2500);
   };
 
   const toggleMute = useCallback((e) => {
@@ -121,20 +123,14 @@ const CourseCard = ({ course }) => {
               ref={iframeRef}
               src={getBunnyUrl(course.previewVideo)}
               className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-              style={{ zIndex: 1 }}
+              style={{ zIndex: 1, opacity: showVideo ? 1 : 0, transition: 'opacity 0.7s' }}
               allow="autoplay; encrypted-media; picture-in-picture"
               referrerPolicy="origin"
               allowFullScreen
               title={course.title}
               onLoad={onIframeLoad}
             />
-            {/* Cover Bunny's own play button until our thumbnail fades out */}
-            {!showVideo && (
-              <div
-                className="absolute inset-0"
-                style={{ zIndex: 3, background: 'rgba(0,0,0,0.01)', pointerEvents: 'none' }}
-              />
-            )}
+
           </>
         )}
 
@@ -236,5 +232,6 @@ const CourseCard = ({ course }) => {
 };
 
 export default CourseCard;
+
 
 
