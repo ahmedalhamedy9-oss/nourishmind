@@ -28,7 +28,6 @@ const CourseCard = ({ course }) => {
   const [wishlisted,   setWishlisted]   = useState(false);
   const [wishlistBusy, setWishlistBusy] = useState(false);
 
-  // Load wishlist state for this card
   useEffect(() => {
     if (!currentUser || !course?.id) return;
     getDoc(doc(db, 'users', currentUser.uid))
@@ -51,9 +50,9 @@ const CourseCard = ({ course }) => {
     finally { setWishlistBusy(false); }
   };
 
-  const [showIframe,   setShowIframe]   = useState(false); // mount iframe in DOM
-  const [videoReady,   setVideoReady]   = useState(false); // Bunny loaded & playing
-  const [showVideo,    setShowVideo]    = useState(false); // thumbnail faded out
+  const [showIframe,   setShowIframe]   = useState(false);
+  const [videoReady,   setVideoReady]   = useState(false);
+  const [showVideo,    setShowVideo]    = useState(false);
   const [muted,        setMuted]        = useState(true);
   const [iframeSrc,    setIframeSrc]    = useState('');
 
@@ -91,17 +90,14 @@ const CourseCard = ({ course }) => {
     clearTimeout(videoTimer.current);
   }, []);
 
-  // Listen for Bunny postMessage events to know when video actually starts playing
   useEffect(() => {
     if (!showIframe) return;
     const handleMessage = (e) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        // Bunny fires 'play' or 'timeupdate' when video is actually running
         if (data?.event === 'play' || data?.event === 'timeupdate') {
           if (hoverRef.current && !videoReady) {
             setVideoReady(true);
-            // Give a tiny extra delay so first frame renders before we show
             videoTimer.current = setTimeout(() => {
               if (hoverRef.current) setShowVideo(true);
             }, 300);
@@ -113,7 +109,6 @@ const CourseCard = ({ course }) => {
     return () => window.removeEventListener('message', handleMessage);
   }, [showIframe, videoReady]);
 
-  // Fallback: if postMessage never fires after 3s, show video anyway
   const onIframeLoad = () => {
     videoTimer.current = setTimeout(() => {
       if (hoverRef.current) {
@@ -127,20 +122,26 @@ const CourseCard = ({ course }) => {
     e.stopPropagation();
     const newMuted = !muted;
     setMuted(newMuted);
-    // Reload iframe with correct muted param — most reliable way with Bunny
     setIframeSrc(getBunnyUrl(course.previewVideo, newMuted));
   }, [muted, course.previewVideo]);
 
+  const formattedRating = course.rating ? Number(course.rating).toFixed(1) : null;
+  const formattedStudents = course.students_count
+    ? course.students_count >= 1000
+      ? `${(course.students_count / 1000).toFixed(1)}K`
+      : course.students_count
+    : null;
+
   return (
-    <div
+    <article
       className="flex-shrink-0 w-[280px] sm:w-[300px] cursor-pointer group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => navigate(`/course/${course.id}`)}
+      aria-label={`${course.title}${course.instructor ? ` by ${course.instructor}` : ''}${course.price ? ` — $${course.price}` : ' — Free'}`}
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
 
-        {/* ── iframe in background, always visible so autoplay works ── */}
         {showIframe && hasBunny && (
           <iframe
             ref={iframeRef}
@@ -150,48 +151,49 @@ const CourseCard = ({ course }) => {
             allow="autoplay; encrypted-media; picture-in-picture"
             referrerPolicy="origin"
             allowFullScreen
-            title={course.title}
+            title={`Preview video for ${course.title}`}
             onLoad={onIframeLoad}
           />
         )}
 
-        {/* ── Thumbnail on top, fades out only when video is actually playing ── */}
         <div
           className="absolute inset-0 transition-opacity duration-700"
           style={{ zIndex: 4, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
+          aria-hidden="true"
         >
           {course.image
             ? <img
                 src={course.image}
-                alt={course.title}
+                alt={`${course.title} course thumbnail`}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
                 onError={e => { e.currentTarget.style.display = 'none'; }}
               />
             : null
           }
-          {/* Fallback background always present */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" style={{ zIndex: 0 }} />
         </div>
 
-        {/* ── Mute button — only when video is showing ── */}
         {showVideo && (
           <button
             onClick={toggleMute}
+            aria-label={muted ? 'Unmute preview video' : 'Mute preview video'}
             className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors border border-white/20"
             style={{ zIndex: 10 }}
           >
             {muted
-              ? <VolumeX className="w-4 h-4 text-white" />
-              : <Volume2 className="w-4 h-4 text-white" />
+              ? <VolumeX className="w-4 h-4 text-white" aria-hidden="true" />
+              : <Volume2 className="w-4 h-4 text-white" aria-hidden="true" />
             }
           </button>
         )}
 
-        {/* ── Wishlist button ── */}
         <button
           onClick={toggleWishlist}
           disabled={wishlistBusy}
-          title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+          aria-label={wishlisted ? `Remove ${course.title} from wishlist` : `Save ${course.title} to wishlist`}
+          aria-pressed={wishlisted}
           className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all"
           style={{
             zIndex: 10,
@@ -201,12 +203,11 @@ const CourseCard = ({ course }) => {
             cursor: 'pointer',
           }}
         >
-          <Heart size={13} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
+          <Heart size={13} color="#fff" fill={wishlisted ? '#fff' : 'none'} aria-hidden="true" />
         </button>
 
-        {/* ── Badges ── */}
         {course.new && (
-          <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-black px-2 py-0.5 rounded-sm uppercase z-10">New</span>
+          <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-black px-2 py-0.5 rounded-sm uppercase z-10" aria-label="New course">New</span>
         )}
         {course.level && (
           <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-sm z-10">{course.level}</span>
@@ -215,42 +216,42 @@ const CourseCard = ({ course }) => {
 
       {/* Info */}
       <div className={`px-1 ${isAr ? 'text-right' : 'text-left'}`}>
-        <p className="text-primary text-[10px] font-bold uppercase tracking-wide mb-1">{course.category}</p>
+        {course.category && (
+          <p className="text-primary text-[10px] font-bold uppercase tracking-wide mb-1">{course.category}</p>
+        )}
         <h3 className="text-white font-bold text-sm leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">{course.title}</h3>
         <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
-          {course.rating && (
+          {formattedRating && (
             <span className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-              {Number(course.rating).toFixed(1)}
-              {course.students_count && (
-                <span className="text-gray-500">
-                  ({course.students_count >= 1000
-                    ? `${(course.students_count / 1000).toFixed(1)}K`
-                    : course.students_count})
-                </span>
+              <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" aria-hidden="true" />
+              <span aria-label={`Rating: ${formattedRating} out of 5`}>{formattedRating}</span>
+              {formattedStudents && (
+                <span className="text-gray-500" aria-label={`${formattedStudents} students`}>({formattedStudents})</span>
               )}
             </span>
           )}
           {course.duration_hours && (
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{course.duration_hours}h</span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" aria-hidden="true" />
+              <span aria-label={`Duration: ${course.duration_hours} hours`}>{course.duration_hours}h</span>
+            </span>
           )}
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {course.instructor_image
-              ? <img src={course.instructor_image} alt={course.instructor} className="w-6 h-6 rounded-full object-cover" />
-              : <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold">{course.instructor?.[0] || 'N'}</div>
+              ? <img src={course.instructor_image} alt={`${course.instructor} — instructor`} className="w-6 h-6 rounded-full object-cover" loading="lazy" />
+              : <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold" aria-hidden="true">{course.instructor?.[0] || 'N'}</div>
             }
             <p className="text-gray-400 text-xs truncate max-w-[120px]">{course.instructor || 'NourishMind'}</p>
           </div>
-          <span className="text-primary font-bold text-sm">
+          <span className="text-primary font-bold text-sm" aria-label={course.price ? `Price: $${course.price}` : 'Free'}>
             {course.price ? `$${course.price}` : <span className="text-green-400">Free</span>}
           </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
 export default CourseCard;
-
