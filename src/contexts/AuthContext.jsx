@@ -12,11 +12,10 @@ import { auth, db } from '@/lib/firebase';
 const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
-// ✅ Set your admin email here
 const ADMIN_EMAIL = 'ahmedalhamedy9@gmail.com';
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(undefined); // undefined = not checked yet
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,12 +23,10 @@ export const AuthProvider = ({ children }) => {
     let unsubUser = null;
 
     const unsubAuth = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      // Unsubscribe previous user listener
+      setCurrentUser(user); // null = logged out, User = logged in
       if (unsubUser) { unsubUser(); unsubUser = null; }
 
       if (user) {
-        // Live listener on user doc — picks up avatar/name changes immediately
         unsubUser = onSnapshot(doc(db, 'users', user.uid), (snap) => {
           setUserData(snap.exists() ? snap.data() : null);
           setLoading(false);
@@ -71,9 +68,21 @@ export const AuthProvider = ({ children }) => {
 
   const isAdmin = currentUser?.email === ADMIN_EMAIL;
 
+  // KEY FIX: render children immediately — don't block on auth loading
+  // Components that need auth use `currentUser === undefined` to know if still checking
   return (
-    <AuthContext.Provider value={{ currentUser, userData, loading, login, signup, logout, isAdmin, isAuthenticated: !!currentUser }}>
-      {!loading && children}
+    <AuthContext.Provider value={{
+      currentUser: currentUser === undefined ? null : currentUser,
+      userData,
+      loading,
+      authChecked: currentUser !== undefined,
+      login,
+      signup,
+      logout,
+      isAdmin,
+      isAuthenticated: !!currentUser,
+    }}>
+      {children}
     </AuthContext.Provider>
   );
 };
