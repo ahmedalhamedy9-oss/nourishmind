@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Clock, Volume2, VolumeX } from 'lucide-react';
+import { Star, Clock, Volume2, VolumeX, Heart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const getBunnyUrl = (url) => {
   if (!url) return null;
@@ -21,6 +24,32 @@ const getBunnyUrl = (url) => {
 const CourseCard = ({ course }) => {
   const navigate  = useNavigate();
   const { isAr } = useLanguage();
+  const { currentUser } = useAuth();
+  const [wishlisted,   setWishlisted]   = useState(false);
+  const [wishlistBusy, setWishlistBusy] = useState(false);
+
+  // Load wishlist state for this card
+  useEffect(() => {
+    if (!currentUser || !course?.id) return;
+    getDoc(doc(db, 'users', currentUser.uid))
+      .then(snap => { if (snap.exists()) setWishlisted((snap.data().wishlist||[]).includes(course.id)); })
+      .catch(() => {});
+  }, [currentUser, course?.id]);
+
+  const toggleWishlist = async (e) => {
+    e.stopPropagation();
+    if (!currentUser) { navigate('/login'); return; }
+    if (wishlistBusy) return;
+    setWishlistBusy(true);
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      const current = snap.exists() ? (snap.data().wishlist || []) : [];
+      const updated = wishlisted ? current.filter(x => x !== course.id) : [...current, course.id];
+      await updateDoc(doc(db, 'users', currentUser.uid), { wishlist: updated });
+      setWishlisted(!wishlisted);
+    } catch (_) {}
+    finally { setWishlistBusy(false); }
+  };
 
   const [showIframe, setShowIframe] = useState(false); // mount iframe in DOM
   const [showVideo,  setShowVideo]  = useState(false); // fade thumbnail out
@@ -124,6 +153,23 @@ const CourseCard = ({ course }) => {
             }
           </button>
         )}
+
+        {/* ── Wishlist button ── */}
+        <button
+          onClick={toggleWishlist}
+          disabled={wishlistBusy}
+          title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all"
+          style={{
+            zIndex: 10,
+            background: wishlisted ? 'rgba(239,68,68,0.85)' : 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(4px)',
+            border: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          <Heart size={13} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
+        </button>
 
         {/* ── Badges (always visible, zIndex 10) ── */}
         {course.new && (
