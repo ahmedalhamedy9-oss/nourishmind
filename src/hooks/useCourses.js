@@ -2,22 +2,17 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-const CACHE_KEY = 'nm_courses_v1';
+const LS_KEY = 'nm_courses_v1';
 
-const readCache = () => {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
+const fromLS = () => {
+  try { const r = localStorage.getItem(LS_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
 };
-
-const writeCache = (data) => {
-  try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
+const toLS = (data) => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch {}
 };
 
 export const useCourses = () => {
-  const cached = readCache();
-  // If we have cached real data → show it instantly, no loading
+  const cached = fromLS();
   const [courses, setCourses] = useState(cached || []);
   const [loading, setLoading] = useState(!cached);
 
@@ -27,7 +22,7 @@ export const useCourses = () => {
       (snap) => {
         const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setCourses(data);
-        writeCache(data);
+        toLS(data);
         setLoading(false);
       },
       () => {
@@ -35,7 +30,7 @@ export const useCourses = () => {
           (snap) => {
             const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             setCourses(data);
-            writeCache(data);
+            toLS(data);
             setLoading(false);
           },
           () => { setLoading(false); }
