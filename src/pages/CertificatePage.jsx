@@ -90,22 +90,25 @@ const CertificatePage = () => {
   const { courses } = useCourses();
   const navigate = useNavigate();
   const [userProgress,   setUserProgress]   = useState({});
+  const [progressReady,  setProgressReady]  = useState(false);
   const [certificates,   setCertificates]   = useState([]);
-  const [certsLoading,   setCertsLoading]   = useState(true);
+  const [certsReady,     setCertsReady]     = useState(false);
   const [selectedCert,   setSelectedCert]   = useState(null);
   const [submitted,      setSubmitted]      = useState(false);
+
+  const pageLoading = !progressReady || !certsReady;
 
   useEffect(() => {
     if (!currentUser) { navigate('/login'); return; }
     getDoc(doc(db,'users',currentUser.uid))
-      .then(snap => { if(snap.exists()) setUserProgress(snap.data().progress||{}); })
-      .catch(()=>{});
+      .then(snap => { if(snap.exists()) setUserProgress(snap.data().progress||{}); setProgressReady(true); })
+      .catch(()=>{ setProgressReady(true); });
   }, [currentUser]);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db,'certificates'),
-      snap => { setCertificates(snap.docs.map(d=>({id:d.id,...d.data()}))); setCertsLoading(false); },
-      ()=>{ setCertsLoading(false); }
+      snap => { setCertificates(snap.docs.map(d=>({id:d.id,...d.data()}))); setCertsReady(true); },
+      ()=>{ setCertsReady(true); }
     );
     return unsub;
   }, []);
@@ -123,6 +126,15 @@ const CertificatePage = () => {
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 4000);
   };
+
+  if (pageLoading) return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="text-gray-400 text-sm">Loading certificates…</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,19 +189,7 @@ const CertificatePage = () => {
           <h2 className="text-xl font-bold text-white mb-2">Accredited Certificates</h2>
           <p className="text-gray-500 text-sm mb-6">Select a certificate to request — fill in your details and we'll get in touch.</p>
 
-          {certsLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[1,2,3].map(i => (
-                <div key={i} className="bg-card border border-border rounded-2xl overflow-hidden animate-pulse">
-                  <div className="w-full aspect-video bg-white/5" />
-                  <div className="p-4">
-                    <div className="h-4 bg-white/5 rounded mb-2 w-3/4" />
-                    <div className="h-3 bg-white/5 rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : certificates.length === 0 ? (
+          {certificates.length === 0 ? (
             <div className="border-2 border-dashed border-border rounded-2xl p-16 text-center">
               <Award className="w-12 h-12 text-gray-600 mx-auto mb-4"/>
               <p className="text-gray-400 text-lg font-semibold mb-2">No certificates available yet</p>
