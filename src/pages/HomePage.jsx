@@ -73,7 +73,7 @@ const HomePage = () => {
       <Header />
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center" style={{ overflow: 'hidden' }}>
+      <section className="relative flex items-center" style={{ overflow: 'hidden', minHeight: 'min(100vh, 680px)' }}>
         <div className="absolute inset-0">
           <img src={hero.backgroundImage} alt="Hero" className="w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/10" />
