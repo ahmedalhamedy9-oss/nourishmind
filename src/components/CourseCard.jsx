@@ -13,12 +13,10 @@ const getBunnyUrl = (url) => {
       .replace('player.mediadelivery.net/play/', 'iframe.mediadelivery.net/embed/')
       .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
     const u = new URL(embedUrl);
-    u.searchParams.set('autoplay',        'true');
-    u.searchParams.set('muted',            'true');
-    u.searchParams.set('loop',             'true');
-    u.searchParams.set('controls',         'false');
-    u.searchParams.set('ui',               'false');
-    u.searchParams.set('chromeless',       '1');
+    u.searchParams.set('autoplay', 'true');
+    u.searchParams.set('muted',    'true');
+    u.searchParams.set('loop',     'true');
+    u.searchParams.set('controls', 'false');
     return u.toString();
   } catch { return url; }
 };
@@ -53,9 +51,10 @@ const CourseCard = ({ course }) => {
     finally { setWishlistBusy(false); }
   };
 
-  const [showIframe, setShowIframe] = useState(false); // mount iframe in DOM
-  const [showVideo,  setShowVideo]  = useState(false); // fade thumbnail out
-  const [muted,      setMuted]      = useState(true);
+  const [showIframe,   setShowIframe]   = useState(false); // mount iframe in DOM
+  const [videoReady,   setVideoReady]   = useState(false); // Bunny loaded & playing
+  const [showVideo,    setShowVideo]    = useState(false); // thumbnail faded out
+  const [muted,        setMuted]        = useState(true);
 
   const iframeRef  = useRef(null);
   const hoverRef   = useRef(false);
@@ -77,6 +76,7 @@ const CourseCard = ({ course }) => {
     clearTimeout(hoverTimer.current);
     clearTimeout(videoTimer.current);
     setShowIframe(false);
+    setVideoReady(false);
     setShowVideo(false);
     setMuted(true);
   };
@@ -86,11 +86,36 @@ const CourseCard = ({ course }) => {
     clearTimeout(videoTimer.current);
   }, []);
 
-  // iframe onLoad → wait 2.5s then reveal video (thumbnail fades out)
+  // Listen for Bunny postMessage events to know when video actually starts playing
+  useEffect(() => {
+    if (!showIframe) return;
+    const handleMessage = (e) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        // Bunny fires 'play' or 'timeupdate' when video is actually running
+        if (data?.event === 'play' || data?.event === 'timeupdate') {
+          if (hoverRef.current && !videoReady) {
+            setVideoReady(true);
+            // Give a tiny extra delay so first frame renders before we show
+            videoTimer.current = setTimeout(() => {
+              if (hoverRef.current) setShowVideo(true);
+            }, 300);
+          }
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [showIframe, videoReady]);
+
+  // Fallback: if postMessage never fires after 3s, show video anyway
   const onIframeLoad = () => {
     videoTimer.current = setTimeout(() => {
-      if (hoverRef.current) setShowVideo(true);
-    }, 2500);
+      if (hoverRef.current) {
+        setVideoReady(true);
+        setShowVideo(true);
+      }
+    }, 3000);
   };
 
   const toggleMute = useCallback((e) => {
@@ -116,35 +141,32 @@ const CourseCard = ({ course }) => {
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
 
-        {/* ── iframe loads silently in background (zIndex 1) ── */}
+        {/* ── iframe in background, always visible so autoplay works ── */}
         {showIframe && hasBunny && (
-          <>
-            <iframe
-              ref={iframeRef}
-              src={getBunnyUrl(course.previewVideo)}
-              className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-              style={{ zIndex: 1, opacity: showVideo ? 1 : 0, transition: 'opacity 0.7s' }}
-              allow="autoplay; encrypted-media; picture-in-picture"
-              referrerPolicy="origin"
-              allowFullScreen
-              title={course.title}
-              onLoad={onIframeLoad}
-            />
-
-          </>
+          <iframe
+            ref={iframeRef}
+            src={getBunnyUrl(course.previewVideo)}
+            className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+            style={{ zIndex: 1 }}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerPolicy="origin"
+            allowFullScreen
+            title={course.title}
+            onLoad={onIframeLoad}
+          />
         )}
 
-        {/* ── Thumbnail stays ON TOP (zIndex 4) and fades away only after video ready ── */}
+        {/* ── Thumbnail on top, fades out only when video is actually playing ── */}
         <div
           className="absolute inset-0 transition-opacity duration-700"
           style={{ zIndex: 4, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
         >
           {course.image
-            ? <img 
-                src={course.image} 
-                alt={course.title} 
+            ? <img
+                src={course.image}
+                alt={course.title}
                 className="w-full h-full object-cover"
-                onError={e => { e.currentTarget.style.display='none'; }}
+                onError={e => { e.currentTarget.style.display = 'none'; }}
               />
             : null
           }
@@ -152,7 +174,7 @@ const CourseCard = ({ course }) => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" style={{ zIndex: 0 }} />
         </div>
 
-        {/* ── Mute button (zIndex 10) — only when video is showing ── */}
+        {/* ── Mute button — only when video is showing ── */}
         {showVideo && (
           <button
             onClick={toggleMute}
@@ -183,7 +205,7 @@ const CourseCard = ({ course }) => {
           <Heart size={13} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
         </button>
 
-        {/* ── Badges (always visible, zIndex 10) ── */}
+        {/* ── Badges ── */}
         {course.new && (
           <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-black px-2 py-0.5 rounded-sm uppercase z-10">New</span>
         )}
@@ -232,6 +254,3 @@ const CourseCard = ({ course }) => {
 };
 
 export default CourseCard;
-
-
-
