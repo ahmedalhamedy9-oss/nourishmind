@@ -492,8 +492,8 @@ const CoursePlayerPage = () => {
             </div>
           )}
 
-          {/* ── 3 Action Buttons ── */}
-          {activeLesson && canWatch(activeLesson) && (
+          {/* ── 3 Action Buttons ── always visible so WhatsApp/Book buttons work */}
+          {activeLesson && (
             <LessonActions course={course} isCompleted={courseComplete} whatsappPhone={whatsappPhone} />
           )}
         </div>
@@ -577,6 +577,7 @@ const CoursePlayerPage = () => {
 };
 
 export default CoursePlayerPage;
+
 
 
 
