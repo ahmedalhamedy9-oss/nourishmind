@@ -116,23 +116,32 @@ const CourseCard = ({ course }) => {
 
         {/* ── iframe loads silently in background (zIndex 1) ── */}
         {showIframe && hasBunny && (
-          <iframe
-            ref={iframeRef}
-            src={getBunnyUrl(course.previewVideo)}
-            className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-            style={{ zIndex: 1 }}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            referrerPolicy="origin"
-            allowFullScreen
-            title={course.title}
-            onLoad={onIframeLoad}
-          />
+          <>
+            <iframe
+              ref={iframeRef}
+              src={getBunnyUrl(course.previewVideo)}
+              className="absolute inset-0 w-full h-full border-0 pointer-events-none"
+              style={{ zIndex: 1 }}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="origin"
+              allowFullScreen
+              title={course.title}
+              onLoad={onIframeLoad}
+            />
+            {/* Cover Bunny's own play button until our thumbnail fades out */}
+            {!showVideo && (
+              <div
+                className="absolute inset-0"
+                style={{ zIndex: 3, background: 'transparent', pointerEvents: 'none' }}
+              />
+            )}
+          </>
         )}
 
-        {/* ── Thumbnail stays ON TOP (zIndex 2) and fades away only after video ready ── */}
+        {/* ── Thumbnail stays ON TOP (zIndex 4) and fades away only after video ready ── */}
         <div
           className="absolute inset-0 transition-opacity duration-700"
-          style={{ zIndex: 2, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
+          style={{ zIndex: 4, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
         >
           {course.image
             ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
@@ -220,3 +229,4 @@ const CourseCard = ({ course }) => {
 };
 
 export default CourseCard;
+
