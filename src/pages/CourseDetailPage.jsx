@@ -1,10 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, Star, Clock, Users, ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import Header from '@/components/Header';
 import { useCourses } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
+
+const DEFAULT_WHAT_YOU_GET = [
+  'Expert-led video lessons',
+  'Certificate of completion',
+  'Lifetime access',
+  'Mobile & desktop access',
+];
 
 const getBunnyEmbedUrl = (url, opts = {}) => {
   if (!url) return null;
@@ -29,6 +38,18 @@ const CourseDetailPage = () => {
   const course = courses.find(c => c.id === id);
   const [expandedSections, setExpandedSections] = useState({});
   const [showCurriculum, setShowCurriculum] = useState(false);
+  const [defaultWhatYouGet, setDefaultWhatYouGet] = useState(DEFAULT_WHAT_YOU_GET);
+
+  // Load default what_you_get from Firestore settings
+  useEffect(() => {
+    getDoc(doc(db, 'settings', 'coursepage'))
+      .then(snap => {
+        if (snap.exists() && snap.data().default_what_you_get) {
+          const lines = snap.data().default_what_you_get.split('\n').map(l=>l.trim()).filter(Boolean);
+          if (lines.length) setDefaultWhatYouGet(lines);
+        }
+      }).catch(() => {});
+  }, []);
 
   if (coursesLoading) return (
     <div className="min-h-screen bg-[#0f1117] flex items-center justify-center">
@@ -45,9 +66,15 @@ const CourseDetailPage = () => {
     </div>
   );
 
-  const totalLessons  = course.sections?.reduce((acc, s) => acc + (s.lessons?.length || 0), 0) || 0;
-  const freeLessons   = course.sections?.reduce((acc, s) => acc + (s.lessons?.filter(l => l.free).length || 0), 0) || 0;
+  const totalLessons  = course.sections?.reduce((acc,s) => acc + (s.lessons?.length||0), 0) || 0;
+  const freeLessons   = course.sections?.reduce((acc,s) => acc + (s.lessons?.filter(l=>l.free).length||0), 0) || 0;
   const categoryLabel = categories.find(c => c.id === course.category)?.label || course.category;
+
+  // Resolve what_you_get: course-level override → default from Firestore → hardcoded default
+  const whatYouGet = (course.what_you_get?.length ? course.what_you_get : defaultWhatYouGet);
+
+  // Outcomes: per-course outcomes list
+  const outcomes = course.outcomes || [];
 
   const SectionList = () => (
     <>
@@ -58,7 +85,7 @@ const CourseDetailPage = () => {
             className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-white/5 transition-colors text-left">
             <div>
               <p className="text-white font-semibold text-sm">{section.title}</p>
-              <p className="text-gray-500 text-xs mt-0.5">{section.lessons?.length || 0} lessons{section.duration ? ' · ' + section.duration : ''}</p>
+              <p className="text-gray-500 text-xs mt-0.5">{section.lessons?.length||0} lessons{section.duration?' · '+section.duration:''}</p>
             </div>
             {expandedSections[section.id]
               ? <ChevronUp className="w-4 h-4 text-gray-500 shrink-0" />
@@ -79,9 +106,7 @@ const CourseDetailPage = () => {
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium leading-tight ${lesson.free ? 'text-gray-200' : 'text-gray-500'}`}>
                   {lesson.title}
-                  {lesson.free && (
-                    <span className="ml-1.5 text-[9px] text-green-400 font-bold border border-green-400/30 px-1 py-0.5 rounded align-middle">Free</span>
-                  )}
+                  {lesson.free && <span className="ml-1.5 text-[9px] text-green-400 font-bold border border-green-400/30 px-1 py-0.5 rounded align-middle">Free</span>}
                 </p>
                 <p className="text-gray-600 text-xs mt-0.5">{lesson.duration}</p>
               </div>
@@ -99,11 +124,9 @@ const CourseDetailPage = () => {
       <Header />
 
       {/* TOP BAR */}
-      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 mt-16 shrink-0"
-           style={{ background: '#131720' }}>
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-white/10 mt-16 shrink-0" style={{ background:'#131720' }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors font-medium">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors font-medium">
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
           <div className="hidden sm:block border-l border-white/10 pl-4">
@@ -118,23 +141,16 @@ const CourseDetailPage = () => {
         </button>
       </div>
 
-      {/* BODY */}
       <div className="flex flex-1 min-h-0">
-
-        {/* LEFT / MAIN */}
         <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
 
-          {/* Video — pure CSS aspect-ratio, works perfectly on mobile */}
-          <div className="w-full bg-black" style={{ aspectRatio: '16/9' }}>
+          {/* Video */}
+          <div className="w-full bg-black" style={{ aspectRatio:'16/9' }}>
             {course.previewVideo ? (
-              <iframe
-                src={getBunnyEmbedUrl(course.previewVideo, { autoplay: true, muted: true })}
+              <iframe src={getBunnyEmbedUrl(course.previewVideo,{autoplay:true,muted:true})}
                 className="w-full h-full block border-0"
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                referrerPolicy="origin"
-                allowFullScreen
-                title={course.title}
-              />
+                referrerPolicy="origin" allowFullScreen title={course.title} />
             ) : course.image ? (
               <div className="relative w-full h-full">
                 <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
@@ -168,21 +184,22 @@ const CourseDetailPage = () => {
                   <span className="text-yellow-400 font-bold">{Number(course.rating).toFixed(1)}</span>
                 </span>
               )}
-              {course.duration_hours && <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{course.duration_hours}h</span>}
-              {course.students_count && <span className="flex items-center gap-1.5"><Users className="w-4 h-4" />{course.students_count.toLocaleString()}</span>}
-              {course.level && <span className="border border-white/20 px-2 py-0.5 rounded text-xs">{course.level}</span>}
-              {totalLessons > 0 && <span className="text-gray-500 text-xs">{totalLessons} lessons · {freeLessons} free</span>}
+              {course.duration_hours  && <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{course.duration_hours}h</span>}
+              {course.students_count  && <span className="flex items-center gap-1.5"><Users className="w-4 h-4" />{course.students_count.toLocaleString()}</span>}
+              {course.level           && <span className="border border-white/20 px-2 py-0.5 rounded text-xs">{course.level}</span>}
+              {totalLessons > 0       && <span className="text-gray-500 text-xs">{totalLessons} lessons · {freeLessons} free</span>}
             </div>
 
+            {/* Instructor */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
                 {course.instructor_image
-                  ? <img src={course.instructor_image} alt={course.instructor} className="w-10 h-10 rounded-full object-cover" />
-                  : <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">{course.instructor?.[0] || 'N'}</div>
+                  ? <img src={course.instructor_image} alt={course.instructor} style={{width:44,height:44,borderRadius:'50%',objectFit:'cover',border:'2px solid rgba(74,155,142,0.3)'}} />
+                  : <div style={{width:44,height:44,borderRadius:'50%',background:'rgba(74,155,142,0.15)',display:'flex',alignItems:'center',justifyContent:'center',color:'#5fbfb0',fontWeight:700}}>{course.instructor?.[0]||'N'}</div>
                 }
                 <div>
                   <p className="text-white font-semibold text-sm">{course.instructor || 'NourishMind Expert'}</p>
-                  <p className="text-gray-500 text-xs">Instructor</p>
+                  <p className="text-gray-500 text-xs">{course.instructor_bio || 'Instructor'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -198,12 +215,26 @@ const CourseDetailPage = () => {
             </div>
           </div>
 
+          {/* What you'll learn — outcomes */}
+          {outcomes.length > 0 && (
+            <div className="px-4 sm:px-6 py-5 border-b border-white/10">
+              <h3 className="text-white font-bold mb-4">What You'll Learn</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {outcomes.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2 text-gray-300 text-sm">
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" /> {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* What you get */}
           <div className="px-4 sm:px-6 py-5 border-b border-white/10">
             <h3 className="text-white font-bold mb-3">What you get</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {['Expert-led video lessons','Certificate of completion','Lifetime access','Mobile & desktop access'].map(item => (
-                <div key={item} className="flex items-center gap-2 text-gray-300 text-sm">
+              {whatYouGet.map((item, i) => (
+                <div key={i} className="flex items-center gap-2 text-gray-300 text-sm">
                   <CheckCircle className="w-4 h-4 text-primary shrink-0" /> {item}
                 </div>
               ))}
@@ -219,28 +250,23 @@ const CourseDetailPage = () => {
             </div>
           )}
 
-          {/* Course Content — mobile accordion (visible on mobile, hidden on lg) */}
+          {/* Mobile curriculum */}
           {totalLessons > 0 && (
             <div className="lg:hidden border-b border-white/10">
-              <button
-                onClick={() => setShowCurriculum(p => !p)}
-                className="w-full flex items-center justify-between px-4 py-4 text-left">
+              <button onClick={() => setShowCurriculum(p=>!p)} className="w-full flex items-center justify-between px-4 py-4 text-left">
                 <div>
                   <p className="text-white font-bold text-sm">Course Content</p>
                   <p className="text-gray-500 text-xs mt-0.5">{totalLessons} lessons · {freeLessons} free previews</p>
                 </div>
-                {showCurriculum
-                  ? <ChevronUp className="w-5 h-5 text-gray-400" />
-                  : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                {showCurriculum ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
               </button>
               {showCurriculum && <SectionList />}
             </div>
           )}
         </div>
 
-        {/* RIGHT SIDEBAR — desktop only */}
-        <div className="w-80 shrink-0 border-l border-white/10 overflow-y-auto hidden lg:flex flex-col"
-             style={{ background: '#131720' }}>
+        {/* Desktop sidebar */}
+        <div className="w-80 shrink-0 border-l border-white/10 overflow-y-auto hidden lg:flex flex-col" style={{ background:'#131720' }}>
           <div className="px-5 py-4 border-b border-white/10 shrink-0">
             <p className="text-white font-bold text-sm">Course Content</p>
             <p className="text-gray-500 text-xs mt-0.5">{totalLessons} lessons · {freeLessons} free previews</p>
