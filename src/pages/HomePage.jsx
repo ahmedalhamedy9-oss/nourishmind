@@ -13,8 +13,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReviewsSection from '@/components/ReviewsSection';
 import { ROWS } from '@/lib/data';
 
+// Default hero — shown INSTANTLY, no Firebase needed
 const DEFAULT_HERO = {
-  backgroundImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80',
+  backgroundImage: 'https://res.cloudinary.com/de7haar7x/image/upload/f_auto,q_auto/nourishmind/hero',
   tagline: 'NOURISHMIND · Wellness Learning Platform',
   title1: 'Nourish Your Mind,',
   title2: 'Elevate Your Life',
@@ -25,6 +26,19 @@ const DEFAULT_HERO = {
   cta1: 'Start Learning', cta2: 'Browse Courses',
 };
 
+const HERO_CACHE_KEY = 'nm_hero_cache';
+
+const readHeroCache = () => {
+  try {
+    const raw = sessionStorage.getItem(HERO_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+
+const writeHeroCache = (data) => {
+  try { sessionStorage.setItem(HERO_CACHE_KEY, JSON.stringify(data)); } catch {}
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { courses, loading: coursesLoading } = useCourses();
@@ -32,12 +46,19 @@ const HomePage = () => {
   const [userProgress, setUserProgress] = useState({});
   const [enrolledIds,  setEnrolledIds]  = useState([]);
   const [certificates, setCertificates] = useState([]);
-  const [hero, setHero] = useState(DEFAULT_HERO);
 
-  // Load hero from Firestore
+  // Hero: start from sessionStorage cache → then update from Firebase silently
+  const [hero, setHero] = useState(() => readHeroCache() || DEFAULT_HERO);
+
   useEffect(() => {
     getDoc(doc(db, 'settings', 'hero'))
-      .then(snap => { if (snap.exists()) setHero(h => ({ ...h, ...snap.data() })); })
+      .then(snap => {
+        if (snap.exists()) {
+          const data = { ...DEFAULT_HERO, ...snap.data() };
+          setHero(data);
+          writeHeroCache(data);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -73,7 +94,7 @@ const HomePage = () => {
       <Header />
 
       <main id="main-content">
-        {/* ── HERO ── */}
+        {/* ── HERO — renders immediately, no Firebase wait ── */}
         <section
           aria-label="Welcome to NourishMind"
           className="relative min-h-screen flex items-center"
