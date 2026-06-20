@@ -49,7 +49,7 @@ const ReviewCard = ({ review }) => (
     <p className="text-gray-200 text-base leading-relaxed flex-1">{review.text}</p>
     <div className="flex items-center gap-3 pt-2 border-t border-border">
       {review.avatar ? (
-        <img src={review.avatar} alt={review.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+        <img src={review.avatar} alt={review.name} className="w-12 h-12 rounded-full object-cover shrink-0" loading="lazy" />
       ) : (
         <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg shrink-0">
           {review.name?.[0] || 'S'}
@@ -68,12 +68,13 @@ const ReviewCard = ({ review }) => (
 
 const ReviewsSection = () => {
   const { lang } = useLanguage();
-  const [reviews, setReviews] = useState([]);
+  // Start with placeholders immediately — no loading flash
+  const [reviews, setReviews] = useState(PLACEHOLDER_REVIEWS);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'reviews'),
-      snap => setReviews(snap.empty ? PLACEHOLDER_REVIEWS : snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      () => setReviews(PLACEHOLDER_REVIEWS)
+      snap => { if (!snap.empty) setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))); },
+      () => {} // keep placeholders on error
     );
     return unsub;
   }, []);
