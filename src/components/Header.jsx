@@ -17,13 +17,43 @@ const Logo = () => (
   </Link>
 );
 
+/* Reusable fixed-size avatar */
+const Avatar = ({ src, initials, size = 36 }) => (
+  src ? (
+    <img
+      src={src}
+      alt="avatar"
+      style={{
+        width: size, height: size,
+        borderRadius: '50%',
+        objectFit: 'cover',
+        border: '2px solid rgba(74,155,142,0.4)',
+        display: 'block',
+        flexShrink: 0,
+      }}
+    />
+  ) : (
+    <div style={{
+      width: size, height: size,
+      borderRadius: '50%',
+      background: 'rgba(74,155,142,0.15)',
+      border: '2px solid rgba(74,155,142,0.4)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#5fbfb0', fontWeight: 700, fontSize: size * 0.42,
+      flexShrink: 0,
+    }}>
+      {initials}
+    </div>
+  )
+);
+
 const Header = () => {
-  const [scrolled,       setScrolled]       = useState(false);
-  const [menuOpen,       setMenuOpen]       = useState(false);
-  const [dashboardOpen,  setDashboardOpen]  = useState(false);
+  const [scrolled,      setScrolled]      = useState(false);
+  const [menuOpen,      setMenuOpen]      = useState(false);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
   const { currentUser, userData, logout, isAdmin } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -31,13 +61,13 @@ const Header = () => {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  const isActive    = (path) => location.pathname === path;
-  const closeMenu   = () => setMenuOpen(false);
-  const openDash    = () => { setDashboardOpen(true); setMenuOpen(false); };
-  const closeDash   = () => setDashboardOpen(false);
+  const isActive  = (path) => location.pathname === path;
+  const closeMenu = () => setMenuOpen(false);
+  const openDash  = () => { setDashboardOpen(true); setMenuOpen(false); };
+  const closeDash = () => setDashboardOpen(false);
 
   const displayAvatar = userData?.avatar || currentUser?.photoURL;
-  const displayName   = userData?.name || currentUser?.displayName;
+  const displayName   = userData?.name   || currentUser?.displayName;
   const initials      = (displayName?.[0] || currentUser?.email?.[0] || 'U').toUpperCase();
 
   return (
@@ -45,16 +75,15 @@ const Header = () => {
       <header
         className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center transition-all duration-500"
         style={{
-          background: scrolled ? 'rgba(10,20,18,0.75)' : 'rgba(10,20,18,0.35)',
+          background:    scrolled ? 'rgba(10,20,18,0.75)' : 'rgba(10,20,18,0.35)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: scrolled ? '1px solid rgba(74,155,142,0.2)' : '1px solid rgba(74,155,142,0.08)',
-          boxShadow: scrolled ? '0 4px 32px rgba(0,0,0,0.3)' : 'none',
+          borderBottom:  scrolled ? '1px solid rgba(74,155,142,0.2)' : '1px solid rgba(74,155,142,0.08)',
+          boxShadow:     scrolled ? '0 4px 32px rgba(0,0,0,0.3)' : 'none',
         }}
       >
         <div className="w-full px-4 sm:px-6 flex items-center gap-4">
 
-          {/* Logo */}
           <Logo />
 
           {/* Desktop nav */}
@@ -62,7 +91,7 @@ const Header = () => {
             {NAV_LINKS.map(({ path, label }) => (
               <Link key={path} to={path}
                 className="relative transition-colors duration-200"
-                style={{ color: isActive(path) ? '#5fbfb0' : 'rgba(200,230,225,0.75)', fontWeight: isActive(path) ? '600' : '400' }}
+                style={{ color: isActive(path) ? '#5fbfb0' : 'rgba(200,230,225,0.75)', fontWeight: isActive(path) ? 600 : 400 }}
               >
                 {label}
                 {isActive(path) && (
@@ -73,10 +102,10 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Right */}
+          {/* Right section */}
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
 
-            {/* Search desktop */}
+            {/* Search */}
             <button className="hidden sm:flex transition-colors"
               style={{ color: 'rgba(180,220,215,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
               onMouseEnter={e => e.currentTarget.style.color = '#5fbfb0'}
@@ -85,7 +114,7 @@ const Header = () => {
               <Search size={18} />
             </button>
 
-            {/* Bell desktop */}
+            {/* Bell */}
             {currentUser && (
               <button className="hidden sm:flex transition-colors"
                 style={{ color: 'rgba(180,220,215,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
@@ -98,7 +127,7 @@ const Header = () => {
 
             {currentUser ? (
               <div className="flex items-center gap-2">
-                {/* My Courses desktop */}
+                {/* My Courses link */}
                 <button onClick={openDash}
                   className="hidden md:block text-sm transition-colors"
                   style={{ color: 'rgba(200,230,225,0.7)', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -118,19 +147,13 @@ const Header = () => {
                   </Link>
                 )}
 
-                {/* Avatar button — opens modal */}
-                <button onClick={openDash}
+                {/* Avatar button */}
+                <button
+                  onClick={openDash}
                   className="flex items-center gap-2 transition-opacity hover:opacity-80"
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                  {displayAvatar ? (
-                    <img src={displayAvatar} alt="avatar"
-                      className="w-8 h-8 rounded-full object-cover border border-primary/40" />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm">
-                      {initials}
-                    </div>
-                  )}
+                  <Avatar src={displayAvatar} initials={initials} size={36} />
                   <span className="hidden sm:block text-sm font-medium" style={{ color: 'rgba(200,230,225,0.85)' }}>
                     {displayName?.split(' ')[0] || 'Account'}
                   </span>
@@ -154,7 +177,7 @@ const Header = () => {
               </div>
             )}
 
-            {/* Hamburger mobile */}
+            {/* Hamburger */}
             <button
               className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
               style={{ color: '#5fbfb0', background: menuOpen ? 'rgba(74,155,142,0.12)' : 'transparent', border: 'none', cursor: 'pointer' }}
@@ -171,20 +194,12 @@ const Header = () => {
         <div className="md:hidden fixed top-16 left-0 right-0 z-40 flex flex-col"
           style={{ background: 'rgba(8,18,16,0.97)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(74,155,142,0.15)' }}
         >
-          {/* User card — opens modal */}
           {currentUser && (
             <button onClick={openDash}
               className="flex items-center gap-3 px-4 py-4 border-b w-full text-left"
               style={{ borderColor: 'rgba(74,155,142,0.15)', background: 'none', cursor: 'pointer' }}
             >
-              {displayAvatar ? (
-                <img src={displayAvatar} alt="avatar"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-primary/40 shrink-0" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center text-primary font-bold shrink-0">
-                  {initials}
-                </div>
-              )}
+              <Avatar src={displayAvatar} initials={initials} size={40} />
               <div className="min-w-0">
                 <p className="text-white font-semibold text-sm truncate">{displayName || 'My Account'}</p>
                 <p className="text-xs truncate" style={{ color: 'rgba(200,230,225,0.45)' }}>{currentUser.email}</p>
@@ -193,7 +208,6 @@ const Header = () => {
             </button>
           )}
 
-          {/* Nav links */}
           <div className="flex flex-col px-4 pt-3 pb-2 gap-0.5">
             {NAV_LINKS.map(({ path, label }) => (
               <Link key={path} to={path} onClick={closeMenu}
