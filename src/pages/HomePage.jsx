@@ -15,7 +15,7 @@ import { ROWS } from '@/lib/data';
 
 // Default hero — shown INSTANTLY, no Firebase needed
 const DEFAULT_HERO = {
-  backgroundImage: 'https://res.cloudinary.com/de7haar7x/image/upload/f_auto,q_auto/nourishmind/hero',
+  backgroundImage: 'https://res.cloudinary.com/de7haar7x/image/upload/f_auto,q_auto/v1781974738/nourishmind/hero/ngcw5kiof2en8vgoiqim.jpg',
   tagline: 'NOURISHMIND · Wellness Learning Platform',
   title1: 'Nourish Your Mind,',
   title2: 'Elevate Your Life',
@@ -200,3 +200,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
