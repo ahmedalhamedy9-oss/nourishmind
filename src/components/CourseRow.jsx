@@ -14,20 +14,16 @@ const Top10Card = ({ course, rank }) => {
       <span
         className="absolute bottom-4 font-black select-none pointer-events-none leading-none"
         style={{
-          left: '0px',
-          fontSize: '110px',
-          lineHeight: 1,
-          color: 'transparent',
-          WebkitTextStroke: '2px rgba(255,255,255,0.18)',
-          fontFamily: 'Georgia, serif',
-          zIndex: 0,
+          left: '0px', fontSize: '110px', lineHeight: 1,
+          color: 'transparent', WebkitTextStroke: '2px rgba(255,255,255,0.18)',
+          fontFamily: 'Georgia, serif', zIndex: 0,
         }}
       >
         {rank}
       </span>
       <div className="relative rounded-xl overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-all group-hover:scale-105 duration-300 shadow-lg" style={{ aspectRatio: '2/3', zIndex: 1 }}>
         {course.image
-          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" loading="eager" decoding="async" />
           : <div className="w-full h-full bg-primary/10" />
         }
         {course.new && (
@@ -51,7 +47,7 @@ const NormalCard = ({ course }) => {
     >
       <div className="relative rounded-xl overflow-hidden aspect-video bg-card border border-border group-hover:border-primary/40 transition-all duration-300">
         {course.image
-          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
+          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="eager" decoding="async" />
           : <div className="w-full h-full bg-primary/10" />
         }
         {course.new && (
@@ -82,7 +78,7 @@ const ContinueCard = ({ course, progress = 0 }) => {
     >
       <div className="relative rounded-xl overflow-hidden aspect-video bg-card border border-border group-hover:border-primary/40 transition-all duration-300">
         {course.image
-          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
+          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="eager" decoding="async" />
           : <div className="w-full h-full bg-primary/10" />
         }
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
@@ -111,7 +107,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
 
   return (
     <div className="mb-10 group/row">
-      <div className={"flex items-center gap-3 mb-4 px-4 sm:px-12"}>
+      <div className="flex items-center gap-3 mb-4 px-4 sm:px-12">
         <h2 className="text-white font-bold text-xl">{title}</h2>
         {seeAllPath && (
           <a href={seeAllPath} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
