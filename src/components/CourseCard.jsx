@@ -132,7 +132,7 @@ const CourseCard = ({ course }) => {
             {!showVideo && (
               <div
                 className="absolute inset-0"
-                style={{ zIndex: 3, background: 'transparent', pointerEvents: 'none' }}
+                style={{ zIndex: 3, background: 'rgba(0,0,0,0.01)', pointerEvents: 'none' }}
               />
             )}
           </>
@@ -144,9 +144,16 @@ const CourseCard = ({ course }) => {
           style={{ zIndex: 4, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
         >
           {course.image
-            ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
-            : <div className="w-full h-full bg-gradient-to-br from-primary/30 to-primary/10" />
+            ? <img 
+                src={course.image} 
+                alt={course.title} 
+                className="w-full h-full object-cover"
+                onError={e => { e.currentTarget.style.display='none'; }}
+              />
+            : null
           }
+          {/* Fallback background always present */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" style={{ zIndex: 0 }} />
         </div>
 
         {/* ── Mute button (zIndex 10) — only when video is showing ── */}
@@ -229,4 +236,5 @@ const CourseCard = ({ course }) => {
 };
 
 export default CourseCard;
+
 
