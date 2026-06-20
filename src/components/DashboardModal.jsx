@@ -20,16 +20,16 @@ const DashboardModal = ({ onClose }) => {
   const navigate = useNavigate();
   const overlayRef = useRef(null);
 
-  const [tab, setTab]           = useState('overview');
+  const [tab, setTab]             = useState('overview');
   const [localData, setLocalData] = useState(null);
-  const [saving, setSaving]     = useState(false);
-  const [msg, setMsg]           = useState('');
+  const [saving, setSaving]       = useState(false);
+  const [msg, setMsg]             = useState('');
 
   // Profile fields
-  const [name, setName]         = useState('');
-  const [username, setUsername] = useState('');
-  const [phone, setPhone]       = useState('');
-  const [avatar, setAvatar]     = useState('');
+  const [name, setName]           = useState('');
+  const [username, setUsername]   = useState('');
+  const [phone, setPhone]         = useState('');
+  const [avatar, setAvatar]       = useState('');
   const [uploading, setUploading] = useState(false);
 
   // Password fields
@@ -67,7 +67,7 @@ const DashboardModal = ({ onClose }) => {
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  // Click outside to close
+  // Click outside overlay to close
   const handleOverlayClick = (e) => {
     if (e.target === overlayRef.current) onClose();
   };
@@ -88,7 +88,6 @@ const DashboardModal = ({ onClose }) => {
     try {
       const url = await uploadToCloudinary(file, 'nourishmind/avatars');
       setAvatar(url);
-      // Save immediately to Firestore
       await updateDoc(doc(db, 'users', currentUser.uid), { avatar: url });
       setMsg('✅ Photo updated!');
     } catch { setMsg('❌ Upload failed.'); }
@@ -129,65 +128,92 @@ const DashboardModal = ({ onClose }) => {
   const initials      = (displayName?.[0] || 'U').toUpperCase();
 
   return (
-    /* Overlay */
+    /* Full-screen overlay */
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      className="fixed inset-0 z-[100] flex items-center justify-center"
+      style={{
+        background: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: 'clamp(8px, 3vw, 24px)',
+      }}
     >
       {/* Modal box */}
       <div
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col rounded-2xl"
-        style={{ background: '#0a1412', border: '1px solid rgba(74,155,142,0.2)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
+        className="relative flex flex-col overflow-hidden rounded-2xl w-full"
+        style={{
+          maxWidth: '720px',
+          maxHeight: '92dvh',
+          background: '#0a1412',
+          border: '1px solid rgba(74,155,142,0.2)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+        }}
       >
-        {/* Header bar */}
-        <div className="flex items-center gap-4 px-5 py-4 border-b shrink-0" style={{ borderColor: 'rgba(74,155,142,0.15)' }}>
-          {/* Avatar */}
-          <div className="relative shrink-0">
+        {/* ── Header bar ── */}
+        <div
+          className="flex items-center gap-3 px-4 py-3 shrink-0"
+          style={{ borderBottom: '1px solid rgba(74,155,142,0.15)' }}
+        >
+          {/* Avatar — fixed 40x40, object-cover */}
+          <div className="shrink-0">
             {displayAvatar ? (
-              <img src={displayAvatar} alt={displayName} className="w-11 h-11 rounded-full object-cover border-2 border-primary/40" />
+              <img
+                src={displayAvatar}
+                alt={displayName}
+                style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(74,155,142,0.4)', display: 'block' }}
+              />
             ) : (
-              <div className="w-11 h-11 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center text-primary font-bold text-lg">
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(74,155,142,0.15)', border: '2px solid rgba(74,155,142,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5fbfb0', fontWeight: 700, fontSize: 16 }}>
                 {initials}
               </div>
             )}
           </div>
-          <div className="min-w-0">
+
+          {/* Name & email */}
+          <div className="min-w-0 flex-1">
             <p className="text-white font-bold text-sm truncate">{displayName}</p>
             <p className="text-xs truncate" style={{ color: 'rgba(200,230,225,0.45)' }}>{currentUser?.email}</p>
           </div>
+
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="ml-auto flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors"
-            style={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)' }}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors shrink-0"
+            style={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)', cursor: 'pointer' }}
           >
             <LogOut size={13} /> Logout
           </button>
-          {/* Close */}
+
+          {/* ✕ Close — always visible */}
           <button
             onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors ml-1"
-            style={{ color: 'rgba(200,230,225,0.5)', background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#fff'}
-            onMouseLeave={e => e.currentTarget.style.color = 'rgba(200,230,225,0.5)'}
+            aria-label="Close"
+            style={{
+              width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(200,230,225,0.6)', background: 'rgba(255,255,255,0.06)', border: 'none', cursor: 'pointer',
+              flexShrink: 0, transition: 'color .15s, background .15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'rgba(200,230,225,0.6)'; e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
           >
-            <X size={18} />
+            <X size={17} />
           </button>
         </div>
 
-        {/* Tab bar */}
-        <div className="flex gap-1 px-4 pt-3 pb-0 shrink-0">
+        {/* ── Tab bar ── */}
+        <div className="flex gap-1 px-4 pt-3 shrink-0" style={{ borderBottom: '1px solid rgba(74,155,142,0.12)' }}>
           {TABS.map(t => (
             <button
               key={t.id}
               onClick={() => { setTab(t.id); setMsg(''); }}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors"
               style={{
                 color: tab === t.id ? '#5fbfb0' : 'rgba(200,230,225,0.5)',
-                borderColor: tab === t.id ? '#5fbfb0' : 'transparent',
+                borderBottom: `2px solid ${tab === t.id ? '#5fbfb0' : 'transparent'}`,
                 background: tab === t.id ? 'rgba(74,155,142,0.08)' : 'transparent',
+                marginBottom: -1,
                 cursor: 'pointer',
               }}
             >
@@ -195,12 +221,11 @@ const DashboardModal = ({ onClose }) => {
             </button>
           ))}
         </div>
-        <div className="h-px w-full" style={{ background: 'rgba(74,155,142,0.12)' }} />
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto px-4 py-5" style={{ overscrollBehavior: 'contain' }}>
 
-          {/* Message */}
+          {/* Feedback message */}
           {msg && (
             <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-medium ${msg.startsWith('✅') ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
               {msg}
@@ -216,8 +241,8 @@ const DashboardModal = ({ onClose }) => {
                   <p className="text-sm mb-4" style={{ color: 'rgba(200,230,225,0.4)' }}>No courses enrolled yet</p>
                   <button
                     onClick={() => { onClose(); navigate('/courses'); }}
-                    className="text-sm font-bold px-5 py-2 rounded-xl transition-colors"
-                    style={{ background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color: '#fff' }}
+                    className="text-sm font-bold px-5 py-2 rounded-xl"
+                    style={{ background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color: '#fff', cursor: 'pointer' }}
                   >
                     Browse Courses
                   </button>
@@ -235,7 +260,6 @@ const DashboardModal = ({ onClose }) => {
                         onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(74,155,142,0.4)'}
                         onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(74,155,142,0.15)'}
                       >
-                        {/* Thumbnail */}
                         <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                           <div className="absolute inset-0">
                             {course.image
@@ -244,9 +268,8 @@ const DashboardModal = ({ onClose }) => {
                             }
                           </div>
                         </div>
-                        {/* Progress bar */}
                         <div className="h-1" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                          <div className="h-full transition-all" style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />
+                          <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />
                         </div>
                         <div className="p-3">
                           <p className="text-white font-semibold text-sm line-clamp-1">{course.title}</p>
@@ -258,7 +281,6 @@ const DashboardModal = ({ onClose }) => {
                 </div>
               )}
 
-              {/* Subscription */}
               {localData?.subscription && (
                 <div className="mt-5 p-4 rounded-xl" style={{ background: 'rgba(74,155,142,0.07)', border: '1px solid rgba(74,155,142,0.2)' }}>
                   <p className="text-white font-bold text-sm mb-1">Active Subscription</p>
@@ -275,28 +297,33 @@ const DashboardModal = ({ onClose }) => {
           {tab === 'profile' && (
             <div className="flex flex-col gap-5 max-w-md">
 
-              {/* Avatar */}
+              {/* Avatar upload */}
               <div className="flex items-center gap-4">
                 {displayAvatar ? (
-                  <img src={displayAvatar} alt="avatar" className="w-16 h-16 rounded-full object-cover border-2 border-primary/40 shrink-0" />
+                  <img
+                    src={displayAvatar}
+                    alt="avatar"
+                    style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(74,155,142,0.4)', flexShrink: 0, display: 'block' }}
+                  />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center text-primary font-bold text-2xl shrink-0">
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(74,155,142,0.15)', border: '2px solid rgba(74,155,142,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5fbfb0', fontWeight: 700, fontSize: 24, flexShrink: 0 }}>
                     {initials}
                   </div>
                 )}
-                <label className="flex items-center gap-2 cursor-pointer text-sm px-4 py-2 rounded-lg transition-colors"
-                  style={{ border: '1px dashed rgba(74,155,142,0.4)', color: uploading ? '#5fbfb0' : 'rgba(200,230,225,0.6)' }}>
+                <label
+                  className="flex items-center gap-2 cursor-pointer text-sm px-4 py-2 rounded-lg transition-colors"
+                  style={{ border: '1px dashed rgba(74,155,142,0.4)', color: uploading ? '#5fbfb0' : 'rgba(200,230,225,0.6)' }}
+                >
                   <Upload size={14} />
                   {uploading ? 'Uploading...' : 'Change Photo'}
                   <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
                 </label>
               </div>
 
-              {/* Fields */}
               {[
-                { label: 'Full Name', value: name, set: setName, type: 'text' },
-                { label: 'Username', value: username, set: setUsername, type: 'text' },
-                { label: 'Phone', value: phone, set: setPhone, type: 'tel', placeholder: '+201012345678' },
+                { label: 'Full Name',  value: name,     set: setName,     type: 'text' },
+                { label: 'Username',   value: username,  set: setUsername, type: 'text' },
+                { label: 'Phone',      value: phone,     set: setPhone,    type: 'tel', placeholder: '+201012345678' },
               ].map(({ label, value, set, type, placeholder }) => (
                 <div key={label} className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(200,230,225,0.45)' }}>{label}</label>
@@ -312,7 +339,7 @@ const DashboardModal = ({ onClose }) => {
                 </div>
               ))}
 
-              {/* Email (read-only) */}
+              {/* Email — read only */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(200,230,225,0.45)' }}>Email</label>
                 <input
@@ -325,7 +352,7 @@ const DashboardModal = ({ onClose }) => {
               <button
                 onClick={saveProfile} disabled={saving}
                 className="self-start flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-xl transition-all disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color: '#fff' }}
+                style={{ background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color: '#fff', cursor: 'pointer' }}
               >
                 <Check size={15} /> {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -339,8 +366,8 @@ const DashboardModal = ({ onClose }) => {
                 <p className="text-white font-bold text-sm">Change Password</p>
                 {[
                   { label: 'Current password', value: currentPw, set: setCurrentPw },
-                  { label: 'New password', value: newPw, set: setNewPw },
-                  { label: 'Confirm new password', value: confirmPw, set: setConfirmPw },
+                  { label: 'New password',      value: newPw,     set: setNewPw },
+                  { label: 'Confirm new',       value: confirmPw, set: setConfirmPw },
                 ].map(({ label, value, set }) => (
                   <input
                     key={label} type="password" value={value}
@@ -354,7 +381,7 @@ const DashboardModal = ({ onClose }) => {
                 <button
                   onClick={changePassword} disabled={saving}
                   className="self-start text-sm font-bold px-5 py-2.5 rounded-xl transition-all disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color: '#fff' }}
+                  style={{ background: 'linear-gradient(135deg, #4a9b8e, #3d7a6e)', color: '#fff', cursor: 'pointer' }}
                 >
                   {saving ? 'Saving...' : 'Change Password'}
                 </button>
