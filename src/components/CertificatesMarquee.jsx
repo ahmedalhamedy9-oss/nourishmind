@@ -2,19 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { tr } from '@/lib/translations';
 
-// Placeholder certificates for when none are uploaded yet
-// Proper certificate-looking placeholder images
-const PLACEHOLDER_CERTS = [
-  { id: 'p1', url: 'https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?w=600&q=80', alt: 'Certificate of Completion' },
-  { id: 'p2', url: 'https://images.unsplash.com/photo-1589330694653-ded6df03f754?w=600&q=80', alt: 'Professional Certificate' },
-  { id: 'p3', url: 'https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=600&q=80', alt: 'Excellence Award' },
-  { id: 'p4', url: 'https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=600&q=80', alt: 'Achievement Certificate' },
-  { id: 'p5', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80', alt: 'Nutrition Certificate' },
-];
-
 const CertificatesCarousel = ({ certificates = [] }) => {
   const { lang, isAr } = useLanguage();
-  const items = certificates.length >= 1 ? certificates : PLACEHOLDER_CERTS;
+  const items = certificates;
+  if (!items.length) return null;
   const [active, setActive] = useState(0);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef(null);
@@ -164,3 +155,4 @@ const CertificatesCarousel = ({ certificates = [] }) => {
 };
 
 export default CertificatesCarousel;
+
