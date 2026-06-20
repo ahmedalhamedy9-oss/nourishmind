@@ -213,23 +213,34 @@ const AdminPage = () => {
                   </Btn>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {certificates.map(cert=>(
-                  <div key={cert.id} className="relative group rounded-xl overflow-hidden border border-white/10 bg-white/5">
-                    <img src={cert.url} alt={cert.alt} className="w-full aspect-video object-cover"/>
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button onClick={()=>deleteCert(cert.id)} className="p-2 rounded-lg bg-red-500/80 text-white hover:bg-red-500"><Trash2 className="w-4 h-4"/></button>
-                    </div>
-                    <div className="p-2">
-                      {cert.alt&&<p className="text-white text-xs font-semibold truncate">{cert.alt}</p>}
-                      <div className="flex gap-2 mt-1 flex-wrap">
-                        {cert.price&&<span className="text-primary text-[10px] font-bold">{cert.price}</span>}
-                        {cert.delivery&&<span className="text-gray-500 text-[10px]">{cert.delivery}</span>}
+              <div className="flex flex-col gap-3">
+                {certificates.map(cert=>{
+                  const isValidImg = cert.url && (cert.url.includes('cloudinary.com') || cert.url.match(/\.(jpg|jpeg|png|webp|gif)$/i));
+                  return (
+                  <div key={cert.id} className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4">
+                    {isValidImg
+                      ? <img src={cert.url} alt={cert.alt} className="w-24 h-16 rounded-lg object-cover shrink-0 border border-white/10"/>
+                      : <div className="w-24 h-16 rounded-lg bg-red-500/10 border border-red-500/30 flex flex-col items-center justify-center shrink-0 text-center px-1">
+                          <p className="text-red-400 text-[9px] font-bold">⚠️ Invalid URL</p>
+                          <p className="text-red-300 text-[8px] mt-0.5 break-all line-clamp-2">{cert.url?.slice(0,40)}</p>
+                        </div>
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold text-sm truncate">{cert.alt||'Untitled'}</p>
+                      <div className="flex gap-3 mt-1 flex-wrap">
+                        {cert.price&&<span className="text-primary text-xs font-bold">{cert.price}</span>}
+                        {cert.delivery&&<span className="text-gray-500 text-xs">⏱ {cert.delivery}</span>}
                       </div>
+                      {!isValidImg && <p className="text-red-400 text-[10px] mt-1">URL غير صالحة — احذف هذه الشهادة</p>}
                     </div>
+                    <button onClick={()=>deleteCert(cert.id)}
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 text-xs font-semibold transition-colors">
+                      <Trash2 className="w-3.5 h-3.5"/> Delete
+                    </button>
                   </div>
-                ))}
-                {!certificates.length&&<p className="text-gray-600 text-sm col-span-4">No certificates yet.</p>}
+                  );
+                })}
+                {!certificates.length&&<p className="text-gray-600 text-sm">No certificates yet.</p>}
               </div>
             </div>
           )}
@@ -336,3 +347,4 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
