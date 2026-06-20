@@ -80,18 +80,26 @@ const LessonActions = ({ course, isCompleted, whatsappPhone }) => {
   const handleWhatsApp = () => {
     if (!whatsappPhone) return;
     const num = whatsappPhone.replace(/[^0-9]/g, '');
-    window.open(`https://wa.me/${num}`, '_blank');
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `https://wa.me/${num}`
+      : `https://web.whatsapp.com/send?phone=${num}`;
+    window.open(url, '_blank');
   };
 
   const handleBookSession = () => {
     if (!whatsappPhone) return;
     const num = whatsappPhone.replace(/[^0-9]/g, '');
     const courseTitle = course?.title || 'this course';
-    const instructorName = course?.instructor || 'the doctor';
+    const instructorName = course?.instructor || 'the Lecturer';
     const message = encodeURIComponent(
-      `Hello! I just finished watching "${courseTitle}" with ${instructorName} and I would like to book a consultation session with the doctor. Could you please help me schedule one? 🙏`
+      `Hello! I just finished watching "${courseTitle}" with ${instructorName} and I would like to book an appointment with the Lecturer. Could you please help me schedule one? 🙏`
     );
-    window.open(`https://wa.me/${num}?text=${message}`, '_blank');
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const url = isMobile
+      ? `https://wa.me/${num}?text=${message}`
+      : `https://web.whatsapp.com/send?phone=${num}&text=${message}`;
+    window.open(url, '_blank');
   };
 
   const actions = [
@@ -115,7 +123,7 @@ const LessonActions = ({ course, isCompleted, whatsappPhone }) => {
     },
     {
       icon: Calendar,
-      label: 'Book a session with the doctor',
+      label: 'Book an appointment with the Lecturer',
       sublabel: 'Request a personal consultation',
       color: '#5fbfb0',
       bg: 'rgba(74,155,142,0.08)',
@@ -569,6 +577,7 @@ const CoursePlayerPage = () => {
 };
 
 export default CoursePlayerPage;
+
 
 
 
