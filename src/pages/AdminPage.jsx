@@ -73,8 +73,7 @@ const AdminPage = () => {
   const navigate=useNavigate();
   const{currentUser}=useAuth();
   const[activeTab,setActiveTab]=useState('courses');
-  const[courses,setCourses]=useState([]);
-  const[coursesLoaded,setCoursesLoaded]=useState(false);
+  const[courses,setCourses]=useState(PLACEHOLDER_COURSES);
   const[users,setUsers]=useState([]);
   const[categories,setCategories]=useState(DEFAULT_CATS);
   const[reviews,setReviews]=useState([]);
@@ -122,7 +121,7 @@ const AdminPage = () => {
 
     const unsubCats=onSnapshot(doc(db,'settings','categories'),snap=>{if(snap.exists()&&snap.data().list?.length)setCategories(snap.data().list);else{setDoc(doc(db,'settings','categories'),{list:DEFAULT_CATS});setCategories(DEFAULT_CATS);}},()=>setCategories(DEFAULT_CATS));
     const qCourses=query(collection(db,'courses'),orderBy('createdAt','desc'));
-    const unsubCourses=onSnapshot(qCourses,snap=>{setCourses(snap.empty?[]:snap.docs.map(d=>({id:d.id,...d.data()})));setCoursesLoaded(true);},()=>{const u2=onSnapshot(collection(db,'courses'),snap=>{setCourses(snap.empty?[]:snap.docs.map(d=>({id:d.id,...d.data()})));setCoursesLoaded(true);},()=>{setCourses([]);setCoursesLoaded(true);});return u2;});
+    const unsubCourses=onSnapshot(qCourses,snap=>setCourses(snap.empty?PLACEHOLDER_COURSES:snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{const u2=onSnapshot(collection(db,'courses'),snap=>setCourses(snap.empty?PLACEHOLDER_COURSES:snap.docs.map(d=>({id:d.id,...d.data()}))),()=>setCourses(PLACEHOLDER_COURSES));return u2;});
     const unsubUsers=onSnapshot(query(collection(db,'users'),orderBy('createdAt','desc')),snap=>setUsers(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const unsubReviews=onSnapshot(collection(db,'reviews'),snap=>setReviews(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
     const unsubCerts=onSnapshot(collection(db,'certificates'),snap=>setCertificates(snap.docs.map(d=>({id:d.id,...d.data()}))),()=>{});
@@ -132,7 +131,7 @@ const AdminPage = () => {
   },[]);
 
   const saveCourse=async(data)=>{const{id,...rest}=data;const PH=['1','2','3','4','5','6','7','8','9','10'];const isFS=id&&!PH.includes(String(id));if(isFS)await updateDoc(doc(db,'courses',id),{...rest,updatedAt:serverTimestamp()});else await addDoc(collection(db,'courses'),{...rest,createdAt:serverTimestamp()});};
-  const deleteCourse=async(id)=>{if(!confirm('Delete?'))return;if(id)await deleteDoc(doc(db,'courses',id));};
+  const deleteCourse=async(id)=>{if(!confirm('Delete?'))return;const PH=['1','2','3','4','5','6','7','8','9','10'];if(id&&!PH.includes(String(id)))await deleteDoc(doc(db,'courses',id));else setCourses(prev=>prev.filter(c=>c.id!==id));};
   const addCategory=async()=>{if(!newCat.id.trim()||!newCat.label.trim())return;const updated=[...categories,newCat];setCategories(updated);setNewCat({id:'',label:''});await setDoc(doc(db,'settings','categories'),{list:updated});};
   const deleteCategory=async(idx)=>{const updated=categories.filter((_,i)=>i!==idx);setCategories(updated);await setDoc(doc(db,'settings','categories'),{list:updated});};
   const deleteReview=async(id)=>{if(!confirm('Delete?'))return;await deleteDoc(doc(db,'reviews',id));};
@@ -184,7 +183,7 @@ const AdminPage = () => {
         <main className="ml-52 flex-1 p-8 overflow-y-auto">
 
           {/* COURSES */}
-          {activeTab==='courses'&&(<div>{sectionTitle('Courses',<Btn onClick={()=>setModal('add')}><Plus className="w-4 h-4"/>Add Course</Btn>)}<p className="text-gray-500 text-sm mb-6">{coursesLoaded?`${courses.length} total`:'Loading…'}</p><div className="flex flex-col gap-3">{!coursesLoaded?([1,2,3].map(i=>(<div key={i} className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4 animate-pulse"><div className="w-16 h-10 rounded-lg bg-white/5 shrink-0"/><div className="flex-1"><div className="h-3 bg-white/5 rounded w-2/3 mb-2"/><div className="h-2 bg-white/5 rounded w-1/3"/></div></div>))):courses.map(course=>(<div key={course.id} className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4 hover:border-primary/30 transition-colors"><div className="w-16 h-10 rounded-lg overflow-hidden bg-white/5 shrink-0">{course.image?<img src={course.image} alt={course.title} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-xl">🧠</div>}</div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 mb-0.5 flex-wrap"><p className="text-white font-semibold text-sm truncate">{course.title}</p>{course.featured&&<span className="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded font-bold">Featured</span>}{course.new&&<span className="bg-green-500/20 text-green-400 text-[10px] px-1.5 py-0.5 rounded font-bold">New</span>}{course.top10&&<span className="bg-yellow-500/20 text-yellow-400 text-[10px] px-1.5 py-0.5 rounded font-bold">🏆 #{course.top10_rank}</span>}</div><div className="flex gap-3 text-xs text-gray-500 flex-wrap">{course.price!=null&&<span className="text-primary font-bold">${course.price}</span>}{course.level&&<span>{course.level}</span>}{course.duration_hours&&<span>{course.duration_hours}h</span>}</div></div><div className="flex items-center gap-2 shrink-0"><Btn variant="ghost" onClick={()=>setLessonEditor(course)} className="text-xs px-3 py-1.5">📚 Lessons</Btn><button onClick={()=>setModal(course)} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-primary/40 transition-colors"><Pencil className="w-4 h-4"/></button><button onClick={()=>deleteCourse(course.id)} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors"><Trash2 className="w-4 h-4"/></button></div></div>))}</div></div>)}
+          {activeTab==='courses'&&(<div>{sectionTitle('Courses',<Btn onClick={()=>setModal('add')}><Plus className="w-4 h-4"/>Add Course</Btn>)}<p className="text-gray-500 text-sm mb-6">{courses.length} total</p><div className="flex flex-col gap-3">{courses.map(course=>(<div key={course.id} className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4 hover:border-primary/30 transition-colors"><div className="w-16 h-10 rounded-lg overflow-hidden bg-white/5 shrink-0">{course.image?<img src={course.image} alt={course.title} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-xl">🧠</div>}</div><div className="flex-1 min-w-0"><div className="flex items-center gap-2 mb-0.5 flex-wrap"><p className="text-white font-semibold text-sm truncate">{course.title}</p>{course.featured&&<span className="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded font-bold">Featured</span>}{course.new&&<span className="bg-green-500/20 text-green-400 text-[10px] px-1.5 py-0.5 rounded font-bold">New</span>}{course.top10&&<span className="bg-yellow-500/20 text-yellow-400 text-[10px] px-1.5 py-0.5 rounded font-bold">🏆 #{course.top10_rank}</span>}</div><div className="flex gap-3 text-xs text-gray-500 flex-wrap">{course.price!=null&&<span className="text-primary font-bold">${course.price}</span>}{course.level&&<span>{course.level}</span>}{course.duration_hours&&<span>{course.duration_hours}h</span>}</div></div><div className="flex items-center gap-2 shrink-0"><Btn variant="ghost" onClick={()=>setLessonEditor(course)} className="text-xs px-3 py-1.5">📚 Lessons</Btn><button onClick={()=>setModal(course)} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-primary/40 transition-colors"><Pencil className="w-4 h-4"/></button><button onClick={()=>deleteCourse(course.id)} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors"><Trash2 className="w-4 h-4"/></button></div></div>))}</div></div>)}
 
           {/* LESSONS */}
           {activeTab==='lessons'&&(<div>{sectionTitle('Lessons')}<p className="text-gray-500 text-sm mb-6">Select a course to edit its sections and lessons</p><select onChange={e=>{const c=courses.find(x=>x.id===e.target.value);if(c)setLessonEditor(c);}} defaultValue="" className="w-full max-w-sm bg-[#0d1a17] border border-white/10 text-white rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-primary mb-4"><option value="" disabled>— Choose a course —</option>{courses.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select></div>)}
@@ -348,6 +347,5 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
-
 
 
