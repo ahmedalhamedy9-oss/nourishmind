@@ -1,8 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
-// 🔥 Replace with your Firebase config from console.firebase.google.com
 const firebaseConfig = {
   apiKey: "AIzaSyDsR7dNznDJHM-PuiCNX-xPSaWQdZ9QGew",
   authDomain: "nourishmind-49c9d.firebaseapp.com",
@@ -16,4 +15,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Enable offline persistence (IndexedDB cache)
+// Speeds up repeat visits — data loads from cache instantly, Firebase syncs in background
+enableIndexedDbPersistence(db).catch((err) => {
+  // 'failed-precondition' = multiple tabs open (fine, just skip)
+  // 'unimplemented' = browser doesn't support it (fine, falls back to normal)
+  if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
+    console.warn('Firestore persistence error:', err.code);
+  }
+});
+
 export default app;
