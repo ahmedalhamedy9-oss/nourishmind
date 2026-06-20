@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-const getBunnyUrl = (url) => {
+const getBunnyUrl = (url, muted = true) => {
   if (!url) return null;
   try {
     let embedUrl = url
@@ -14,7 +14,7 @@ const getBunnyUrl = (url) => {
       .replace('player.mediadelivery.net/embed/', 'iframe.mediadelivery.net/embed/');
     const u = new URL(embedUrl);
     u.searchParams.set('autoplay', 'true');
-    u.searchParams.set('muted',    'true');
+    u.searchParams.set('muted',    muted ? 'true' : 'false');
     u.searchParams.set('loop',     'true');
     u.searchParams.set('controls', 'false');
     return u.toString();
@@ -55,6 +55,7 @@ const CourseCard = ({ course }) => {
   const [videoReady,   setVideoReady]   = useState(false); // Bunny loaded & playing
   const [showVideo,    setShowVideo]    = useState(false); // thumbnail faded out
   const [muted,        setMuted]        = useState(true);
+  const [iframeSrc,    setIframeSrc]    = useState('');
 
   const iframeRef  = useRef(null);
   const hoverRef   = useRef(false);
@@ -67,7 +68,10 @@ const CourseCard = ({ course }) => {
     hoverRef.current = true;
     if (!hasBunny) return;
     hoverTimer.current = setTimeout(() => {
-      if (hoverRef.current) setShowIframe(true);
+      if (hoverRef.current) {
+        setIframeSrc(getBunnyUrl(course.previewVideo, true));
+        setShowIframe(true);
+      }
     }, 600);
   };
 
@@ -79,6 +83,7 @@ const CourseCard = ({ course }) => {
     setVideoReady(false);
     setShowVideo(false);
     setMuted(true);
+    setIframeSrc('');
   };
 
   useEffect(() => () => {
@@ -122,15 +127,9 @@ const CourseCard = ({ course }) => {
     e.stopPropagation();
     const newMuted = !muted;
     setMuted(newMuted);
-    try {
-      iframeRef.current?.contentWindow?.postMessage(
-        JSON.stringify({ method: newMuted ? 'mute' : 'unmute' }), '*'
-      );
-      iframeRef.current?.contentWindow?.postMessage(
-        JSON.stringify({ method: 'setVolume', value: newMuted ? 0 : 1 }), '*'
-      );
-    } catch (_) {}
-  }, [muted]);
+    // Reload iframe with correct muted param — most reliable way with Bunny
+    setIframeSrc(getBunnyUrl(course.previewVideo, newMuted));
+  }, [muted, course.previewVideo]);
 
   return (
     <div
@@ -145,7 +144,7 @@ const CourseCard = ({ course }) => {
         {showIframe && hasBunny && (
           <iframe
             ref={iframeRef}
-            src={getBunnyUrl(course.previewVideo)}
+            src={iframeSrc}
             className="absolute inset-0 w-full h-full border-0 pointer-events-none"
             style={{ zIndex: 1 }}
             allow="autoplay; encrypted-media; picture-in-picture"
@@ -254,3 +253,4 @@ const CourseCard = ({ course }) => {
 };
 
 export default CourseCard;
+
