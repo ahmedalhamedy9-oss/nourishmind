@@ -281,7 +281,7 @@ const CoursePlayerPage = () => {
     if (isNowComplete) {
       setShowCompletionBanner(true);
       setTimeout(() => {
-        navigate('/certificates');
+        navigate('/certificates', { state: { justCompletedCourseId: id } });
       }, 3500);
     }
     try {
@@ -577,6 +577,7 @@ const CoursePlayerPage = () => {
 };
 
 export default CoursePlayerPage;
+
 
 
 
