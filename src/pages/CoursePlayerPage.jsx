@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronUp, SkipForward, SkipBack, BookOpen,
   Volume2, Gauge, Heart, Award, MessageCircle, Calendar,
 } from 'lucide-react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCourses } from '@/hooks/useCourses';
@@ -178,7 +178,6 @@ const CoursePlayerPage = () => {
 
   /* Load WhatsApp number from Firestore settings */
   useEffect(() => {
-    const { onSnapshot } = require('firebase/firestore');
     const unsub = onSnapshot(doc(db, 'settings', 'contact'),
       snap => { if (snap.exists()) setWhatsappPhone(snap.data().whatsapp || ''); },
       () => {}
@@ -570,5 +569,6 @@ const CoursePlayerPage = () => {
 };
 
 export default CoursePlayerPage;
+
 
 
