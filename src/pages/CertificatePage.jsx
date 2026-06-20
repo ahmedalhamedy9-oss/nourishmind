@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Award, BookOpen, ArrowLeft, Check, X } from 'lucide-react';
 import { doc, getDoc, collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -89,7 +89,12 @@ const CertificatePage = () => {
   const { currentUser } = useAuth();
   const { courses } = useCourses();
   const navigate = useNavigate();
-  const [userProgress,   setUserProgress]   = useState({});
+  const location = useLocation();
+  const justCompletedCourseId = location.state?.justCompletedCourseId || null;
+  const [userProgress,   setUserProgress]   = useState(
+    // Pre-seed 100% for the course just completed so we don't wait for Firestore
+    justCompletedCourseId ? { [justCompletedCourseId]: 100 } : {}
+  );
   const [progressReady,  setProgressReady]  = useState(false);
   const [certificates,   setCertificates]   = useState([]);
   const [certsReady,     setCertsReady]     = useState(false);
@@ -235,4 +240,5 @@ const CertificatePage = () => {
 };
 
 export default CertificatePage;
+
 
