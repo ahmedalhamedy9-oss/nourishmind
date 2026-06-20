@@ -49,7 +49,11 @@ export const FloatingWhatsApp = () => {
 
   if (!phone) return null;
 
-  const url = `https://wa.me/${phone.replace(/[^0-9]/g, '')}`;
+  const num = phone.replace(/[^0-9]/g, '');
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const url = isMobile
+    ? `https://wa.me/${num}`
+    : `https://web.whatsapp.com/send?phone=${num}`;
 
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
@@ -247,3 +251,4 @@ const Header = () => {
 };
 
 export default Header;
+
