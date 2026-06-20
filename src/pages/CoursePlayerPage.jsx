@@ -68,10 +68,12 @@ const SpeedControl = ({ speed, onChange }) => {
 /* ── 3 Action Buttons under each lesson ── */
 const LessonActions = ({ course, isCompleted, whatsappPhone }) => {
   const navigate = useNavigate();
+  const [certToast, setCertToast] = React.useState(false);
 
   const handleCertificate = () => {
     if (!isCompleted) {
-      alert('You must complete the full course to acquire your accredited certification.');
+      setCertToast(true);
+      setTimeout(() => setCertToast(false), 3000);
       return;
     }
     navigate('/certificates');
@@ -134,6 +136,19 @@ const LessonActions = ({ course, isCompleted, whatsappPhone }) => {
 
   return (
     <div style={{ padding:'16px', borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+      {certToast && (
+        <div style={{
+          marginBottom: 10, padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)',
+          display: 'flex', alignItems: 'center', gap: 8,
+          animation: 'fadeIn .2s ease'
+        }}>
+          <span style={{ fontSize: 16 }}>⚠️</span>
+          <p style={{ color: '#f59e0b', fontSize: 12, fontWeight: 600, margin: 0 }}>
+            Complete the full course first to acquire your certification.
+          </p>
+        </div>
+      )}
       <p style={{ color:'rgba(200,220,215,0.4)', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:10 }}>
         What's next?
       </p>
@@ -577,6 +592,7 @@ const CoursePlayerPage = () => {
 };
 
 export default CoursePlayerPage;
+
 
 
 
