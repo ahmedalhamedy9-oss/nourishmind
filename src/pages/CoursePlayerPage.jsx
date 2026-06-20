@@ -171,6 +171,7 @@ const CoursePlayerPage = () => {
   const [wishlisted,       setWishlisted]        = useState(false);
   const [wishlistBusy,     setWishlistBusy]      = useState(false);
   const [courseComplete,   setCourseComplete]    = useState(false);
+  const [showCompletionBanner, setShowCompletionBanner] = useState(false);
   const [whatsappPhone,    setWhatsappPhone]     = useState('');
   const iframeKey = useRef(0);
   const iframeRef = useRef(null);
@@ -270,6 +271,12 @@ const CoursePlayerPage = () => {
     const pct = Math.round((newCompleted.length / (allLessons.length || 1)) * 100);
     const isNowComplete = newCompleted.length >= allLessons.length && allLessons.length > 0;
     setCourseComplete(isNowComplete);
+    if (isNowComplete) {
+      setShowCompletionBanner(true);
+      setTimeout(() => {
+        navigate('/certificates');
+      }, 3500);
+    }
     try {
       await updateDoc(doc(db, 'users', currentUser.uid), {
         ['progress.'+id+'_completed']:  newCompleted,
@@ -310,6 +317,28 @@ const CoursePlayerPage = () => {
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', background:'#0f1117', fontFamily:'system-ui,sans-serif' }}>
+
+      {/* ── Completion Banner ── */}
+      {showCompletionBanner && (
+        <div style={{ position:'fixed', top:0, left:0, right:0, zIndex:1000, background:'linear-gradient(135deg,#16a34a,#15803d)', padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', boxShadow:'0 4px 24px rgba(22,163,74,0.5)', animation:'slideDown 0.4s ease' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <div style={{ width:40, height:40, borderRadius:'50%', background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <CheckCircle size={22} color="#fff" />
+            </div>
+            <div>
+              <p style={{ color:'#fff', fontWeight:800, fontSize:15, margin:0 }}>🎉 Course Completed!</p>
+              <p style={{ color:'rgba(255,255,255,0.8)', fontSize:12, margin:'2px 0 0' }}>Redirecting you to your certificates…</p>
+            </div>
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <button onClick={() => navigate('/certificates')} style={{ background:'rgba(255,255,255,0.2)', border:'1px solid rgba(255,255,255,0.4)', borderRadius:8, color:'#fff', fontWeight:700, fontSize:12, padding:'7px 16px', cursor:'pointer' }}>
+              View Certificates →
+            </button>
+            <button onClick={() => setShowCompletionBanner(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.6)', cursor:'pointer', padding:4 }}>✕</button>
+          </div>
+        </div>
+      )}
+      <style>{`@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
 
       {/* TOP BAR */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', height:52, background:'#131720', borderBottom:'1px solid rgba(255,255,255,0.08)', flexShrink:0, position:'sticky', top:0, zIndex:50 }}>
@@ -541,3 +570,5 @@ const CoursePlayerPage = () => {
 };
 
 export default CoursePlayerPage;
+
+
