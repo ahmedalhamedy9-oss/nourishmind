@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Star, Clock, Users, ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Lock } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { Play, Star, Clock, Users, ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Lock, Heart } from 'lucide-react';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Header from '@/components/Header';
 import { useCourses } from '@/hooks/useCourses';
@@ -38,7 +38,32 @@ const CourseDetailPage = () => {
   const course = courses.find(c => c.id === id);
   const [expandedSections, setExpandedSections] = useState({});
   const [showCurriculum, setShowCurriculum] = useState(false);
+  const [wishlisted,    setWishlisted]    = useState(false);
+  const [wishlistBusy, setWishlistBusy]  = useState(false);
   const [defaultWhatYouGet, setDefaultWhatYouGet] = useState(DEFAULT_WHAT_YOU_GET);
+
+  // Load wishlist state
+  useEffect(() => {
+    if (!currentUser || !id) return;
+    getDoc(doc(db, 'users', currentUser.uid))
+      .then(snap => { if (snap.exists()) setWishlisted((snap.data().wishlist||[]).includes(id)); })
+      .catch(() => {});
+  }, [currentUser, id]);
+
+  const toggleWishlist = async (e) => {
+    e.stopPropagation();
+    if (!currentUser) { navigate('/login'); return; }
+    if (wishlistBusy) return;
+    setWishlistBusy(true);
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      const current = snap.exists() ? (snap.data().wishlist || []) : [];
+      const updated = wishlisted ? current.filter(x => x !== id) : [...current, id];
+      await updateDoc(doc(db, 'users', currentUser.uid), { wishlist: updated });
+      setWishlisted(!wishlisted);
+    } catch (_) {}
+    finally { setWishlistBusy(false); }
+  };
 
   // Load default what_you_get from Firestore settings
   useEffect(() => {
@@ -206,6 +231,12 @@ const CourseDetailPage = () => {
                 <span className="text-2xl font-extrabold text-white">
                   {course.price ? `$${course.price}` : <span className="text-green-400">Free</span>}
                 </span>
+                <button onClick={toggleWishlist} disabled={wishlistBusy}
+                  title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+                  className="flex items-center justify-center w-10 h-10 rounded-xl transition-all"
+                  style={{ background: wishlisted ? 'rgba(239,68,68,0.12)' : 'rgba(255,255,255,0.06)', border: `1px solid ${wishlisted ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.12)'}`, cursor:'pointer' }}>
+                  <Heart size={18} color={wishlisted ? '#ef4444' : 'rgba(200,220,215,0.6)'} fill={wishlisted ? '#ef4444' : 'none'} />
+                </button>
                 <button onClick={() => navigate(`/course/${course.id}/learn`)}
                   className="flex items-center gap-2 bg-primary text-white font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors text-sm">
                   <Play className="w-4 h-4 fill-white" />
@@ -279,3 +310,4 @@ const CourseDetailPage = () => {
 };
 
 export default CourseDetailPage;
+
