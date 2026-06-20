@@ -13,9 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReviewsSection from '@/components/ReviewsSection';
 import { ROWS } from '@/lib/data';
 
-// Default hero — shown INSTANTLY, no Firebase needed
 const DEFAULT_HERO = {
-  backgroundImage: 'https://res.cloudinary.com/de7haar7x/image/upload/f_auto,q_auto/v1781974738/nourishmind/hero/ngcw5kiof2en8vgoiqim.jpg',
+  backgroundImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80',
   tagline: 'NOURISHMIND · Wellness Learning Platform',
   title1: 'Nourish Your Mind,',
   title2: 'Elevate Your Life',
@@ -26,19 +25,6 @@ const DEFAULT_HERO = {
   cta1: 'Start Learning', cta2: 'Browse Courses',
 };
 
-const HERO_CACHE_KEY = 'nm_hero_cache';
-
-const readHeroCache = () => {
-  try {
-    const raw = sessionStorage.getItem(HERO_CACHE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-};
-
-const writeHeroCache = (data) => {
-  try { sessionStorage.setItem(HERO_CACHE_KEY, JSON.stringify(data)); } catch {}
-};
-
 const HomePage = () => {
   const navigate = useNavigate();
   const { courses, loading: coursesLoading } = useCourses();
@@ -46,19 +32,12 @@ const HomePage = () => {
   const [userProgress, setUserProgress] = useState({});
   const [enrolledIds,  setEnrolledIds]  = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [hero, setHero] = useState(DEFAULT_HERO);
 
-  // Hero: start from sessionStorage cache → then update from Firebase silently
-  const [hero, setHero] = useState(() => readHeroCache() || DEFAULT_HERO);
-
+  // Load hero from Firestore
   useEffect(() => {
     getDoc(doc(db, 'settings', 'hero'))
-      .then(snap => {
-        if (snap.exists()) {
-          const data = { ...DEFAULT_HERO, ...snap.data() };
-          setHero(data);
-          writeHeroCache(data);
-        }
-      })
+      .then(snap => { if (snap.exists()) setHero(h => ({ ...h, ...snap.data() })); })
       .catch(() => {});
   }, []);
 
@@ -93,112 +72,87 @@ const HomePage = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main id="main-content">
-        {/* ── HERO — renders immediately, no Firebase wait ── */}
-        <section
-          aria-label="Welcome to NourishMind"
-          className="relative flex items-center"
-          style={{ overflow: 'hidden', minHeight: '100svh' }}>
-          <div className="absolute inset-0" aria-hidden="true">
-            <img
-              src={hero.backgroundImage}
-              alt=""
-              role="presentation"
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-              className="w-full h-full object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/10" />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-          </div>
+      {/* ── HERO ── */}
+      <section className="relative min-h-screen flex items-center" style={{ overflow: 'hidden' }}>
+        <div className="absolute inset-0">
+          <img src={hero.backgroundImage} alt="Hero" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+        </div>
 
-          <div className="relative z-10 w-full px-6 sm:px-16 pt-20 pb-16">
-            <motion.div
-              initial={{ opacity:0, y:30 }}
-              animate={{ opacity:1, y:0 }}
-              transition={{ duration:0.8 }}
-              className="max-w-2xl w-full">
-              <p className="text-primary font-bold text-xs sm:text-sm uppercase tracking-widest mb-4">
-                {hero.tagline}
-              </p>
-              <h1 className="font-extrabold text-white leading-[1.15] mb-6 text-4xl sm:text-6xl lg:text-7xl">
-                {hero.title1}{' '}<span className="text-primary">{hero.title2}</span>
-              </h1>
-              <p className="text-gray-300 text-lg mb-10 max-w-xl leading-relaxed">{hero.subtitle}</p>
-              <div className="flex items-center gap-4 mb-12 flex-wrap justify-start">
-                <button
-                  onClick={() => navigate('/courses')}
-                  aria-label="Start learning — browse all courses"
-                  className="flex items-center gap-2 bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-white/90 transition-all text-base shadow-lg">
-                  <Play className="w-5 h-5 fill-black" aria-hidden="true" /> {hero.cta1}
-                </button>
-                <button
-                  onClick={() => navigate('/courses')}
-                  aria-label="Browse all available courses"
-                  className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-all text-base">
-                  <Info className="w-5 h-5" aria-hidden="true" /> {hero.cta2}
-                </button>
-              </div>
-              <ul aria-label="Platform statistics" className="flex items-center gap-6 text-sm text-gray-300 flex-wrap justify-start list-none p-0 m-0">
-                {stats.map(({ icon: Icon, value, label }) => (
-                  <li key={label} className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-primary" aria-hidden="true" />
-                    <span><strong>{value}</strong> {label}</span>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          </div>
-        </section>
-
-        <CertificatesCarousel certificates={certificates} />
-
-        <section aria-label="Course library" className="relative z-10 pb-8">
-          {coursesLoading ? (
-            <div className="px-4 sm:px-12 py-8" aria-busy="true" aria-label="Loading courses">
-              <div className="h-6 w-48 bg-white/5 rounded-lg mb-6 animate-pulse" />
-              <div className="flex gap-4 overflow-hidden">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="flex-shrink-0 w-[280px] animate-pulse" aria-hidden="true">
-                    <div className="aspect-video rounded-xl bg-white/5 mb-3" />
-                    <div className="h-4 bg-white/5 rounded mb-2 w-3/4" />
-                    <div className="h-3 bg-white/5 rounded w-1/2" />
-                  </div>
-                ))}
-              </div>
+        <div className="relative z-10 w-full px-6 sm:px-16 pt-20 pb-16">
+          <motion.div initial={{ opacity:0, y:30 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.8 }} className="max-w-2xl w-full">
+            <p className="text-primary font-bold text-xs sm:text-sm uppercase tracking-widest mb-4">
+              {hero.tagline}
+            </p>
+            <h1 className="font-extrabold text-white leading-[1.15] mb-6 text-4xl sm:text-6xl lg:text-7xl">
+              {hero.title1}{' '}<span className="text-primary">{hero.title2}</span>
+            </h1>
+            <p className="text-gray-300 text-lg mb-10 max-w-xl leading-relaxed">{hero.subtitle}</p>
+            <div className="flex items-center gap-4 mb-12 flex-wrap justify-start">
+              <button onClick={() => navigate('/courses')}
+                className="flex items-center gap-2 bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-white/90 transition-all text-base shadow-lg">
+                <Play className="w-5 h-5 fill-black" /> {hero.cta1}
+              </button>
+              <button onClick={() => navigate('/courses')}
+                className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white font-semibold px-7 py-3.5 rounded-xl hover:bg-white/20 transition-all text-base">
+                <Info className="w-5 h-5" /> {hero.cta2}
+              </button>
             </div>
-          ) : (
-            <>
-              <CourseRow
-                title="🏆 Top 10 Courses Today"
-                courses={[...courses.filter(c=>c.top10)].sort((a,b)=>(a.top10_rank||99)-(b.top10_rank||99)).slice(0,10).concat(courses.filter(c=>!c.top10)).slice(0,10)}
-                variant="top10"
-                seeAllPath="/courses"
-              />
-              {currentUser && enrolledIds.length > 0 && (
-                <CourseRow
-                  title="▶ Continue Learning"
-                  courses={courses.filter(c => enrolledIds.includes(c.id))}
-                  variant="continue"
-                  userProgress={userProgress}
-                />
-              )}
-              {ROWS.filter(r => r.id !== 'featured').map(row => (
-                <CourseRow key={row.id} title={row.title} courses={getRow(row)} />
+            <div className="flex items-center gap-6 text-sm text-gray-300 flex-wrap justify-start">
+              {stats.map(({ icon: Icon, value, label }) => (
+                <span key={label} className="flex items-center gap-2">
+                  <Icon className="w-4 h-4 text-primary" /> {value} {label}
+                </span>
               ))}
-            </>
-          )}
-        </section>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-        <ReviewsSection />
-      </main>
+      <CertificatesCarousel certificates={certificates} />
 
+      <section className="relative z-10 pb-8">
+        {coursesLoading ? (
+          <div className="px-4 sm:px-12 py-8">
+            <div className="h-6 w-48 bg-white/5 rounded-lg mb-6 animate-pulse" />
+            <div className="flex gap-4 overflow-hidden">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex-shrink-0 w-[280px] animate-pulse">
+                  <div className="aspect-video rounded-xl bg-white/5 mb-3" />
+                  <div className="h-4 bg-white/5 rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-white/5 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <CourseRow
+              title="🏆 Top 10 Courses Today"
+              courses={[...courses.filter(c=>c.top10)].sort((a,b)=>(a.top10_rank||99)-(b.top10_rank||99)).slice(0,10).concat(courses.filter(c=>!c.top10)).slice(0,10)}
+              variant="top10"
+              seeAllPath="/courses"
+            />
+            {currentUser && enrolledIds.length > 0 && (
+              <CourseRow
+                title="▶ Continue Learning"
+                courses={courses.filter(c => enrolledIds.includes(c.id))}
+                variant="continue"
+                userProgress={userProgress}
+              />
+            )}
+            {ROWS.filter(r => r.id !== 'featured').map(row => (
+              <CourseRow key={row.id} title={row.title} courses={getRow(row)} />
+            ))}
+          </>
+        )}
+      </section>
+
+      <ReviewsSection />
       <Footer />
     </div>
   );
 };
 
 export default HomePage;
-
-
