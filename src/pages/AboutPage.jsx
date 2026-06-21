@@ -20,11 +20,7 @@ const DEFAULT = {
   val1_title:'Science-First',   val1_desc:'Every course is grounded in peer-reviewed research. We never compromise on evidence quality.',
   val2_title:'Human-Centered',  val2_desc:'We design for real people navigating real struggles — with compassion and cultural sensitivity.',
   val3_title:'Holistic Approach',val3_desc:'Mind, body, and nutrition are inseparable. Our curriculum reflects that integration at every level.',
-  team: [
-    { name:'Dr. Ahmed Al-Hamedy', role:'Founder & Lead Psychiatrist', bio:'Psychiatrist and founder of Dawn for Mental Health. Pioneer of nutritional psychiatry in the Arabic-speaking world.', avatar:'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&q=80' },
-    { name:'Dr. Sarah Ahmed',     role:'Head of Nutrition',           bio:'Clinical nutritionist with 15 years of experience integrating diet and mental wellness.', avatar:'https://images.unsplash.com/photo-1659301254614-8d6a9d46f26a?w=200&q=80' },
-    { name:'Dr. Layla Mansour',   role:'Psychotherapy Lead',          bio:'Specialist in CBT and mindfulness-based interventions for anxiety and depression.', avatar:'https://images.unsplash.com/photo-1612944095914-33fd0a85fcfc?w=200&q=80' },
-  ],
+  team: [],
 };
 
 const STAT_ICONS = [Users, Globe, Award, Brain];
