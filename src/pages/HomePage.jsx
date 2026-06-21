@@ -75,7 +75,18 @@ const HomePage = () => {
       {/* ── HERO ── */}
       <section className="relative min-h-screen flex items-center" style={{ overflow: 'hidden' }}>
         <div className="absolute inset-0">
-          <img src={hero.backgroundImage} alt="Hero" className="w-full h-full object-cover object-center" />
+          {hero.backgroundType === 'video' && hero.backgroundVideoId ? (
+            <>
+              <iframe
+                src={`https://iframe.mediadelivery.net/embed/683192/${hero.backgroundVideoId}?autoplay=1&loop=1&muted=1&controls=0&preload=true`}
+                className="w-full h-full"
+                style={{ border: 'none', position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                allow="autoplay"
+              />
+            </>
+          ) : (
+            <img src={hero.backgroundImage} alt="Hero" className="w-full h-full object-cover object-center" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/10" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
         </div>
