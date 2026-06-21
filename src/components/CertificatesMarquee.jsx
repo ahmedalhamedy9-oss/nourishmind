@@ -60,22 +60,22 @@ const CertificatesCarousel = ({ certificates = [] }) => {
       opacity = 1;
       filter = 'brightness(1)';
     } else if (isLeft) {
-      transform = 'translateX(-55%) translateZ(-80px) rotateY(20deg) scale(0.82)';
+      transform = 'translateX(-65%) translateZ(-120px) rotateY(25deg) scale(0.85)';
       zIndex = 5;
       opacity = 0.85;
       filter = 'brightness(0.6)';
     } else if (isRight) {
-      transform = 'translateX(55%) translateZ(-80px) rotateY(-20deg) scale(0.82)';
+      transform = 'translateX(65%) translateZ(-120px) rotateY(-25deg) scale(0.85)';
       zIndex = 5;
       opacity = 0.85;
       filter = 'brightness(0.6)';
     } else if (isFarLeft) {
-      transform = 'translateX(-95%) translateZ(-160px) rotateY(30deg) scale(0.65)';
+      transform = 'translateX(-110%) translateZ(-250px) rotateY(35deg) scale(0.7)';
       zIndex = 2;
       opacity = 0.5;
       filter = 'brightness(0.4)';
     } else if (isFarRight) {
-      transform = 'translateX(95%) translateZ(-160px) rotateY(-30deg) scale(0.65)';
+      transform = 'translateX(110%) translateZ(-250px) rotateY(-35deg) scale(0.7)';
       zIndex = 2;
       opacity = 0.5;
       filter = 'brightness(0.4)';
@@ -107,7 +107,7 @@ const CertificatesCarousel = ({ certificates = [] }) => {
       {/* 3D Carousel */}
       <div
         className="relative mx-auto flex items-center justify-center"
-        style={{ height: 'clamp(260px, 50vw, 400px)', perspective: '1000px' }}
+        style={{ height: '400px', perspective: '1000px' }}
       >
         {items.map((cert, index) => {
           const style = getStyle(index);
@@ -120,8 +120,8 @@ const CertificatesCarousel = ({ certificates = [] }) => {
               key={cert.id}
               className="absolute cursor-pointer"
               style={{
-                width: 'clamp(160px, 45vw, 280px)',
-                height: 'clamp(200px, 58vw, 360px)',
+                width: '280px',
+                height: '360px',
                 ...style,
               }}
               onClick={() => {
