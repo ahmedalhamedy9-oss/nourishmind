@@ -3,27 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CourseCard from '@/components/CourseCard';
 
+// Top 10 style card with big number behind
 const Top10Card = ({ course, rank }) => {
   const navigate = useNavigate();
   return (
+    // paddingLeft reserves space for the number bleeding behind the card
     <div
       className="relative flex-shrink-0 cursor-pointer group"
       style={{ width: '190px', paddingLeft: '50px' }}
       onClick={() => navigate(`/course/${course.id}`)}
     >
+      {/* Big rank number — positioned inside padded area, never clipped */}
       <span
         className="absolute bottom-4 font-black select-none pointer-events-none leading-none"
         style={{
-          left: '0px', fontSize: '110px', lineHeight: 1,
-          color: 'transparent', WebkitTextStroke: '2px rgba(255,255,255,0.18)',
-          fontFamily: 'Georgia, serif', zIndex: 0,
+          left: '0px',
+          fontSize: '110px',
+          lineHeight: 1,
+          color: 'transparent',
+          WebkitTextStroke: '2px rgba(255,255,255,0.18)',
+          fontFamily: 'Georgia, serif',
+          zIndex: 0,
         }}
       >
         {rank}
       </span>
+      {/* Card sits to the right of the number */}
       <div className="relative rounded-xl overflow-hidden bg-card border border-border group-hover:border-primary/50 transition-all group-hover:scale-105 duration-300 shadow-lg" style={{ aspectRatio: '2/3', zIndex: 1 }}>
         {course.image
-          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" loading="eager" decoding="async" />
+          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
           : <div className="w-full h-full bg-primary/10" />
         }
         {course.new && (
@@ -37,6 +45,7 @@ const Top10Card = ({ course, rank }) => {
   );
 };
 
+// Normal card
 const NormalCard = ({ course }) => {
   const navigate = useNavigate();
   return (
@@ -47,7 +56,7 @@ const NormalCard = ({ course }) => {
     >
       <div className="relative rounded-xl overflow-hidden aspect-video bg-card border border-border group-hover:border-primary/40 transition-all duration-300">
         {course.image
-          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="eager" decoding="async" />
+          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           : <div className="w-full h-full bg-primary/10" />
         }
         {course.new && (
@@ -68,6 +77,7 @@ const NormalCard = ({ course }) => {
   );
 };
 
+// Continue Learning card with progress
 const ContinueCard = ({ course, progress = 0 }) => {
   const navigate = useNavigate();
   return (
@@ -78,12 +88,14 @@ const ContinueCard = ({ course, progress = 0 }) => {
     >
       <div className="relative rounded-xl overflow-hidden aspect-video bg-card border border-border group-hover:border-primary/40 transition-all duration-300">
         {course.image
-          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="eager" decoding="async" />
+          ? <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           : <div className="w-full h-full bg-primary/10" />
         }
+        {/* Progress bar */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
           <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
         </div>
+        {/* Progress label */}
         <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full">
           {progress}%
         </div>
@@ -96,7 +108,7 @@ const ContinueCard = ({ course, progress = 0 }) => {
   );
 };
 
-const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgress = {}, wishlistIds = [] }) => {
+const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgress = {} }) => {
   const ref = useRef(null);
 
   const scroll = (dir) => {
@@ -107,7 +119,8 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
 
   return (
     <div className="mb-10 group/row">
-      <div className="flex items-center gap-3 mb-4 px-4 sm:px-12">
+      {/* Header */}
+      <div className={"flex items-center gap-3 mb-4 px-4 sm:px-12"}>
         <h2 className="text-white font-bold text-xl">{title}</h2>
         {seeAllPath && (
           <a href={seeAllPath} className="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
@@ -116,6 +129,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
         )}
       </div>
 
+      {/* Cards */}
       <div className="relative">
         <button
           onClick={() => scroll(-1)}
@@ -134,7 +148,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
               ? <Top10Card key={course.id} course={course} rank={i + 1} />
               : variant === 'continue'
               ? <ContinueCard key={course.id} course={course} progress={userProgress[course.id] || 0} />
-              : <CourseCard key={course.id} course={course} wishlisted={wishlistIds.includes(course.id)} />
+              : <CourseCard key={course.id} course={course} />
           ))}
         </div>
 
