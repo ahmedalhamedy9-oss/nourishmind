@@ -87,11 +87,15 @@ const AdminPage = () => {
   const[savingPricing,setSavingPricing]=useState(false);
 
   // Hero state
-  const[hero,setHero]=useState({backgroundType:'image',backgroundImage:'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80',backgroundVideoId:'',tagline:'NOURISHMIND · Wellness Learning Platform',title1:'Nourish Your Mind,',title2:'Elevate Your Life',subtitle:'Expert-led courses in mental health, psychology & nutrition.',stat1_value:'50,000+',stat1_label:'Students',stat2_value:'AR / EN',stat2_label:'Languages',stat3_value:'4.8',stat3_label:'Rating',cta1:'Start Learning',cta2:'Browse Courses'});
+  const[hero,setHero]=useState({backgroundType:'image',backgroundImage:'',backgroundVideoId:'',tagline:'NOURISHMIND · Wellness Learning Platform',title1:'Nourish Your Mind,',title2:'Elevate Your Life',subtitle:'Expert-led courses in mental health, psychology & nutrition.',stat1_value:'50,000+',stat1_label:'Students',stat2_value:'AR / EN',stat2_label:'Languages',stat3_value:'4.8',stat3_label:'Rating',cta1:'Start Learning',cta2:'Browse Courses'});
   const[savingHero,setSavingHero]=useState(false);
 
   // About state
-  const[about,setAbout]=useState({badge:'Our Story',headline1:'We Believe Food is',headline2:'Medicine for the Mind',intro:"NourishMind was born from a simple but powerful idea...",stat1_value:'50,000+',stat1_label:'Students',stat2_value:'AR / EN',stat2_label:'Languages',stat3_value:'4.8 ★',stat3_label:'Average Rating',stat4_value:'30+',stat4_label:'Expert Courses',val1_title:'Science-First',val1_desc:'Every course is grounded in peer-reviewed research.',val2_title:'Human-Centered',val2_desc:'We design for real people navigating real struggles.',val3_title:'Holistic Approach',val3_desc:'Mind, body, and nutrition are inseparable.',team:[{name:'Dr. Ahmed Al-Hamedy',role:'Founder & Lead Psychiatrist',bio:'Psychiatrist and founder of Dawn for Mental Health.',avatar:'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=200&q=80'}]});
+  const[about,setAbout]=useState({badge:'Our Story',headline1:'We Believe Food is',headline2:'Medicine for the Mind',intro:"NourishMind was born from a simple but powerful idea...",stat1_value:'50,000+',stat1_label:'Students',stat2_value:'AR / EN',stat2_label:'Languages',stat3_value:'4.8 ★',stat3_label:'Average Rating',stat4_value:'30+',stat4_label:'Expert Courses',val1_title:'Science-First',val1_desc:'Every course is grounded in peer-reviewed research.',val2_title:'Human-Centered',val2_desc:'We design for real people navigating real struggles.',val3_title:'Holistic Approach',val3_desc:'Mind, body, and nutrition are inseparable.',team:[
+    {name:'Dr. Ahmed Al-Hamedy',role:'Founder & Lead Psychiatrist',bio:'Psychiatrist and founder of Dawn for Mental Health. Pioneer of nutritional psychiatry in the Arabic-speaking world.',avatar:''},
+    {name:'Dr. Sarah Ahmed',role:'Head of Nutrition',bio:'Clinical nutritionist with 15 years of experience integrating diet and mental wellness.',avatar:''},
+    {name:'Dr. Layla Mansour',role:'Psychotherapy Lead',bio:'Specialist in CBT and mindfulness-based interventions for anxiety and depression.',avatar:''},
+  ]});
   const[savingAbout,setSavingAbout]=useState(false);
 
   // Reviews
