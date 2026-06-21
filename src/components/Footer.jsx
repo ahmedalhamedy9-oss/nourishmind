@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import RevealSection from '@/components/RevealSection';
 
 const Footer = () => (
-  <footer className="border-t border-border mt-16 py-12 px-4 sm:px-12 text-gray-500 text-sm">
+  <RevealSection delay={50}><footer className="border-t border-border mt-16 py-12 px-4 sm:px-12 text-gray-500 text-sm">
     <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
       <div>
         <p className="text-white font-bold mb-3">NourishMind</p>
@@ -34,6 +35,7 @@ const Footer = () => (
     </div>
     <p className="text-xs text-center opacity-50">© 2026 NourishMind. All rights reserved.</p>
   </footer>
+</RevealSection>
 );
 
 export default Footer;
