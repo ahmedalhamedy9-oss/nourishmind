@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import SplashScreen from '@/components/SplashScreen';
+import DoorScreen   from '@/components/DoorScreen';
 import HomePage from '@/pages/HomePage';
 import CoursesPage from '@/pages/CoursesPage';
 import CourseDetailPage from '@/pages/CourseDetailPage';
@@ -14,7 +15,7 @@ import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import AdminPage from '@/pages/AdminPage';
 import CertificatePage from '@/pages/CertificatePage';
 
-/* Show splash only on first visit per session */
+/* Splash only on first visit per session; Door always shows */
 const hasSeenSplash = sessionStorage.getItem('nm_splash_done') === '1';
 
 const AdminRoute = ({ children }) => {
@@ -35,45 +36,47 @@ const PrivateRoute = ({ children }) => {
 const AppRoutes = ({ onAuthReady }) => {
   const { loading } = useAuth();
 
-  /* Tell SplashScreen when Firebase is done */
   React.useEffect(() => {
     if (!loading) onAuthReady();
   }, [loading]);
 
   return (
     <Routes>
-      <Route path="/"                element={<HomePage />} />
-      <Route path="/courses"         element={<CoursesPage />} />
-      <Route path="/course/:id"      element={<CourseDetailPage />} />
-      <Route path="/login"           element={<LoginPage />} />
-      <Route path="/signup"          element={<SignupPage />} />
-      <Route path="/about"           element={<AboutPage />} />
-      <Route path="/pricing"         element={<PricingPage />} />
-      <Route path="/my-courses"      element={<MyCoursesPage />} />
-      <Route path="/course/:id/learn" element={<CoursePlayerPage />} />
-      <Route path="/certificates"    element={<PrivateRoute><CertificatePage /></PrivateRoute>} />
-      <Route path="/admin"           element={<AdminRoute><AdminPage /></AdminRoute>} />
-      <Route path="*"               element={<Navigate to="/" />} />
+      <Route path="/"                  element={<HomePage />} />
+      <Route path="/courses"           element={<CoursesPage />} />
+      <Route path="/course/:id"        element={<CourseDetailPage />} />
+      <Route path="/login"             element={<LoginPage />} />
+      <Route path="/signup"            element={<SignupPage />} />
+      <Route path="/about"             element={<AboutPage />} />
+      <Route path="/pricing"           element={<PricingPage />} />
+      <Route path="/my-courses"        element={<MyCoursesPage />} />
+      <Route path="/course/:id/learn"  element={<CoursePlayerPage />} />
+      <Route path="/certificates"      element={<PrivateRoute><CertificatePage /></PrivateRoute>} />
+      <Route path="/admin"             element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="*"                  element={<Navigate to="/" />} />
     </Routes>
   );
 };
 
 const App = () => {
-  const [showSplash,  setShowSplash]  = useState(!hasSeenSplash);
-  const [authReady,   setAuthReady]   = useState(false);
-  const [appVisible,  setAppVisible]  = useState(hasSeenSplash);
+  /* 3 stages: splash → door → app */
+  const [stage,      setStage]      = useState(hasSeenSplash ? 'door' : 'splash');
+  const [authReady,  setAuthReady]  = useState(false);
+  const [appVisible, setAppVisible] = useState(false);
 
-  const handleAuthReady = useCallback(() => {
-    setAuthReady(true);
-  }, []);
+  const handleAuthReady = useCallback(() => setAuthReady(true), []);
 
   const handleSplashDone = useCallback(() => {
     sessionStorage.setItem('nm_splash_done', '1');
-    setShowSplash(false);
-    setAppVisible(true);
+    setStage('door');
   }, []);
 
-  /* Pass _ready flag to SplashScreen via callback object */
+  const handleDoorDone = useCallback(() => {
+    setAppVisible(true);
+    setStage('app');
+  }, []);
+
+  /* Pass _ready flag trick to SplashScreen */
   const splashCallback = handleSplashDone;
   splashCallback._ready = authReady;
 
@@ -81,8 +84,21 @@ const App = () => {
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
-          {showSplash && <SplashScreen onComplete={splashCallback} />}
-          <div style={{ opacity: appVisible ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+          {/* Splash — first visit only */}
+          {stage === 'splash' && (
+            <SplashScreen onComplete={splashCallback} />
+          )}
+
+          {/* Door — always, after splash (or directly on repeat visits) */}
+          {(stage === 'door') && (
+            <DoorScreen onComplete={handleDoorDone} />
+          )}
+
+          {/* App content — fades in after door */}
+          <div style={{
+            opacity:    appVisible ? 1 : 0,
+            transition: 'opacity 0.4s ease',
+          }}>
             <AppRoutes onAuthReady={handleAuthReady} />
           </div>
         </AuthProvider>
