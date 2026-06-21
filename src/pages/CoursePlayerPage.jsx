@@ -4,6 +4,7 @@ import {
   ChevronLeft, CheckCircle, Circle, Lock, Play, List,
   ChevronDown, ChevronUp, SkipForward, SkipBack, BookOpen,
   Volume2, Gauge, Heart, Award, MessageCircle, Calendar,
+  FileText,
 } from 'lucide-react';
 import { doc, updateDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -66,7 +67,7 @@ const SpeedControl = ({ speed, onChange }) => {
 };
 
 /* ── 3 Action Buttons under each lesson ── */
-const LessonActions = ({ course, isCompleted, whatsappPhone }) => {
+const LessonActions = ({ course, isCompleted, whatsappPhone, activeLesson }) => {
   const navigate = useNavigate();
   const [certToast, setCertToast] = React.useState(false);
 
@@ -104,7 +105,22 @@ const LessonActions = ({ course, isCompleted, whatsappPhone }) => {
     window.open(url, '_blank');
   };
 
+  const pdfHref = activeLesson?.pdfUrl
+    ? activeLesson.pdfUrl.includes('drive.google.com/file/')
+      ? 'https://drive.google.com/uc?export=download&id=' + activeLesson.pdfUrl.replace(/.*\/d\/([^/]+).*/, '$1')
+      : activeLesson.pdfUrl
+    : null;
+
   const actions = [
+    ...(pdfHref ? [{
+      icon: FileText,
+      label: 'Download PDF Summary',
+      sublabel: 'Lesson reference guide',
+      color: 'rgba(201,168,76,0.9)',
+      bg: 'rgba(201,168,76,0.08)',
+      border: 'rgba(201,168,76,0.3)',
+      onClick: () => window.open(pdfHref, '_blank'),
+    }] : []),
     {
       icon: Award,
       label: 'Acquire your accredited certification',
@@ -488,35 +504,6 @@ const CoursePlayerPage = () => {
                   {activeLesson.free && <span style={{ marginLeft:8, color:'#4ade80', fontSize:10, fontWeight:700, border:'1px solid rgba(74,222,128,0.3)', padding:'1px 6px', borderRadius:4 }}>Free</span>}
                 </p>
               </div>
-              {/* PDF Download — only for enrolled users */}
-              {canWatch(activeLesson) && activeLesson.pdfUrl && (
-                <a
-                  href={activeLesson.pdfUrl.includes('drive.google.com/file/')
-                    ? activeLesson.pdfUrl.replace('/view?usp=sharing','').replace('/view','').replace('https://drive.google.com/file/d/','https://drive.google.com/uc?export=download&id=')
-                    : activeLesson.pdfUrl
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    marginTop: 8,
-                    padding: '7px 14px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(201,168,76,0.4)',
-                    background: 'rgba(201,168,76,0.08)',
-                    color: 'rgba(201,168,76,0.9)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  📄 Download PDF Summary
-                </a>
-              )}
-
               {canWatch(activeLesson) && (
                 <button onClick={() => markComplete(activeLesson)}
                   style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0, padding:'8px 14px', borderRadius:20, fontSize:12, fontWeight:600, cursor:'pointer',
@@ -550,7 +537,7 @@ const CoursePlayerPage = () => {
 
           {/* ── 3 Action Buttons ── always visible so WhatsApp/Book buttons work */}
           {activeLesson && (
-            <LessonActions course={course} isCompleted={courseComplete} whatsappPhone={whatsappPhone} />
+            <LessonActions course={course} isCompleted={courseComplete} whatsappPhone={whatsappPhone} activeLesson={activeLesson} />
           )}
         </div>
 
