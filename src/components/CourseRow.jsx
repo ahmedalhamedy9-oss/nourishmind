@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CourseCard from '@/components/CourseCard';
+import RevealSection from '@/components/RevealSection';
 
 // Top 10 style card with big number behind
 const Top10Card = ({ course, rank }) => {
