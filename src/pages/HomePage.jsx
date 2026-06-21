@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import ReviewsSection from '@/components/ReviewsSection';
 import { ROWS } from '@/lib/data';
 import RevealSection from '@/components/RevealSection';
-import InstructorMarquee from '@/components/InstructorMarquee';
 
 const DEFAULT_HERO = {
   backgroundImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80',
@@ -35,7 +34,6 @@ const HomePage = () => {
   const [enrolledIds,  setEnrolledIds]  = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [hero, setHero]               = useState(DEFAULT_HERO);
-  const [instructors, setInstructors] = useState([]);
 
   // Load hero from Firestore
   useEffect(() => {
@@ -44,12 +42,6 @@ const HomePage = () => {
       .catch(() => {});
   }, []);
 
-  // Load instructors marquee
-  useEffect(() => {
-    getDoc(doc(db, 'settings', 'instructors'))
-      .then(snap => { if (snap.exists()) setInstructors(snap.data().list || []); })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'certificates'),
@@ -133,26 +125,6 @@ const HomePage = () => {
 
       <RevealSection delay={50}><CertificatesCarousel certificates={certificates} /></RevealSection>
 
-      {/* ── INSTRUCTOR MARQUEE ── */}
-      {instructors.length > 0 && (
-        <RevealSection delay={100}>
-          <div style={{ padding: '40px 0 20px' }}>
-            <p style={{
-              textAlign: 'center',
-              color: 'rgba(255,255,255,0.35)',
-              fontSize: 11,
-              letterSpacing: '0.15em',
-              fontFamily: "'Outfit', sans-serif",
-              textTransform: 'uppercase',
-              marginBottom: 24,
-              fontWeight: 600,
-            }}>
-              Learn from the best
-            </p>
-            <InstructorMarquee instructors={instructors} />
-          </div>
-        </RevealSection>
-      )}
 
       <section className="relative z-10 pb-8">
         {coursesLoading ? (

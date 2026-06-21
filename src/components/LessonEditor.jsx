@@ -24,7 +24,7 @@ const LessonEditor = ({ course, onClose }) => {
 
   const addLesson = (sid) =>
     setSections(prev => prev.map(s =>
-      s.id === sid ? { ...s, lessons: [...(s.lessons || []), { id: genId(), title: 'New Lesson', duration: '0:00', videoUrl: '', free: false }] } : s
+      s.id === sid ? { ...s, lessons: [...(s.lessons || []), { id: genId(), title: 'New Lesson', duration: '0:00', videoUrl: '', pdfUrl: '', free: false }] } : s
     ));
 
   const updateLesson = (sid, lid, key, val) =>
@@ -114,6 +114,14 @@ const LessonEditor = ({ course, onClose }) => {
                         />
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        {/* PDF Download */}
+                        <input
+                          value={lesson.pdfUrl || ''}
+                          onChange={e => updateLesson(section.id, lesson.id, 'pdfUrl', e.target.value)}
+                          placeholder="PDF Google Drive link (optional)"
+                          className="flex-1 bg-transparent text-gray-400 text-xs outline-none min-w-0 border-t border-white/5 pt-1 mt-1"
+                          style={{ minWidth: 0 }}
+                        />
                         <button
                           onClick={() => updateLesson(section.id, lesson.id, 'free', !lesson.free)}
                           className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg border transition-colors ${lesson.free ? 'border-green-500/40 text-green-400 bg-green-500/10' : 'border-border text-gray-500 hover:border-primary'}`}
