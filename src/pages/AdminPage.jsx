@@ -29,7 +29,7 @@ const TABS = [
   { id: 'about',       label: 'About Page',    icon: Info },
   { id: 'coursepage',  label: 'Course Page',   icon: FileText },
   { id: 'contact',     label: 'Contact / WA',  icon: Phone },
-  { id: 'instructors', label: 'Instructors',    icon: Users },
+  { id: 'instructors', label: 'Marquee Images', icon: Image },
 ];
 
 const Field = ({ label, children }) => (
@@ -138,6 +138,7 @@ const AdminPage = () => {
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
+    getDoc(doc(db,'settings','instructors')).then(snap=>{if(snap.exists())setInstructors(snap.data().list||[]);}).catch(()=>{});
 
     const unsubCats=onSnapshot(doc(db,'settings','categories'),snap=>{if(snap.exists()&&snap.data().list?.length)setCategories(snap.data().list);else{setDoc(doc(db,'settings','categories'),{list:DEFAULT_CATS});setCategories(DEFAULT_CATS);}},()=>setCategories(DEFAULT_CATS));
     const qCourses=query(collection(db,'courses'),orderBy('createdAt','desc'));
@@ -362,7 +363,7 @@ const AdminPage = () => {
 
       {activeTab === 'instructors' && (
             <div>
-              {sectionTitle('Instructors Marquee', (
+              {sectionTitle('Marquee Images', (
                 <Btn onClick={saveInstructors} disabled={savingInst}>
                   <Check className="w-4 h-4"/>
                   {savingInst ? 'Saving…' : 'Save'}
