@@ -29,6 +29,7 @@ const TABS = [
   { id: 'about',       label: 'About Page',    icon: Info },
   { id: 'coursepage',  label: 'Course Page',   icon: FileText },
   { id: 'contact',     label: 'Contact / WA',  icon: Phone },
+  { id: 'instructors', label: 'Instructors',    icon: Users },
 ];
 
 const Field = ({ label, children }) => (
@@ -51,6 +52,19 @@ const Btn = ({ children, onClick, disabled, variant='primary', className='' }) =
 const ImgUpload = ({ label, folder, currentUrl, onUpload }) => {
   const [busy,setBusy]=useState(false);
   const handle=async(e)=>{const file=e.target.files?.[0];if(!file)return;setBusy(true);try{onUpload(await uploadToCloudinary(file,folder));}catch(err){alert('Upload failed: '+err.message);}finally{setBusy(false);}};
+  const saveInstructors=async()=>{
+    setSavingInst(true);
+    try{
+      await setDoc(doc(db,'settings','instructors'),{list:instructors});
+      alert('Instructors saved!');
+    }catch(e){alert('Error: '+e.message);}
+    finally{setSavingInst(false);}
+  };
+
+  const addInstructor=()=>setInstructors(prev=>[...prev,{name:'',title:'',image:''}]);
+  const removeInstructor=(i)=>setInstructors(prev=>prev.filter((_,j)=>j!==i));
+  const setInstField=(i,k,v)=>setInstructors(prev=>prev.map((inst,j)=>j===i?{...inst,[k]:v}:inst));
+
   return(
     <div className="flex flex-col gap-2">
       {currentUrl&&<img src={currentUrl} alt="" className="h-20 w-auto rounded-lg object-cover border border-white/10" onError={e=>e.target.style.display='none'}/>}
@@ -73,6 +87,8 @@ const AdminPage = () => {
   const navigate=useNavigate();
   const{currentUser}=useAuth();
   const[activeTab,setActiveTab]=useState('courses');
+  const[instructors,setInstructors]=useState([]);
+  const[savingInst,setSavingInst]=useState(false);
   const[courses,setCourses]=useState(PLACEHOLDER_COURSES);
   const[users,setUsers]=useState([]);
   const[categories,setCategories]=useState(DEFAULT_CATS);
@@ -343,6 +359,8 @@ const AdminPage = () => {
 
         </main>
       </div>
+
+      {activeTab==='instructors'&&(<div>{sectionTitle('Instructors Marquee',<Btn onClick={saveInstructors} disabled={savingInst}><Check className="w-4 h-4"/>{savingInst?'Saving…':'Save'}</Btn>)}<p className="text-gray-500 text-sm mb-6">هذه الصور ستظهر في الـ Marquee على الهوم بيدج. المقاس المثالي: 400×600px (2:3)</p><div className="mb-4"><Btn onClick={addInstructor} variant="ghost"><Plus className="w-4 h-4"/>Add Instructor</Btn></div><div className="flex flex-col gap-4">{instructors.map((inst,i)=>(<div key={i} className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 flex gap-5 items-start"><div className="shrink-0 w-20 h-[120px] rounded-xl overflow-hidden bg-white/5 border border-white/10">{inst.image?<img src={inst.image} alt={inst.name} className="w-full h-full object-cover object-top"/>:<div className="w-full h-full flex items-center justify-center text-2xl text-gray-600">{inst.name?.[0]||'?'}</div>}</div><div className="flex-1 flex flex-col gap-3"><div className="grid grid-cols-2 gap-3"><Field label="Name"><Input value={inst.name} onChange={e=>setInstField(i,'name',e.target.value)} placeholder="Dr. Ahmed"/></Field><Field label="Title"><Input value={inst.title} onChange={e=>setInstField(i,'title',e.target.value)} placeholder="Psychiatrist"/></Field></div><Field label="Photo (400x600px)"><ImgUpload label="Upload Photo" folder="nourishmind/instructors" currentUrl={inst.image} onUpload={url=>setInstField(i,'image',url)}/><Input value={inst.image} onChange={e=>setInstField(i,'image',e.target.value)} placeholder="https://…" className="mt-1"/></Field></div><button onClick={()=>removeInstructor(i)} className="text-gray-500 hover:text-red-400 shrink-0"><Trash2 className="w-4 h-4"/></button></div>))}{!instructors.length&&<p className="text-gray-500 text-sm">No instructors yet.</p>}</div></div>)}
 
       {modal&&(<ModalErrorBoundary onClose={()=>setModal(null)}><CourseModal course={modal==='add'?null:modal} categories={categories} onSave={saveCourse} onClose={()=>setModal(null)}/></ModalErrorBoundary>)}
       {lessonEditor&&(<LessonEditor course={lessonEditor} onClose={(updatedSections)=>{if(updatedSections)setCourses(prev=>prev.map(c=>c.id===lessonEditor.id?{...c,sections:updatedSections}:c));setLessonEditor(null);}}/>)}
