@@ -12,6 +12,7 @@ import { useCourses } from '@/hooks/useCourses';
 import { useAuth } from '@/contexts/AuthContext';
 import ReviewsSection from '@/components/ReviewsSection';
 import { ROWS } from '@/lib/data';
+import RevealSection from '@/components/RevealSection';
 
 const DEFAULT_HERO = {
   backgroundImage: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1600&q=80',
@@ -121,7 +122,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      <CertificatesCarousel certificates={certificates} />
+      <RevealSection delay={50}><CertificatesCarousel certificates={certificates} /></RevealSection>
 
       <section className="relative z-10 pb-8">
         {coursesLoading ? (
@@ -160,7 +161,7 @@ const HomePage = () => {
         )}
       </section>
 
-      <ReviewsSection />
+      <RevealSection delay={100}><ReviewsSection /></RevealSection>
       <Footer />
     </div>
   );
