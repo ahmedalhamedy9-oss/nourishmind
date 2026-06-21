@@ -105,11 +105,16 @@ const LessonActions = ({ course, isCompleted, whatsappPhone, activeLesson }) => 
     window.open(url, '_blank');
   };
 
-  const pdfHref = activeLesson?.pdfUrl
-    ? activeLesson.pdfUrl.includes('drive.google.com/file/')
-      ? 'https://drive.google.com/uc?export=download&id=' + activeLesson.pdfUrl.replace(/.*\/d\/([^/]+).*/, '$1')
-      : activeLesson.pdfUrl
-    : null;
+  const getPdfHref = (url) => {
+    if (!url) return null;
+    // Extract file ID from Google Drive URL
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (match) {
+      return `https://drive.google.com/uc?export=download&id=${match[1]}&confirm=1`;
+    }
+    return url; // Return as-is if not a Drive URL
+  };
+  const pdfHref = getPdfHref(activeLesson?.pdfUrl);
 
   const actions = [
     ...(pdfHref ? [{
