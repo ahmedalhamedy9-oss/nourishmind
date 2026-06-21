@@ -17,6 +17,8 @@ const getBunnyUrl = (url, muted = true) => {
     u.searchParams.set('muted',    muted ? 'true' : 'false');
     u.searchParams.set('loop',     'true');
     u.searchParams.set('controls', 'false');
+    u.searchParams.set('preload',  'true');
+    u.searchParams.set('responsive', 'false');
     return u.toString();
   } catch { return url; }
 };
@@ -120,7 +122,7 @@ const CourseCard = ({ course }) => {
         setVideoReady(true);
         setShowVideo(true);
       }
-    }, 3000);
+    }, 1500);
   };
 
   const toggleMute = useCallback((e) => {
@@ -142,17 +144,22 @@ const CourseCard = ({ course }) => {
 
         {/* ── iframe in background, always visible so autoplay works ── */}
         {showIframe && hasBunny && (
-          <iframe
-            ref={iframeRef}
-            src={iframeSrc}
-            className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-            style={{ zIndex: 1 }}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            referrerPolicy="origin"
-            allowFullScreen
-            title={course.title}
-            onLoad={onIframeLoad}
-          />
+          <>
+            <iframe
+              ref={iframeRef}
+              src={iframeSrc}
+              className="absolute inset-0 w-full h-full border-0"
+              style={{ zIndex: 1, pointerEvents: 'none' }}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="origin"
+              title={course.title}
+              onLoad={onIframeLoad}
+            />
+            {/* Transparent blocker that sits over the iframe while thumbnail is visible — hides controls */}
+            {!showVideo && (
+              <div className="absolute inset-0" style={{ zIndex: 3, background: 'transparent' }} />
+            )}
+          </>
         )}
 
         {/* ── Thumbnail on top, fades out only when video is actually playing ── */}
