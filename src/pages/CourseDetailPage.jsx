@@ -41,14 +41,6 @@ const CourseDetailPage = () => {
   const [wishlisted,    setWishlisted]    = useState(false);
   const [wishlistBusy, setWishlistBusy]  = useState(false);
   const [defaultWhatYouGet, setDefaultWhatYouGet] = useState(DEFAULT_WHAT_YOU_GET);
-  const [videoActivated,    setVideoActivated]    = useState(false);
-  const [isMobile,          setIsMobile]          = useState(() => window.innerWidth < 768);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   // Load wishlist state
   useEffect(() => {
@@ -178,46 +170,12 @@ const CourseDetailPage = () => {
         <div className="flex flex-col flex-1 min-w-0 overflow-y-auto">
 
           {/* Video */}
-          <div className="w-full bg-black" style={{ aspectRatio:'16/9', position:'relative' }}>
+          <div className="w-full bg-black" style={{ aspectRatio:'16/9' }}>
             {course.previewVideo ? (
-              <>
-                {/* On desktop: autoplay iframe immediately.
-                    On mobile: show thumbnail + play button; load iframe only after user taps */}
-                {(!isMobile || videoActivated) && (
-                  <iframe
-                    src={getBunnyEmbedUrl(course.previewVideo, {
-                      autoplay: true,
-                      muted: !videoActivated, // desktop=muted, mobile after tap=unmuted
-                    })}
-                    className="w-full h-full block border-0"
-                    style={{ position:'absolute', inset:0 }}
-                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media; playsinline"
-                    referrerPolicy="origin" allowFullScreen title={course.title}
-                    playsInline
-                  />
-                )}
-                {/* Mobile thumbnail overlay — shown until user taps */}
-                {isMobile && !videoActivated && (
-                  <div
-                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                    style={{ background:'#000', zIndex:2 }}
-                    onClick={() => setVideoActivated(true)}
-                  >
-                    {course.image && (
-                      <img src={course.image} alt={course.title}
-                        className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                    )}
-                    <div className="relative z-10 flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-xl border-2 border-white/20">
-                        <Play className="w-7 h-7 text-white fill-white ml-1" />
-                      </div>
-                      <span style={{ color:'rgba(255,255,255,0.8)', fontSize:12, fontWeight:600 }}>
-                        Tap to play trailer
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </>
+              <iframe src={getBunnyEmbedUrl(course.previewVideo,{autoplay:true,muted:true})}
+                className="w-full h-full block border-0"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                referrerPolicy="origin" allowFullScreen title={course.title} />
             ) : course.image ? (
               <div className="relative w-full h-full">
                 <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
