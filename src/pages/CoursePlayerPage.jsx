@@ -196,6 +196,8 @@ const CoursePlayerPage = () => {
   const [courseComplete,   setCourseComplete]    = useState(false);
   const [showCompletionBanner, setShowCompletionBanner] = useState(false);
   const [whatsappPhone,    setWhatsappPhone]     = useState('');
+  const [showTapHint,      setShowTapHint]       = useState(false);
+  const tapHintTimer = useRef(null);
   const iframeKey = useRef(0);
   const iframeRef = useRef(null);
 
@@ -207,6 +209,15 @@ const CoursePlayerPage = () => {
     );
     return unsub;
   }, []);
+
+  /* Show "Tap for sound" hint briefly on mobile when a new lesson loads */
+  useEffect(() => {
+    if (!isMobile || !activeLesson) return;
+    setShowTapHint(true);
+    clearTimeout(tapHintTimer.current);
+    tapHintTimer.current = setTimeout(() => setShowTapHint(false), 3000);
+    return () => clearTimeout(tapHintTimer.current);
+  }, [activeLesson?.id, isMobile]);
 
   const applySpeed = useCallback((s) => {
     setSpeed(s);
@@ -426,8 +437,9 @@ const CoursePlayerPage = () => {
                       style={{ width:'100%', height:'100%', border:'none', display:'block', position:'absolute', inset:0 }}
                       allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                       referrerPolicy="origin" allowFullScreen title={activeLesson.title}/>
-                    {isMobile && (
-                      <div style={{ position:'absolute', top:8, right:8, zIndex:10, pointerEvents:'none' }}>
+                    {isMobile && showTapHint && (
+                      <div style={{ position:'absolute', top:8, right:8, zIndex:10, pointerEvents:'none',
+                        transition:'opacity 0.5s', opacity: showTapHint ? 1 : 0 }}>
                         <div style={{ display:'flex', alignItems:'center', gap:4, background:'rgba(0,0,0,0.6)', borderRadius:6, padding:'4px 8px' }}>
                           <Volume2 size={12} color="rgba(255,255,255,0.7)"/>
                           <span style={{ color:'rgba(255,255,255,0.7)', fontSize:10, fontWeight:500 }}>Tap player for sound</span>
