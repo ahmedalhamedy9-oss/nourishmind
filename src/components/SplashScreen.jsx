@@ -18,14 +18,19 @@ const SplashScreen = ({ onComplete }) => {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
-  /* Simulated progress: crawls to 90, waits for Firebase, then jumps to 100 */
+  /* Simulated progress:
+     - يمشي ببطء ثابت بـ 1% كل 300ms
+     - يوصل لـ 92% بحد أقصى ويفضل يتحرك ببطء جداً
+     - لما Firebase يجاوب يكمل لـ 100% */
   useEffect(() => {
     let current = 0;
     intervalRef.current = setInterval(() => {
-      current += current < 30 ? 8 : current < 60 ? 5 : current < 85 ? 2 : 0;
-      setProgress(Math.min(current, 90));
-      if (current >= 90) clearInterval(intervalRef.current);
-    }, 180);
+      current += current < 70 ? 1.2 : current < 85 ? 0.6 : current < 92 ? 0.2 : 0;
+      setProgress(prev => {
+        const next = Math.min(current, 92);
+        return Math.max(prev, next); // never go backwards
+      });
+    }, 300);
     return () => clearInterval(intervalRef.current);
   }, []);
 
@@ -38,7 +43,7 @@ const SplashScreen = ({ onComplete }) => {
       setTimeout(() => {
         setVisible(false);
         setTimeout(onComplete, 400);
-      }, 600);
+      }, 700);
     }
   }, [onComplete._ready]);
 
@@ -62,7 +67,7 @@ const SplashScreen = ({ onComplete }) => {
       {/* ── Logo ── */}
       <div
         style={{
-          transform:  logoReady ? 'translateY(0) scale(1)'    : 'translateY(-18px) scale(0.88)',
+          transform:  logoReady ? 'translateY(0) scale(1)' : 'translateY(-18px) scale(0.88)',
           opacity:    logoReady ? 1 : 0,
           transition: 'transform 0.65s cubic-bezier(.22,1,.36,1), opacity 0.65s ease',
           marginBottom: 24,
@@ -99,46 +104,45 @@ const SplashScreen = ({ onComplete }) => {
           fontWeight: 400,
           fontFamily: "'Outfit', sans-serif",
           letterSpacing: '0.02em',
-          marginBottom: 0,
         }}
       >
         Preparing the best experience for you...
       </div>
 
-      {/* ── Progress bar — pinned to bottom ── */}
-      <div
-        style={{
-          position:   'absolute',
-          bottom:     0,
-          left:       0,
-          right:      0,
-          height:     3,
-          background: 'rgba(255,255,255,0.08)',
-        }}
-      >
-        <div
-          style={{
+      {/* ── Progress bar + percentage — 60px من أسفل ── */}
+      <div style={{
+        position: 'absolute',
+        bottom:   60,
+        left:     32,
+        right:    32,
+      }}>
+        {/* Percentage */}
+        <div style={{
+          display:        'flex',
+          justifyContent: 'flex-end',
+          marginBottom:   6,
+          color:          'rgba(255,255,255,0.35)',
+          fontSize:        11,
+          fontFamily:     "'Outfit', sans-serif",
+        }}>
+          {Math.round(progress)}%
+        </div>
+
+        {/* Bar track */}
+        <div style={{
+          height:       3,
+          background:   'rgba(255,255,255,0.08)',
+          borderRadius: 4,
+          overflow:     'hidden',
+        }}>
+          <div style={{
             height:     '100%',
             width:      `${progress}%`,
             background: 'linear-gradient(90deg, #4a9b8e, #6dbfb0)',
-            transition: 'width 0.3s ease',
-            borderRadius: '0 2px 2px 0',
-          }}
-        />
-      </div>
-
-      {/* ── Percentage ── */}
-      <div
-        style={{
-          position:   'absolute',
-          bottom:     10,
-          right:      16,
-          color:      'rgba(255,255,255,0.3)',
-          fontSize:   11,
-          fontFamily: "'Outfit', sans-serif",
-        }}
-      >
-        {progress}%
+            transition: 'width 0.4s ease',
+            borderRadius: 4,
+          }} />
+        </div>
       </div>
     </div>
   );
