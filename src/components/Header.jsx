@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Shield } from 'lucide-react';
+import { Menu, X, Shield, Heart, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardModal from '@/components/DashboardModal';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 const NAV_LINKS = [
@@ -34,7 +34,6 @@ const Avatar = ({ src, initials, size = 36 }) => (
   )
 );
 
-// WhatsApp — lazy loaded, separate listener
 export const FloatingWhatsApp = () => {
   const [phone, setPhone] = useState('');
   useEffect(() => {
@@ -72,17 +71,8 @@ const Header = () => {
   const location = useLocation();
 
   useEffect(() => {
-    let ticking = false;
-    const fn = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          setScrolled(window.scrollY > 10);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', fn, { passive: true });
+    const fn = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', fn);
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
@@ -97,13 +87,13 @@ const Header = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center transition-all duration-300"
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 flex items-center transition-all duration-500"
         style={{
-          background:    scrolled ? 'rgba(10,20,18,0.92)' : 'rgba(10,20,18,0.4)',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          WebkitBackdropFilter: scrolled ? 'blur(12px)' : 'none',
+          background:    scrolled ? 'rgba(10,20,18,0.75)' : 'rgba(10,20,18,0.35)',
+          backdropFilter:'blur(20px) saturate(180%)',
+          WebkitBackdropFilter:'blur(20px) saturate(180%)',
           borderBottom:  scrolled ? '1px solid rgba(74,155,142,0.2)' : '1px solid rgba(74,155,142,0.08)',
-          boxShadow:     scrolled ? '0 2px 20px rgba(0,0,0,0.3)' : 'none',
+          boxShadow:     scrolled ? '0 4px 32px rgba(0,0,0,0.3)' : 'none',
         }}>
         <div className="w-full px-4 sm:px-6 flex items-center gap-4">
           <Logo />
@@ -176,7 +166,7 @@ const Header = () => {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden fixed top-16 left-0 right-0 z-40 flex flex-col"
-          style={{ background:'rgba(8,18,16,0.98)', borderBottom:'1px solid rgba(74,155,142,0.15)' }}>
+          style={{ background:'rgba(8,18,16,0.97)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(74,155,142,0.15)' }}>
           {currentUser && (
             <button onClick={openDash} className="flex items-center gap-3 px-4 py-4 border-b w-full text-left"
               style={{ borderColor:'rgba(74,155,142,0.15)', background:'none', cursor:'pointer' }}>
