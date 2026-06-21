@@ -3,6 +3,7 @@ import { Star } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { tr } from '@/lib/translations';
 import { collection, onSnapshot } from 'firebase/firestore';
+import RevealSection from '@/components/RevealSection';
 import { db } from '@/lib/firebase';
 
 const PLACEHOLDER_REVIEWS = [
