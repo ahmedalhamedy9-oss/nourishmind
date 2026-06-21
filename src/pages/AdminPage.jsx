@@ -360,7 +360,56 @@ const AdminPage = () => {
         </main>
       </div>
 
-      {activeTab==='instructors'&&(<div>{sectionTitle('Instructors Marquee',<Btn onClick={saveInstructors} disabled={savingInst}><Check className="w-4 h-4"/>{savingInst?'Saving…':'Save'}</Btn>)}<p className="text-gray-500 text-sm mb-6">هذه الصور ستظهر في الـ Marquee على الهوم بيدج. المقاس المثالي: 400×600px (2:3)</p><div className="mb-4"><Btn onClick={addInstructor} variant="ghost"><Plus className="w-4 h-4"/>Add Instructor</Btn></div><div className="flex flex-col gap-4">{instructors.map((inst,i)=>(<div key={i} className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 flex gap-5 items-start"><div className="shrink-0 w-20 h-[120px] rounded-xl overflow-hidden bg-white/5 border border-white/10">{inst.image?<img src={inst.image} alt={inst.name} className="w-full h-full object-cover object-top"/>:<div className="w-full h-full flex items-center justify-center text-2xl text-gray-600">{inst.name?.[0]||'?'}</div>}</div><div className="flex-1 flex flex-col gap-3"><div className="grid grid-cols-2 gap-3"><Field label="Name"><Input value={inst.name} onChange={e=>setInstField(i,'name',e.target.value)} placeholder="Dr. Ahmed"/></Field><Field label="Title"><Input value={inst.title} onChange={e=>setInstField(i,'title',e.target.value)} placeholder="Psychiatrist"/></Field></div><Field label="Photo (400x600px)"><ImgUpload label="Upload Photo" folder="nourishmind/instructors" currentUrl={inst.image} onUpload={url=>setInstField(i,'image',url)}/><Input value={inst.image} onChange={e=>setInstField(i,'image',e.target.value)} placeholder="https://…" className="mt-1"/></Field></div><button onClick={()=>removeInstructor(i)} className="text-gray-500 hover:text-red-400 shrink-0"><Trash2 className="w-4 h-4"/></button></div>))}{!instructors.length&&<p className="text-gray-500 text-sm">No instructors yet.</p>}</div></div>)}
+      {activeTab === 'instructors' && (
+            <div>
+              {sectionTitle('Instructors Marquee', (
+                <Btn onClick={saveInstructors} disabled={savingInst}>
+                  <Check className="w-4 h-4"/>
+                  {savingInst ? 'Saving…' : 'Save'}
+                </Btn>
+              ))}
+              <p className="text-gray-500 text-sm mb-6">
+                هذه الصور ستظهر في الـ Marquee على الهوم بيدج. المقاس المثالي: 400×600px (2:3)
+              </p>
+              <div className="mb-4">
+                <Btn onClick={addInstructor} variant="ghost">
+                  <Plus className="w-4 h-4"/>Add Instructor
+                </Btn>
+              </div>
+              <div className="flex flex-col gap-4">
+                {instructors.map((inst, i) => (
+                  <div key={i} className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 flex gap-5 items-start">
+                    <div className="shrink-0 w-20 h-[120px] rounded-xl overflow-hidden bg-white/5 border border-white/10">
+                      {inst.image
+                        ? <img src={inst.image} alt={inst.name} className="w-full h-full object-cover object-top"/>
+                        : <div className="w-full h-full flex items-center justify-center text-2xl text-gray-600">{inst.name?.[0] || '?'}</div>
+                      }
+                    </div>
+                    <div className="flex-1 flex flex-col gap-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Name">
+                          <Input value={inst.name} onChange={e => setInstField(i, 'name', e.target.value)} placeholder="Dr. Ahmed"/>
+                        </Field>
+                        <Field label="Title">
+                          <Input value={inst.title} onChange={e => setInstField(i, 'title', e.target.value)} placeholder="Psychiatrist"/>
+                        </Field>
+                      </div>
+                      <Field label="Photo (400×600px recommended)">
+                        <ImgUpload label="Upload Photo" folder="nourishmind/instructors" currentUrl={inst.image} onUpload={url => setInstField(i, 'image', url)}/>
+                        <Input value={inst.image} onChange={e => setInstField(i, 'image', e.target.value)} placeholder="https://…" className="mt-1"/>
+                      </Field>
+                    </div>
+                    <button onClick={() => removeInstructor(i)} className="text-gray-500 hover:text-red-400 shrink-0">
+                      <Trash2 className="w-4 h-4"/>
+                    </button>
+                  </div>
+                ))}
+                {!instructors.length && (
+                  <p className="text-gray-500 text-sm">No instructors yet. Click Add Instructor to start.</p>
+                )}
+              </div>
+            </div>
+          )}
 
       {modal&&(<ModalErrorBoundary onClose={()=>setModal(null)}><CourseModal course={modal==='add'?null:modal} categories={categories} onSave={saveCourse} onClose={()=>setModal(null)}/></ModalErrorBoundary>)}
       {lessonEditor&&(<LessonEditor course={lessonEditor} onClose={(updatedSections)=>{if(updatedSections)setCourses(prev=>prev.map(c=>c.id===lessonEditor.id?{...c,sections:updatedSections}:c));setLessonEditor(null);}}/>)}
