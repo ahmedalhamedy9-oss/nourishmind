@@ -10,11 +10,6 @@ export const uploadToCloudinary = async (file, folder = 'nourishmind') => {
   formData.append('upload_preset', UPLOAD_PRESET);
   formData.append('folder', folder);
 
-  // For PDFs: use image endpoint but tell Cloudinary it's a raw file
-  if (isPdf) {
-    formData.append('resource_type', 'raw');
-  }
-
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`,
     { method: 'POST', body: formData }
@@ -24,6 +19,14 @@ export const uploadToCloudinary = async (file, folder = 'nourishmind') => {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error?.message || 'Cloudinary upload failed');
   }
+
   const data = await res.json();
-  return data.secure_url;
+  let url = data.secure_url;
+
+  // Fix URL for PDFs: replace /image/upload/ with /raw/upload/
+  if (isPdf && url.includes('/image/upload/')) {
+    url = url.replace('/image/upload/', '/raw/upload/');
+  }
+
+  return url;
 };
