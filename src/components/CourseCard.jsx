@@ -62,19 +62,22 @@ const CourseCard = ({ course }) => {
   const iframeRef  = useRef(null);
   const hoverRef   = useRef(false);
   const hoverTimer = useRef(null);
+  const isMobile   = typeof window !== 'undefined' && window.innerWidth < 768;
   const videoTimer = useRef(null);
 
   const hasBunny = !!course.previewVideo;
 
   const handleMouseEnter = () => {
+    if (isMobile) return; // no hover on mobile
     hoverRef.current = true;
     if (!hasBunny) return;
     hoverTimer.current = setTimeout(() => {
       if (hoverRef.current) {
-        setIframeSrc(getBunnyUrl(course.previewVideo, true));
+        // After 1.5s intentional hover → play with sound (like Netflix)
+        setIframeSrc(getBunnyUrl(course.previewVideo, false));
         setShowIframe(true);
       }
-    }, 600);
+    }, 1500);
   };
 
   const handleMouseLeave = () => {
@@ -139,6 +142,12 @@ const CourseCard = ({ course }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => navigate(`/course/${course.id}`)}
+      style={{
+        transform: showVideo ? 'scale(1.04)' : 'scale(1)',
+        transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        zIndex: showVideo ? 10 : 1,
+        position: 'relative',
+      }}
     >
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
 
