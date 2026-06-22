@@ -172,7 +172,7 @@ const CourseDetailPage = () => {
           {/* Video */}
           <div className="w-full bg-black" style={{ aspectRatio:'16/9' }}>
             {course.previewVideo ? (
-              <iframe src={getBunnyEmbedUrl(course.previewVideo,{autoplay:true,muted:true})}
+              <iframe src={getBunnyEmbedUrl(course.previewVideo,{autoplay:true,muted:false})}
                 className="w-full h-full block border-0"
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                 referrerPolicy="origin" allowFullScreen title={course.title} />
