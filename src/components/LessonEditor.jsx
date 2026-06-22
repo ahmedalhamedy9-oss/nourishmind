@@ -1,33 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, X, Check, ChevronDown, ChevronUp, Lock, Unlock, Upload, FileText } from 'lucide-react';
+import { Plus, Trash2, X, Check, ChevronDown, ChevronUp, Lock, Unlock, FileText } from 'lucide-react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { uploadToCloudinary } from '@/lib/cloudinary';
-
-const PdfUpload = ({ currentUrl, onUpload }) => {
-  const [busy, setBusy] = useState(false);
-  const handle = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.type !== 'application/pdf') { alert('Please select a PDF file'); return; }
-    setBusy(true);
-    try {
-      const url = await uploadToCloudinary(file, 'nourishmind/pdfs');
-      onUpload(url);
-    } catch (err) {
-      alert('Upload failed: ' + err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <label className={`flex items-center gap-1.5 cursor-pointer text-xs px-2 py-1 rounded-lg border transition-colors ${busy ? 'opacity-50 pointer-events-none border-border text-gray-500' : 'border-dashed border-white/15 text-gray-500 hover:text-primary hover:border-primary'}`}>
-      {busy ? <><Upload className="w-3 h-3 animate-pulse"/>Uploading…</> : <><FileText className="w-3 h-3"/>Upload PDF</>}
-      <input type="file" accept="application/pdf" className="hidden" onChange={handle}/>
-    </label>
-  );
-};
 
 const genId = () => Math.random().toString(36).substr(2, 9);
 
@@ -140,23 +114,20 @@ const LessonEditor = ({ course, onClose }) => {
                         />
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        {/* PDF Upload + URL */}
+                        {/* PDF URL — Google Drive */}
                         <div className="flex items-center gap-1.5 w-full border-t border-white/5 pt-2 mt-1">
-                          <PdfUpload
-                            currentUrl={lesson.pdfUrl}
-                            onUpload={url => updateLesson(section.id, lesson.id, 'pdfUrl', url)}
+                          <FileText className="w-3 h-3 text-gray-600 shrink-0"/>
+                          <input
+                            value={lesson.pdfUrl || ''}
+                            onChange={e => updateLesson(section.id, lesson.id, 'pdfUrl', e.target.value)}
+                            placeholder="Google Drive PDF link (optional)"
+                            className="flex-1 bg-transparent text-gray-400 text-xs outline-none min-w-0"
                           />
                           {lesson.pdfUrl && (
-                            <>
-                              <a href={lesson.pdfUrl} target="_blank" rel="noopener noreferrer"
-                                className="text-primary text-xs hover:underline truncate max-w-[120px]">
-                                View PDF
-                              </a>
-                              <button onClick={() => updateLesson(section.id, lesson.id, 'pdfUrl', '')}
-                                className="text-gray-600 hover:text-red-400">
-                                <X className="w-3 h-3"/>
-                              </button>
-                            </>
+                            <button onClick={() => updateLesson(section.id, lesson.id, 'pdfUrl', '')}
+                              className="text-gray-600 hover:text-red-400 shrink-0">
+                              <X className="w-3 h-3"/>
+                            </button>
                           )}
                         </div>
                         <button
