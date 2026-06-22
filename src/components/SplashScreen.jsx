@@ -57,9 +57,23 @@ const SplashScreen = ({ onComplete }) => {
     return () => clearInterval(intervalRef.current);
   }, []);
 
-  /* Firebase ready → complete to 100% then call onComplete */
+  /* Firebase ready OR timeout → complete to 100% then call onComplete */
   useEffect(() => {
+    // Fallback timeout — if Firebase doesn't respond in 8s (Safari issue), proceed anyway
+    const fallbackTimer = setTimeout(() => {
+      if (!doneRef.current) {
+        doneRef.current = true;
+        clearInterval(intervalRef.current);
+        setProgress(100);
+        setTimeout(() => {
+          setVisible(false);
+          setTimeout(onComplete, 400);
+        }, 600);
+      }
+    }, 8000);
+
     if (onComplete._ready && !doneRef.current) {
+      clearTimeout(fallbackTimer);
       doneRef.current = true;
       clearInterval(intervalRef.current);
       setFeatVisible(false);
@@ -73,6 +87,8 @@ const SplashScreen = ({ onComplete }) => {
         setTimeout(onComplete, 400);
       }, 900);
     }
+
+    return () => clearTimeout(fallbackTimer);
   }, [onComplete._ready]);
 
   if (!visible) return null;
