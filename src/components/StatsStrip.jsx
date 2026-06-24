@@ -1,188 +1,96 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import React, { useEffect, useRef, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 /**
- * StatsStrip — animated stats bar
- *
- * Stats:
- *   1. Enrolled Learners  — starts from `settings/stats.enrolledBase`,
- *                           auto-increments +5 every 60s client-side
- *   2. Accredited Courses — live count of courses with accredited:true
- *   3. Completion Rate    — from `settings/stats.completionRate` (e.g. "96%")
- *   4. Internationally Accredited — static label, no institution names
- *
- * Admin control: settings/stats → { enrolledBase: 2400, completionRate: "96%" }
- * (Add a "Stats" section to Admin Panel to edit these)
+ * StatsStrip
+ * 4 stats loaded from Firestore `settings/stats`:
+ *   { stat1_value, stat1_label,
+ *     stat2_value, stat2_label,
+ *     stat3_value, stat3_label,
+ *     stat4_value, stat4_label }
+ * Defaults shown if not set in Admin.
+ * Edit from Admin Panel → 📊 Stats Strip tab.
  */
 
-/* Animated number counter */
-const Counter = ({ target, suffix = '', duration = 1800 }) => {
-  const [display, setDisplay] = useState(0);
-  const startRef = useRef(null);
-  const rafRef   = useRef(null);
-
-  useEffect(() => {
-    if (!target) return;
-    startRef.current = null;
-    const animate = (ts) => {
-      if (!startRef.current) startRef.current = ts;
-      const elapsed = ts - startRef.current;
-      const progress = Math.min(elapsed / duration, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.floor(eased * target));
-      if (progress < 1) rafRef.current = requestAnimationFrame(animate);
-    };
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [target, duration]);
-
-  /* Format with comma: 2400 → 2,400 */
-  const formatted = display.toLocaleString('en-US');
-  return <span>{formatted}{suffix}</span>;
-};
+const DEFAULTS = [
+  { value: '2,400+', label: 'Enrolled Learners' },
+  { value: '100+',   label: 'Accredited Courses' },
+  { value: '96%',    label: 'Completion Rate'    },
+  { value: 'Internationally\nAccredited', label: '' },
+];
 
 const StatsStrip = () => {
-  const [enrolledBase,     setEnrolledBase]     = useState(null);  // from Firebase
-  const [enrolledLive,     setEnrolledLive]     = useState(null);  // base + increments
-  const [accreditedCount,  setAccreditedCount]  = useState(null);
-  const [completionRate,   setCompletionRate]   = useState('96%');
-  const [visible,          setVisible]          = useState(false);
-  const stripRef = useRef(null);
-  const tickRef  = useRef(null);
+  const [stats,   setStats]   = useState(DEFAULTS);
+  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
 
-  /* ── Load settings/stats from Firestore ── */
+  /* ── Load from Firestore (live) ── */
   useEffect(() => {
-    getDoc(doc(db, 'settings', 'stats'))
-      .then(snap => {
-        if (snap.exists()) {
-          const d = snap.data();
-          if (d.enrolledBase)    setEnrolledBase(Number(d.enrolledBase));
-          if (d.completionRate)  setCompletionRate(String(d.completionRate));
-        } else {
-          // default if not set yet in Admin
-          setEnrolledBase(2400);
-        }
-      })
-      .catch(() => setEnrolledBase(2400));
-  }, []);
-
-  /* ── Live-count accredited courses ── */
-  useEffect(() => {
-    const unsub = onSnapshot(
-      collection(db, 'courses'),
-      snap => {
-        const count = snap.docs.filter(d => d.data().accredited === true).length;
-        setAccreditedCount(count);
-      },
-      () => {}
-    );
+    const unsub = onSnapshot(doc(db, 'settings', 'stats'), snap => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      setStats([
+        { value: d.stat1_value || DEFAULTS[0].value, label: d.stat1_label || DEFAULTS[0].label },
+        { value: d.stat2_value || DEFAULTS[1].value, label: d.stat2_label || DEFAULTS[1].label },
+        { value: d.stat3_value || DEFAULTS[2].value, label: d.stat3_label || DEFAULTS[2].label },
+        { value: d.stat4_value || DEFAULTS[3].value, label: d.stat4_label || DEFAULTS[3].label },
+      ]);
+    }, () => {});
     return unsub;
   }, []);
 
-  /* ── Auto-increment enrolled +5 every 60s ── */
+  /* ── Fade in on scroll ── */
   useEffect(() => {
-    if (enrolledBase === null) return;
-    setEnrolledLive(enrolledBase);
-    tickRef.current = setInterval(() => {
-      setEnrolledLive(n => n + 5);
-    }, 60_000); // every 60 seconds
-    return () => clearInterval(tickRef.current);
-  }, [enrolledBase]);
-
-  /* ── IntersectionObserver — trigger counter animation on scroll-in ── */
-  useEffect(() => {
-    if (!stripRef.current) return;
+    if (!ref.current) return;
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) setVisible(true); },
-      { threshold: 0.3 }
+      { threshold: 0.25 }
     );
-    obs.observe(stripRef.current);
+    obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
 
-  const stats = [
-    {
-      value:   enrolledLive,
-      suffix:  '+',
-      label:   'Enrolled Learners',
-      animate: true,
-    },
-    {
-      value:   accreditedCount,
-      suffix:  '',
-      label:   'Accredited Courses',
-      animate: true,
-    },
-    {
-      value:   null,
-      text:    completionRate,
-      label:   'Completion Rate',
-      animate: false,
-    },
-    {
-      value:   null,
-      text:    'Internationally\nAccredited',
-      label:   '',
-      animate: false,
-      large:   true,
-    },
-  ];
-
   return (
     <div
-      ref={stripRef}
+      ref={ref}
       style={{
-        margin:       '0 32px',
+        margin: '0 32px',
         borderRadius: '16px',
-        background:   'rgba(255,255,255,0.03)',
-        border:       '1px solid rgba(255,255,255,0.07)',
-        padding:      '36px 0',
-        display:      'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        padding: '36px 0',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4,1fr)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(16px)',
+        transition: 'opacity 0.7s ease, transform 0.7s ease',
       }}
     >
       {stats.map((s, i) => (
         <div key={i} style={{
-          display:        'flex',
-          flexDirection:  'column',
-          alignItems:     'center',
-          justifyContent: 'center',
-          padding:        '0 24px',
-          borderRight:    i < stats.length - 1
-            ? '1px solid rgba(255,255,255,0.07)'
-            : 'none',
-          gap: '6px',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          padding: '0 24px', gap: '6px',
+          borderRight: i < 3 ? '1px solid rgba(255,255,255,0.07)' : 'none',
         }}>
-          {/* ── Big number / text ── */}
           <span style={{
-            fontFamily:  s.large ? "'Playfair Display','Georgia',serif" : "'Playfair Display','Georgia',serif",
-            fontSize:    s.large ? 'clamp(1.4rem,2.5vw,2rem)' : 'clamp(1.8rem,3vw,2.8rem)',
-            fontWeight:  900,
-            color:       'hsl(var(--primary))',
-            lineHeight:  1.1,
-            textAlign:   'center',
-            whiteSpace:  'pre-line',
+            fontFamily: "'Playfair Display','Georgia',serif",
+            fontSize: 'clamp(1.6rem,2.8vw,2.6rem)',
+            fontWeight: 900,
+            color: 'hsl(var(--primary))',
+            lineHeight: 1.1,
+            textAlign: 'center',
+            whiteSpace: 'pre-line',
           }}>
-            {s.animate && visible && s.value !== null ? (
-              <Counter target={s.value} suffix={s.suffix} />
-            ) : s.animate && s.value !== null ? (
-              /* before scroll-in: show 0 */
-              <span>0{s.suffix}</span>
-            ) : (
-              s.text || '—'
-            )}
+            {s.value}
           </span>
-
-          {/* ── Label ── */}
           {s.label && (
             <span style={{
-              fontSize:      '0.82rem',
-              color:         'rgba(255,255,255,0.5)',
-              fontWeight:    500,
-              letterSpacing: '0.3px',
-              textAlign:     'center',
+              fontSize: '0.82rem',
+              color: 'rgba(255,255,255,0.5)',
+              fontWeight: 500,
+              textAlign: 'center',
             }}>
               {s.label}
             </span>

@@ -115,7 +115,7 @@ const AdminPage = () => {
 
   // Course page
   const[coursePage,setCoursePage]=useState({default_what_you_get:'Expert-led video lessons\nCertificate of completion\nLifetime access\nMobile & desktop access'});
-  const[stats,setStats]=useState({enrolledBase:'2400',completionRate:'96%'});
+  const[stats,setStats]=useState({stat1_value:'2,400+',stat1_label:'Enrolled Learners',stat2_value:'100+',stat2_label:'Accredited Courses',stat3_value:'96%',stat3_label:'Completion Rate',stat4_value:'Internationally\nAccredited',stat4_label:''});
   const[savingStats,setSavingStats]=useState(false);
   const[savingCoursePage,setSavingCoursePage]=useState(false);
 
@@ -157,7 +157,7 @@ const AdminPage = () => {
   const deleteCert=async(id)=>{if(!confirm('Delete?'))return;await deleteDoc(doc(db,'certificates',id));};
   const addReview=async()=>{if(!newReview.name.trim()||!newReview.text.trim()){alert('Name and text required');return;}setSavingReview(true);try{await addDoc(collection(db,'reviews'),{...newReview,rating:Number(newReview.rating),createdAt:serverTimestamp()});setNewReview({name:'',rating:5,text:'',location:'',avatar:''});}catch(e){alert('Error: '+e.message);}finally{setSavingReview(false);}};
   const saveHero=async()=>{setSavingHero(true);try{await setDoc(doc(db,'settings','hero'),{...hero,updatedAt:serverTimestamp()});alert('Hero saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingHero(false);}};
-  const saveStats=async()=>{setSavingStats(true);try{await setDoc(doc(db,'settings','stats'),{enrolledBase:parseInt(stats.enrolledBase)||2400,completionRate:stats.completionRate||'96%',updatedAt:serverTimestamp()});alert('Stats saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingStats(false);};};
+  const saveStats=async()=>{setSavingStats(true);try{await setDoc(doc(db,'settings','stats'),{...stats,updatedAt:serverTimestamp()});alert('Stats saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingStats(false);};};;
   const saveHeroCarousel=async()=>{setSavingSlides(true);try{await setDoc(doc(db,'settings','heroCarousel'),{slides:heroSlides,updatedAt:serverTimestamp()});alert('Carousel saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingSlides(false);};};
   const openSlide=(idx)=>{setEditingSlide(idx);setSlideForm(idx===null?{...EMPTY_SLIDE,id:Date.now().toString()}:{...heroSlides[idx]});};
   const saveSlide=()=>{const s={...slideForm};if(!s.id)s.id=Date.now().toString();if(editingSlide===null){setHeroSlides(p=>[...p,s]);}else{setHeroSlides(p=>p.map((x,i)=>i===editingSlide?s:x));}setEditingSlide(undefined);};
@@ -335,35 +335,19 @@ const AdminPage = () => {
           {/* HERO */}
           {activeTab==='stats'&&(<div>
   {sectionTitle('Stats Strip',<Btn onClick={saveStats} disabled={savingStats}><Check className="w-4 h-4"/>{savingStats?'Saving…':'Save Stats'}</Btn>)}
-  <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 flex flex-col gap-5">
-    <div>
-      <p className="text-white font-bold text-sm mb-1">📊 Stats Strip</p>
-      <p className="text-xs text-gray-500 mb-4">الأرقام دي بتظهر في الـ stats bar في الصفحة الرئيسية. عدد الكورسات المعتمدة بيتحسب تلقائياً من الكورسات اللي عليها ✓ CME Accredited.</p>
-    </div>
-    <Field label="Enrolled Learners (Base Number)">
-      <p className="text-xs text-gray-500 mb-1">الرقم الابتدائي — الموقع بيزود +5 كل دقيقة تلقائياً</p>
-      <Input type="number" value={stats.enrolledBase} onChange={e=>setStats(s=>({...s,enrolledBase:e.target.value}))} placeholder="2400" min="0"/>
-    </Field>
-    <Field label="Completion Rate">
-      <p className="text-xs text-gray-500 mb-1">بيظهر زي ما هو (مثال: 96%)</p>
-      <Input value={stats.completionRate} onChange={e=>setStats(s=>({...s,completionRate:e.target.value}))} placeholder="96%"/>
-    </Field>
-    <div className="bg-black/20 border border-white/5 rounded-lg p-4">
-      <p className="text-xs text-gray-400 mb-2">📌 Preview:</p>
-      <div className="grid grid-cols-4 gap-3 text-center">
-        {[
-          {v:stats.enrolledBase+'+',l:'Enrolled Learners'},
-          {v:'Auto',l:'Accredited Courses'},
-          {v:stats.completionRate,l:'Completion Rate'},
-          {v:'Internationally Accredited',l:''}
-        ].map((s,i)=>(
-          <div key={i} className="bg-white/3 rounded-lg p-3">
-            <p className="text-primary font-bold text-lg" style={{fontFamily:"'Playfair Display',serif"}}>{s.v}</p>
-            {s.l&&<p className="text-gray-500 text-xs mt-1">{s.l}</p>}
-          </div>
-        ))}
+  <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 flex flex-col gap-4">
+    <p className="text-xs text-gray-500">الأرقام دي بتظهر في الـ stats bar في الصفحة الرئيسية. اكتب القيمة والـ label زي ما تحب.</p>
+    {[
+      {vk:'stat1_value',lk:'stat1_label',hint:'مثال: 2,400+'},
+      {vk:'stat2_value',lk:'stat2_label',hint:'مثال: 100+'},
+      {vk:'stat3_value',lk:'stat3_label',hint:'مثال: 96%'},
+      {vk:'stat4_value',lk:'stat4_label',hint:'مثال: Internationally\nAccredited'},
+    ].map((f,i)=>(
+      <div key={i} className="grid grid-cols-2 gap-3 p-4 bg-black/20 rounded-xl border border-white/5">
+        <Field label={`Stat ${i+1} — Value`}><Input value={stats[f.vk]||''} onChange={e=>setStats(s=>({...s,[f.vk]:e.target.value}))} placeholder={f.hint}/></Field>
+        <Field label={`Stat ${i+1} — Label`}><Input value={stats[f.lk]||''} onChange={e=>setStats(s=>({...s,[f.lk]:e.target.value}))} placeholder="اسم الـ stat"/></Field>
       </div>
-    </div>
+    ))}
   </div>
 </div>)}
 {activeTab==='carousel'&&(<div>
