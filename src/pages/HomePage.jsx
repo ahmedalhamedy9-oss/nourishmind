@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroCarousel from '@/components/HeroCarousel';
 import CourseRow from '@/components/CourseRow';
+import StatsStrip from '@/components/StatsStrip';
 import CertificatesCarousel from '@/components/CertificatesCarousel';
 import ReviewsSection from '@/components/ReviewsSection';
 import RevealSection from '@/components/RevealSection';
@@ -38,8 +39,15 @@ const HomePage = () => {
       {/* ── HERO CAROUSEL ── */}
       <HeroCarousel />
 
+      {/* ── STATS STRIP ── */}
+      <RevealSection delay={0}>
+        <div style={{ padding: '48px 0 0' }}>
+          <StatsStrip />
+        </div>
+      </RevealSection>
+
       {/* ── COURSE ROWS ── */}
-      <section className="relative z-10 pb-8">
+      <section className="relative z-10 pb-8" style={{ paddingTop: '48px' }}>
         {coursesLoading ? (
           <div className="px-4 sm:px-12 py-8">
             <div className="h-6 w-48 rounded-lg mb-6 animate-pulse"
@@ -59,7 +67,6 @@ const HomePage = () => {
           </div>
         ) : (
           <>
-            {/* Top 10 */}
             <CourseRow
               title="🏆 Top 10 Courses Today"
               courses={[...courses.filter(c => c.top10)]
@@ -70,8 +77,6 @@ const HomePage = () => {
               variant="top10"
               seeAllPath="/courses"
             />
-
-            {/* Continue Learning */}
             {currentUser && enrolledIds.length > 0 && (
               <CourseRow
                 title="▶ Continue Learning"
@@ -80,8 +85,6 @@ const HomePage = () => {
                 userProgress={userProgress}
               />
             )}
-
-            {/* Dynamic rows */}
             {ROWS.filter(r => r.id !== 'featured').map(row => (
               <CourseRow key={row.id} title={row.title} courses={getRow(row)} />
             ))}

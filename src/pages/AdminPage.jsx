@@ -25,6 +25,7 @@ const TABS = [
   { id: 'reviews',     label: 'Reviews',       icon: MessageSquare },
   { id: 'pricing',     label: 'Pricing',       icon: DollarSign },
   { id: 'users',       label: 'Users',         icon: Users },
+  { id: 'stats',       label: '📊 Stats Strip',   icon: Home },
   { id: 'carousel',    label: '🎬 Hero Carousel', icon: Home },
   { id: 'hero',        label: 'Hero Section',  icon: Home },
   { id: 'about',       label: 'About Page',    icon: Info },
@@ -114,6 +115,8 @@ const AdminPage = () => {
 
   // Course page
   const[coursePage,setCoursePage]=useState({default_what_you_get:'Expert-led video lessons\nCertificate of completion\nLifetime access\nMobile & desktop access'});
+  const[stats,setStats]=useState({enrolledBase:'2400',completionRate:'96%'});
+  const[savingStats,setSavingStats]=useState(false);
   const[savingCoursePage,setSavingCoursePage]=useState(false);
 
   // Certificate upload form
@@ -130,6 +133,7 @@ const AdminPage = () => {
   useEffect(()=>{
     getDoc(doc(db,'settings','hero')).then(snap=>{if(snap.exists())setHero(h=>({...h,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','heroCarousel')).then(snap=>{if(snap.exists()&&Array.isArray(snap.data().slides))setHeroSlides(snap.data().slides);}).catch(()=>{});
+    getDoc(doc(db,'settings','stats')).then(snap=>{if(snap.exists())setStats(s=>({...s,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
@@ -153,6 +157,7 @@ const AdminPage = () => {
   const deleteCert=async(id)=>{if(!confirm('Delete?'))return;await deleteDoc(doc(db,'certificates',id));};
   const addReview=async()=>{if(!newReview.name.trim()||!newReview.text.trim()){alert('Name and text required');return;}setSavingReview(true);try{await addDoc(collection(db,'reviews'),{...newReview,rating:Number(newReview.rating),createdAt:serverTimestamp()});setNewReview({name:'',rating:5,text:'',location:'',avatar:''});}catch(e){alert('Error: '+e.message);}finally{setSavingReview(false);}};
   const saveHero=async()=>{setSavingHero(true);try{await setDoc(doc(db,'settings','hero'),{...hero,updatedAt:serverTimestamp()});alert('Hero saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingHero(false);}};
+  const saveStats=async()=>{setSavingStats(true);try{await setDoc(doc(db,'settings','stats'),{enrolledBase:parseInt(stats.enrolledBase)||2400,completionRate:stats.completionRate||'96%',updatedAt:serverTimestamp()});alert('Stats saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingStats(false);};};
   const saveHeroCarousel=async()=>{setSavingSlides(true);try{await setDoc(doc(db,'settings','heroCarousel'),{slides:heroSlides,updatedAt:serverTimestamp()});alert('Carousel saved!');}catch(e){alert('Error: '+e.message);}finally{setSavingSlides(false);};};
   const openSlide=(idx)=>{setEditingSlide(idx);setSlideForm(idx===null?{...EMPTY_SLIDE,id:Date.now().toString()}:{...heroSlides[idx]});};
   const saveSlide=()=>{const s={...slideForm};if(!s.id)s.id=Date.now().toString();if(editingSlide===null){setHeroSlides(p=>[...p,s]);}else{setHeroSlides(p=>p.map((x,i)=>i===editingSlide?s:x));}setEditingSlide(undefined);};
@@ -328,7 +333,40 @@ const AdminPage = () => {
           {activeTab==='users'&&(<div>{sectionTitle('Users')}<div className="relative mb-6 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"/><Input value={userSearch} onChange={e=>setUserSearch(e.target.value)} placeholder="Search by email or name..." className="pl-9"/></div><div className="flex flex-col gap-3">{filteredUsers.map(user=>(<details key={user.id} className="bg-[#0d1a17] border border-white/10 rounded-xl overflow-hidden"><summary className="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-white/5 transition-colors">{user.avatar?<img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover shrink-0 border border-white/10"/>:<div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">{user.name?.[0]?.toUpperCase()||user.email?.[0]?.toUpperCase()||'?'}</div>}<div className="flex-1 min-w-0"><p className="text-white font-semibold text-sm truncate">{user.name||'No name'}</p><div className="flex gap-3 text-xs text-gray-500 flex-wrap"><span>{user.email}</span>{user.phone&&<span>{user.phone}</span>}</div></div><div className="flex items-center gap-2 shrink-0"><span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user.status==='suspended'?'bg-red-500/20 text-red-400':user.role==='admin'?'bg-primary/20 text-primary':'bg-white/5 text-gray-400'}`}>{user.status==='suspended'?'Suspended':user.role||'student'}</span><span className="text-xs text-gray-500">{user.enrolledCourses?.length||0} courses</span><ChevronDown className="w-4 h-4 text-gray-500"/></div></summary><div className="border-t border-white/10 p-5 flex flex-col gap-5"><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Edit Name</p><div className="flex gap-2"><Input defaultValue={user.name||''} id={`name-${user.id}`} placeholder="Full name" className="max-w-xs"/><Btn onClick={async()=>{const val=document.getElementById('name-'+user.id)?.value;if(!val)return;await updateDoc(doc(db,'users',user.id),{name:val});}}><Check className="w-4 h-4"/>Save</Btn></div></div><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Enrolled Courses</p><div className="flex flex-wrap gap-2 mb-3">{user.enrolledCourses?.map(cid=>{const c=courses.find(x=>x.id===cid);return(<div key={cid} className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs px-2 py-1 rounded-lg">{c?.title||cid}<button onClick={async()=>{const updated=(user.enrolledCourses||[]).filter(id=>id!==cid);await updateDoc(doc(db,'users',user.id),{enrolledCourses:updated});}} className="text-red-400 hover:text-red-300 ml-1 font-bold">x</button></div>);})}  {!user.enrolledCourses?.length&&<p className="text-gray-600 text-xs">No courses enrolled</p>}</div><div className="flex gap-2"><select id={`enroll-${user.id}`} className="bg-[#0a1412] border border-white/10 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary"><option value="">Add to course...</option>{courses.filter(c=>!user.enrolledCourses?.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select><Btn variant="ghost" className="text-xs py-1.5" onClick={async()=>{const sel=document.getElementById('enroll-'+user.id);if(!sel?.value)return;const updated=[...(user.enrolledCourses||[]),sel.value];await updateDoc(doc(db,'users',user.id),{enrolledCourses:updated});sel.value='';}}><Plus className="w-3 h-3"/>Enroll</Btn></div></div><div className="flex gap-2 pt-2 border-t border-white/10">{user.status==='suspended'?<Btn variant="ghost" className="text-xs" onClick={async()=>{await updateDoc(doc(db,'users',user.id),{status:'active'});}}>Activate Account</Btn>:<Btn variant="danger" className="text-xs" onClick={async()=>{if(!confirm('Suspend '+(user.name||user.email)+'?'))return;await updateDoc(doc(db,'users',user.id),{status:'suspended'});}}>Suspend Account</Btn>}</div></div></details>))}{!filteredUsers.length&&<p className="text-gray-600 text-sm">No users found.</p>}</div></div>)}
 
           {/* HERO */}
-          {activeTab==='carousel'&&(<div>
+          {activeTab==='stats'&&(<div>
+  {sectionTitle('Stats Strip',<Btn onClick={saveStats} disabled={savingStats}><Check className="w-4 h-4"/>{savingStats?'Saving…':'Save Stats'}</Btn>)}
+  <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 flex flex-col gap-5">
+    <div>
+      <p className="text-white font-bold text-sm mb-1">📊 Stats Strip</p>
+      <p className="text-xs text-gray-500 mb-4">الأرقام دي بتظهر في الـ stats bar في الصفحة الرئيسية. عدد الكورسات المعتمدة بيتحسب تلقائياً من الكورسات اللي عليها ✓ CME Accredited.</p>
+    </div>
+    <Field label="Enrolled Learners (Base Number)">
+      <p className="text-xs text-gray-500 mb-1">الرقم الابتدائي — الموقع بيزود +5 كل دقيقة تلقائياً</p>
+      <Input type="number" value={stats.enrolledBase} onChange={e=>setStats(s=>({...s,enrolledBase:e.target.value}))} placeholder="2400" min="0"/>
+    </Field>
+    <Field label="Completion Rate">
+      <p className="text-xs text-gray-500 mb-1">بيظهر زي ما هو (مثال: 96%)</p>
+      <Input value={stats.completionRate} onChange={e=>setStats(s=>({...s,completionRate:e.target.value}))} placeholder="96%"/>
+    </Field>
+    <div className="bg-black/20 border border-white/5 rounded-lg p-4">
+      <p className="text-xs text-gray-400 mb-2">📌 Preview:</p>
+      <div className="grid grid-cols-4 gap-3 text-center">
+        {[
+          {v:stats.enrolledBase+'+',l:'Enrolled Learners'},
+          {v:'Auto',l:'Accredited Courses'},
+          {v:stats.completionRate,l:'Completion Rate'},
+          {v:'Internationally Accredited',l:''}
+        ].map((s,i)=>(
+          <div key={i} className="bg-white/3 rounded-lg p-3">
+            <p className="text-primary font-bold text-lg" style={{fontFamily:"'Playfair Display',serif"}}>{s.v}</p>
+            {s.l&&<p className="text-gray-500 text-xs mt-1">{s.l}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>)}
+{activeTab==='carousel'&&(<div>
   {sectionTitle('Hero Carousel',<Btn onClick={saveHeroCarousel} disabled={savingSlides}><Check className="w-4 h-4"/>{savingSlides?'Saving…':'Save Carousel'}</Btn>)}
   <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5 mb-5">
     <div className="flex items-center justify-between mb-4">
