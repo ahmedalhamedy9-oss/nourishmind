@@ -124,7 +124,7 @@ const CertificatesCarousel = () => {
           fontSize: 'clamp(1.6rem,3vw,2.4rem)', fontWeight: 900,
           color: '#fff', lineHeight: 1.15,
         }}>
-          Proof You've Trained with the Best
+          Level Up. Get Certified. Go Global.
         </h2>
       </div>
 
