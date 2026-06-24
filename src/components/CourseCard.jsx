@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, Clock, Volume2, VolumeX, Heart } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Heart, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -23,18 +22,27 @@ const getBunnyUrl = (url, muted = true) => {
   } catch { return url; }
 };
 
-const CourseCard = ({ course }) => {
-  const navigate  = useNavigate();
-  const { isAr } = useLanguage();
+/**
+ * CourseCard — Portrait 2:3 MasterClass-style
+ * • pop-out on hover (scale + translateY)
+ * • gradient overlay with title + meta at bottom
+ * • Netflix-style preview video on hover (Bunny Stream)
+ * • badge (New / CME / etc.) top-left
+ * • top-10 ghost number option
+ * • wishlist heart
+ */
+const CourseCard = ({ course, rank }) => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
+
+  // ── Wishlist ──
   const [wishlisted,   setWishlisted]   = useState(false);
   const [wishlistBusy, setWishlistBusy] = useState(false);
 
-  // Load wishlist state for this card
   useEffect(() => {
     if (!currentUser || !course?.id) return;
     getDoc(doc(db, 'users', currentUser.uid))
-      .then(snap => { if (snap.exists()) setWishlisted((snap.data().wishlist||[]).includes(course.id)); })
+      .then(snap => { if (snap.exists()) setWishlisted((snap.data().wishlist || []).includes(course.id)); })
       .catch(() => {});
   }, [currentUser, course?.id]);
 
@@ -53,27 +61,25 @@ const CourseCard = ({ course }) => {
     finally { setWishlistBusy(false); }
   };
 
-  const [showIframe,   setShowIframe]   = useState(false); // mount iframe in DOM
-  const [videoReady,   setVideoReady]   = useState(false); // Bunny loaded & playing
-  const [showVideo,    setShowVideo]    = useState(false); // thumbnail faded out
-  const [muted,        setMuted]        = useState(true);
-  const [iframeSrc,    setIframeSrc]    = useState('');
+  // ── Preview video (Bunny) ──
+  const [showIframe, setShowIframe] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [showVideo,  setShowVideo]  = useState(false);
+  const [muted,      setMuted]      = useState(true);
+  const [iframeSrc,  setIframeSrc]  = useState('');
 
-  const iframeRef  = useRef(null);
   const hoverRef   = useRef(false);
   const hoverTimer = useRef(null);
-  const isMobile   = typeof window !== 'undefined' && window.innerWidth < 768;
   const videoTimer = useRef(null);
-
-  const hasBunny = !!course.previewVideo;
+  const isMobile   = typeof window !== 'undefined' && window.innerWidth < 768;
+  const hasBunny   = !!course.previewVideo;
 
   const handleMouseEnter = () => {
-    if (isMobile) return; // no hover on mobile
+    if (isMobile) return;
     hoverRef.current = true;
     if (!hasBunny) return;
     hoverTimer.current = setTimeout(() => {
       if (hoverRef.current) {
-        // After 1.5s intentional hover → play with sound (like Netflix)
         setIframeSrc(getBunnyUrl(course.previewVideo, false));
         setShowIframe(true);
       }
@@ -96,17 +102,14 @@ const CourseCard = ({ course }) => {
     clearTimeout(videoTimer.current);
   }, []);
 
-  // Listen for Bunny postMessage events to know when video actually starts playing
   useEffect(() => {
     if (!showIframe) return;
     const handleMessage = (e) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        // Bunny fires 'play' or 'timeupdate' when video is actually running
         if (data?.event === 'play' || data?.event === 'timeupdate') {
           if (hoverRef.current && !videoReady) {
             setVideoReady(true);
-            // Give a tiny extra delay so first frame renders before we show
             videoTimer.current = setTimeout(() => {
               if (hoverRef.current) setShowVideo(true);
             }, 300);
@@ -118,13 +121,9 @@ const CourseCard = ({ course }) => {
     return () => window.removeEventListener('message', handleMessage);
   }, [showIframe, videoReady]);
 
-  // Fallback: if postMessage never fires after 3s, show video anyway
   const onIframeLoad = () => {
     videoTimer.current = setTimeout(() => {
-      if (hoverRef.current) {
-        setVideoReady(true);
-        setShowVideo(true);
-      }
+      if (hoverRef.current) { setVideoReady(true); setShowVideo(true); }
     }, 1500);
   };
 
@@ -132,141 +131,195 @@ const CourseCard = ({ course }) => {
     e.stopPropagation();
     const newMuted = !muted;
     setMuted(newMuted);
-    // Reload iframe with correct muted param — most reliable way with Bunny
     setIframeSrc(getBunnyUrl(course.previewVideo, newMuted));
   }, [muted, course.previewVideo]);
 
-  return (
-    <div
-      className="flex-shrink-0 w-[280px] sm:w-[300px] cursor-pointer group"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={() => navigate(`/course/${course.id}`)}
-      style={{
-        transform: showVideo ? 'scale(1.04)' : 'scale(1)',
-        transition: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-        zIndex: showVideo ? 10 : 1,
-        position: 'relative',
-      }}
-    >
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-card mb-3 shadow-md group-hover:shadow-xl transition-shadow">
-
-        {/* ── iframe in background, always visible so autoplay works ── */}
-        {showIframe && hasBunny && (
-          <>
+  // ── Top-10 layout ──
+  if (rank) {
+    return (
+      <div
+        className="relative flex-shrink-0 cursor-pointer group"
+        style={{ width: '190px', paddingLeft: '52px' }}
+        onClick={() => navigate(`/course/${course.id}`)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Ghost number */}
+        <span style={{
+          position: 'absolute', bottom: '8px', left: 0,
+          fontSize: '120px', lineHeight: 1,
+          color: 'transparent',
+          WebkitTextStroke: '2px rgba(255,255,255,0.15)',
+          fontFamily: 'Georgia, serif', fontWeight: 900,
+          userSelect: 'none', pointerEvents: 'none', zIndex: 0,
+        }}>
+          {rank}
+        </span>
+        <div
+          className="relative rounded-xl overflow-hidden"
+          style={{
+            aspectRatio: '2/3', zIndex: 1,
+            boxShadow: showVideo ? '0 20px 50px rgba(0,0,0,0.8)' : '0 8px 28px rgba(0,0,0,0.5)',
+            transform: showVideo ? 'scale(1.08) translateY(-10px)' : 'scale(1)',
+            transition: 'all 0.35s cubic-bezier(0.2,0,0.2,1)',
+          }}
+        >
+          {/* Bunny iframe */}
+          {showIframe && hasBunny && (
             <iframe
-              ref={iframeRef}
               src={iframeSrc}
               className="absolute inset-0 w-full h-full border-0"
               style={{ zIndex: 1, pointerEvents: 'none' }}
-              allow="autoplay; encrypted-media; picture-in-picture"
-              referrerPolicy="origin"
-              title={course.title}
+              allow="autoplay; encrypted-media"
               onLoad={onIframeLoad}
             />
-            {/* Transparent blocker that sits over the iframe while thumbnail is visible — hides controls */}
-            {!showVideo && (
-              <div className="absolute inset-0" style={{ zIndex: 3, background: 'transparent' }} />
-            )}
-          </>
+          )}
+          {/* Thumbnail */}
+          <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: showVideo ? 0 : 1, zIndex: 2 }}>
+            {course.image
+              ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+              : <div className="w-full h-full" style={{ background: 'hsl(var(--primary) / 0.2)' }} />
+            }
+          </div>
+          {/* Overlay */}
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 55%)',
+            zIndex: 3, pointerEvents: 'none'
+          }} />
+          {/* Badge */}
+          {course.new && (
+            <span className="absolute top-2 left-2" style={{
+              background: 'hsl(var(--primary))', color: '#000',
+              fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.5px',
+              textTransform: 'uppercase', padding: '2px 8px', borderRadius: '3px', zIndex: 4
+            }}>New</span>
+          )}
+          {/* Title */}
+          <div className="absolute bottom-0 left-0 right-0 p-3" style={{ zIndex: 4 }}>
+            <p className="text-white font-bold line-clamp-2" style={{ fontSize: '0.78rem' }}>{course.title}</p>
+            <p style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.55)', marginTop: '2px' }}>
+              {course.price ? `$${course.price}` : 'Free'}
+            </p>
+          </div>
+          {/* Mute */}
+          {showVideo && (
+            <button onClick={toggleMute} className="absolute bottom-2 right-2" style={{
+              width: '28px', height: '28px', borderRadius: '50%',
+              background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, cursor: 'pointer'
+            }}>
+              {muted ? <VolumeX size={12} color="#fff" /> : <Volume2 size={12} color="#fff" />}
+            </button>
+          )}
+          {/* Wishlist */}
+          <button onClick={toggleWishlist} disabled={wishlistBusy} style={{
+            position: 'absolute', top: '8px', right: '8px', zIndex: 5,
+            width: '26px', height: '26px', borderRadius: '50%',
+            background: wishlisted ? 'rgba(239,68,68,0.85)' : 'rgba(0,0,0,0.55)',
+            border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <Heart size={11} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Standard portrait card ──
+  return (
+    <div
+      className="relative flex-shrink-0 cursor-pointer group"
+      style={{ width: '190px' }}
+      onClick={() => navigate(`/course/${course.id}`)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div
+        className="relative rounded-xl overflow-hidden"
+        style={{
+          aspectRatio: '2/3',
+          boxShadow: showVideo
+            ? '0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px hsl(var(--primary) / 0.4)'
+            : '0 8px 28px rgba(0,0,0,0.5)',
+          transform: showVideo ? 'scale(1.1) translateY(-12px)' : 'scale(1)',
+          transition: 'all 0.35s cubic-bezier(0.2,0,0.2,1)',
+          zIndex: showVideo ? 10 : 1,
+        }}
+      >
+        {/* Bunny iframe */}
+        {showIframe && hasBunny && (
+          <iframe
+            src={iframeSrc}
+            className="absolute inset-0 w-full h-full border-0"
+            style={{ zIndex: 1, pointerEvents: 'none' }}
+            allow="autoplay; encrypted-media"
+            onLoad={onIframeLoad}
+          />
         )}
 
-        {/* ── Thumbnail on top, fades out only when video is actually playing ── */}
-        <div
-          className="absolute inset-0 transition-opacity duration-700"
-          style={{ zIndex: 4, opacity: showVideo ? 0 : 1, pointerEvents: 'none' }}
-        >
+        {/* Thumbnail */}
+        <div className="absolute inset-0 transition-opacity duration-700" style={{ opacity: showVideo ? 0 : 1, zIndex: 2 }}>
           {course.image
-            ? <img
-                src={course.image}
-                alt={course.title}
-                className="w-full h-full object-cover"
-                onError={e => { e.currentTarget.style.display = 'none'; }}
-              />
-            : null
+            ? <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+            : <div className="w-full h-full" style={{ background: 'hsl(var(--primary) / 0.2)' }} />
           }
-          {/* Fallback background always present */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-primary/10" style={{ zIndex: 0 }} />
         </div>
 
-        {/* ── Mute button — only when video is showing ── */}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.1) 55%)',
+          zIndex: 3, pointerEvents: 'none'
+        }} />
+
+        {/* Badge */}
+        {(course.new || course.badge) && (
+          <span className="absolute top-2 left-2" style={{
+            background: 'hsl(var(--primary))', color: '#000',
+            fontSize: '0.6rem', fontWeight: 700, letterSpacing: '1.5px',
+            textTransform: 'uppercase', padding: '2px 8px', borderRadius: '3px', zIndex: 4
+          }}>
+            {course.badge || 'New'}
+          </span>
+        )}
+
+        {/* Card info at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-3" style={{ zIndex: 4 }}>
+          <p className="text-white font-bold line-clamp-2" style={{ fontSize: '0.82rem', lineHeight: 1.3 }}>
+            {course.title}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
+              {course.instructor || 'NourishMind'}
+            </p>
+            <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'hsl(var(--primary))' }}>
+              {course.price ? `$${course.price}` : <span style={{ color: '#4ade80' }}>Free</span>}
+            </p>
+          </div>
+        </div>
+
+        {/* Mute button */}
         {showVideo && (
-          <button
-            onClick={toggleMute}
-            className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center hover:bg-black/90 transition-colors border border-white/20"
-            style={{ zIndex: 10 }}
-          >
-            {muted
-              ? <VolumeX className="w-4 h-4 text-white" />
-              : <Volume2 className="w-4 h-4 text-white" />
-            }
+          <button onClick={toggleMute} className="absolute bottom-2 right-2" style={{
+            width: '28px', height: '28px', borderRadius: '50%',
+            background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5, cursor: 'pointer'
+          }}>
+            {muted ? <VolumeX size={12} color="#fff" /> : <Volume2 size={12} color="#fff" />}
           </button>
         )}
 
-        {/* ── Wishlist button ── */}
-        <button
-          onClick={toggleWishlist}
-          disabled={wishlistBusy}
-          title={wishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center transition-all"
-          style={{
-            zIndex: 10,
-            background: wishlisted ? 'rgba(239,68,68,0.85)' : 'rgba(0,0,0,0.55)',
-            backdropFilter: 'blur(4px)',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          <Heart size={13} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
+        {/* Wishlist */}
+        <button onClick={toggleWishlist} disabled={wishlistBusy} style={{
+          position: 'absolute', top: '8px', right: '8px', zIndex: 5,
+          width: '26px', height: '26px', borderRadius: '50%',
+          background: wishlisted ? 'rgba(239,68,68,0.85)' : 'rgba(0,0,0,0.55)',
+          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <Heart size={11} color="#fff" fill={wishlisted ? '#fff' : 'none'} />
         </button>
-
-        {/* ── Badges ── */}
-        {course.new && (
-          <span className="absolute top-2 left-2 bg-primary text-white text-[9px] font-black px-2 py-0.5 rounded-sm uppercase z-10">New</span>
-        )}
-        {course.level && (
-          <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-sm z-10">{course.level}</span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className={`px-1 ${isAr ? 'text-right' : 'text-left'}`}>
-        <p className="text-primary text-[10px] font-bold uppercase tracking-wide mb-1">{course.category}</p>
-        <h3 className="text-white font-bold text-sm leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">{course.title}</h3>
-        <div className="flex items-center gap-3 text-xs text-gray-400 mb-2">
-          {course.rating && (
-            <span className="flex items-center gap-1">
-              <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-              {Number(course.rating).toFixed(1)}
-              {course.students_count && (
-                <span className="text-gray-500">
-                  ({course.students_count >= 1000
-                    ? `${(course.students_count / 1000).toFixed(1)}K`
-                    : course.students_count})
-                </span>
-              )}
-            </span>
-          )}
-          {course.duration_hours && (
-            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{course.duration_hours}h</span>
-          )}
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {course.instructor_image
-              ? <img src={course.instructor_image} alt={course.instructor} className="w-6 h-6 rounded-full object-cover" />
-              : <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold">{course.instructor?.[0] || 'N'}</div>
-            }
-            <p className="text-gray-400 text-xs truncate max-w-[120px]">{course.instructor || 'NourishMind'}</p>
-          </div>
-          <span className="text-primary font-bold text-sm">
-            {course.price ? `$${course.price}` : <span className="text-green-400">Free</span>}
-          </span>
-        </div>
       </div>
     </div>
   );
 };
 
 export default CourseCard;
-
