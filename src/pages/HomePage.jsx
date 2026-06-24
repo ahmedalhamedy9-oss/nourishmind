@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import HeroCarousel from '@/components/HeroCarousel';
 import CourseRow from '@/components/CourseRow';
+import CertificatesCarousel from '@/components/CertificatesCarousel';
 import ReviewsSection from '@/components/ReviewsSection';
 import RevealSection from '@/components/RevealSection';
 import { useCourses } from '@/hooks/useCourses';
@@ -17,7 +18,6 @@ const HomePage = () => {
   const [userProgress, setUserProgress] = useState({});
   const [enrolledIds,  setEnrolledIds]  = useState([]);
 
-  // Load user progress / enrolled courses
   useEffect(() => {
     if (!currentUser) return;
     getDoc(doc(db, 'users', currentUser.uid)).then(snap => {
@@ -35,25 +35,24 @@ const HomePage = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      {/* ── HERO CAROUSEL — reads Firebase internally ── */}
+      {/* ── HERO CAROUSEL ── */}
       <HeroCarousel />
 
       {/* ── COURSE ROWS ── */}
       <section className="relative z-10 pb-8">
         {coursesLoading ? (
-          /* Skeleton while loading */
           <div className="px-4 sm:px-12 py-8">
             <div className="h-6 w-48 rounded-lg mb-6 animate-pulse"
               style={{ background: 'rgba(255,255,255,0.05)' }} />
             <div className="flex gap-4 overflow-hidden">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="flex-shrink-0 animate-pulse" style={{ width: '190px' }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} className="flex-shrink-0 animate-pulse" style={{ width:'190px' }}>
                   <div className="rounded-xl mb-3"
-                    style={{ aspectRatio: '2/3', background: 'rgba(255,255,255,0.05)' }} />
+                    style={{ aspectRatio:'2/3', background:'rgba(255,255,255,0.05)' }} />
                   <div className="h-4 rounded mb-2 w-3/4"
-                    style={{ background: 'rgba(255,255,255,0.05)' }} />
+                    style={{ background:'rgba(255,255,255,0.05)' }} />
                   <div className="h-3 rounded w-1/2"
-                    style={{ background: 'rgba(255,255,255,0.05)' }} />
+                    style={{ background:'rgba(255,255,255,0.05)' }} />
                 </div>
               ))}
             </div>
@@ -64,10 +63,10 @@ const HomePage = () => {
             <CourseRow
               title="🏆 Top 10 Courses Today"
               courses={[...courses.filter(c => c.top10)]
-                .sort((a, b) => (a.top10_rank || 99) - (b.top10_rank || 99))
-                .slice(0, 10)
+                .sort((a,b) => (a.top10_rank||99)-(b.top10_rank||99))
+                .slice(0,10)
                 .concat(courses.filter(c => !c.top10))
-                .slice(0, 10)}
+                .slice(0,10)}
               variant="top10"
               seeAllPath="/courses"
             />
@@ -84,16 +83,18 @@ const HomePage = () => {
 
             {/* Dynamic rows */}
             {ROWS.filter(r => r.id !== 'featured').map(row => (
-              <CourseRow
-                key={row.id}
-                title={row.title}
-                courses={getRow(row)}
-              />
+              <CourseRow key={row.id} title={row.title} courses={getRow(row)} />
             ))}
           </>
         )}
       </section>
 
+      {/* ── CERTIFICATES CAROUSEL ── */}
+      <RevealSection delay={0}>
+        <CertificatesCarousel />
+      </RevealSection>
+
+      {/* ── REVIEWS ── */}
       <RevealSection delay={100}>
         <ReviewsSection />
       </RevealSection>
