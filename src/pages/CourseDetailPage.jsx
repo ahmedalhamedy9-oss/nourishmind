@@ -37,7 +37,7 @@ const getBunnyEmbedUrl = (url, opts = {}) => {
 const StickySkillCard = ({ item, index }) => (
   <div style={{
     position: 'sticky',
-    top: `${72 + index * 20}px`,
+    top: `${80 + index * 60}px`,
     zIndex: index + 1,
     width: 'calc(100% - 96px)',
     maxWidth: '560px',
@@ -68,7 +68,7 @@ const StickySkillCard = ({ item, index }) => (
     }}>
       <div style={{
         width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-        background: '#e8273c', color: '#fff',
+        background: 'hsl(var(--primary))', color: '#fff',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '0.82rem', fontWeight: 700, marginTop: '2px',
       }}>
@@ -394,7 +394,7 @@ const CourseDetailPage = () => {
           {skillItems.map((item, i) => (
             <React.Fragment key={i}>
               <StickySkillCard item={item} index={i} />
-              {i < skillItems.length - 1 && <div style={{ height: '80vh', background: '#0a0a0f' }} />}
+              {i < skillItems.length - 1 && <div style={{ height: '120vh', background: '#0a0a0f' }} />}
             </React.Fragment>
           ))}
           <div style={{ height: '60px' }} />
