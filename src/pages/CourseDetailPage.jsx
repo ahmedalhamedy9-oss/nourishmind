@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Lock, ChevronDown, ChevronUp, Heart, CheckCircle } from 'lucide-react';
+import { Play, Lock, ChevronDown, ChevronUp, Heart, CheckCircle, RotateCcw } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Header from '@/components/Header';
@@ -32,167 +32,201 @@ const getBunnyEmbedUrl = (url, opts = {}) => {
 };
 
 /* ─────────────────────────────────────────
-   STICKY SKILLS STACK  (MasterClass style)
-   - Mobile: single-column stacking cards
-   - Desktop: 4-column grid (no stacking)
+   FLIP CARD COMPONENT
+   Front: رقم + عنوان + صورة خلفية
+   Back:  وصف تفصيلي
 ───────────────────────────────────────── */
-const StickySkillsSection = ({ skillItems, onViewLessonPlan }) => {
-  /* Each card is sticky with increasing top offset so they stack */
-  const CARD_PEEK = 60; // px visible from card below
-  const TOP_OFFSET = 80; // first card top (below header)
+const FlipCard = ({ item, index }) => {
+  const [flipped, setFlipped] = useState(false);
 
   return (
-    <section style={{ padding: '80px 0 0' }}>
-      {/* Header */}
-      <div style={{ padding: '0 48px', marginBottom: '32px' }}>
-        <h2 style={{
-          fontFamily: "'Playfair Display','Georgia',serif",
-          fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '6px'
-        }}>
-          Skills You'll Learn
-        </h2>
-        <button
-          onClick={onViewLessonPlan}
-          style={{
-            background: 'none', border: 'none', color: 'hsl(var(--primary))',
-            fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline'
-          }}
-        >
-          View lesson plan
-        </button>
-      </div>
-
-      {/* ── Desktop grid (≥768px) ── */}
-      <div className="skills-grid-desktop" style={{
-        display: 'none', /* shown via CSS below */
-        gridTemplateColumns: 'repeat(auto-fill, minmax(220px,1fr))',
-        gap: '16px', padding: '0 48px',
+    <div
+      onClick={() => setFlipped(f => !f)}
+      style={{
+        cursor: 'pointer',
+        aspectRatio: '3/4',
+        perspective: '1000px',
+        borderRadius: '16px',
+        userSelect: 'none',
+      }}
+    >
+      {/* Flip container */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        transformStyle: 'preserve-3d',
+        transition: 'transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1)',
+        transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+        borderRadius: '16px',
       }}>
-        {skillItems.map((item, i) => (
-          <div key={i} style={{
-            borderRadius: '14px', overflow: 'hidden',
-            aspectRatio: '51/64', position: 'relative',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+
+        {/* ── FRONT ── */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+        }}>
+          {/* Background */}
+          {item.image
+            ? <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            : <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, hsl(var(--primary)/0.5) 0%, hsl(var(--primary)/0.15) 100%)` }} />
+          }
+          {/* Gradient overlay */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.7) 100%)',
+          }} />
+
+          {/* Number badge */}
+          <div style={{
+            position: 'absolute', top: '16px', left: '16px',
+            width: '34px', height: '34px', borderRadius: '50%',
+            background: 'hsl(var(--primary))', color: '#000',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '0.85rem', fontWeight: 800,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
           }}>
-            {item.image
-              ? <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,hsl(var(--primary)/0.4),hsl(var(--primary)/0.1))' }} />
-            }
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.1) 50%,rgba(0,0,0,0.55) 100%)' }} />
-            {/* number + title */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '18px 18px', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <div style={{
-                width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
-                background: 'hsl(var(--primary))', color: '#000',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.78rem', fontWeight: 700,
-              }}>{i + 1}</div>
-              <h3 style={{
-                fontFamily: "'Playfair Display','Georgia',serif",
-                fontSize: 'clamp(1rem,1.8vw,1.3rem)', fontWeight: 900,
-                color: '#fff', lineHeight: 1.2, marginTop: '2px',
-              }}>{item.title}</h3>
-            </div>
+            {index + 1}
           </div>
-        ))}
-      </div>
 
-      {/* ── Mobile stacking (< 768px) ── */}
-      {/*
-        Trick: wrap all cards in a tall container so the page has
-        enough scroll-room. Each card is position:sticky and they
-        stack on top of each other as the user scrolls.
-        Container height = cards * scroll-room-per-card
-      */}
-      <div
-        className="skills-stack-mobile"
-        style={{
-          position: 'relative',
-          /* Give each card ~60vh of scroll room so stacking feels smooth */
-          height: `calc(${skillItems.length} * 60vh + 80vh)`,
-        }}
-      >
-        {skillItems.map((item, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'sticky',
-              top: `${TOP_OFFSET + i * CARD_PEEK}px`,
-              zIndex: i + 1,
-              /* centre the card horizontally with side margins */
-              width: 'calc(100% - 48px)',
-              maxWidth: '480px',
-              margin: '0 auto',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              aspectRatio: '51/64',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.75)',
-              /* slight scale-down for cards further back in stack */
-              transform: `scale(${1 - i * 0.02})`,
-              transformOrigin: 'top center',
-            }}
-          >
-            {/* Background image */}
-            <div style={{ position: 'absolute', inset: 0 }}>
-              {item.image
-                ? <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,hsl(var(--primary)/0.4),hsl(var(--primary)/0.1))' }} />
-              }
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(to bottom,rgba(0,0,0,0.72) 0%,rgba(0,0,0,0.08) 50%,rgba(0,0,0,0.6) 100%)'
-              }} />
-            </div>
-
-            {/* Number badge + title */}
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0,
-              padding: '22px 22px',
-              display: 'flex', alignItems: 'flex-start', gap: '14px',
-              zIndex: 5,
+          {/* Title bottom */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            padding: '20px 18px',
+          }}>
+            <h3 style={{
+              fontFamily: "'Playfair Display','Georgia',serif",
+              fontSize: 'clamp(1rem, 2.5vw, 1.3rem)',
+              fontWeight: 900, color: '#fff', lineHeight: 1.25,
+              marginBottom: '8px',
             }}>
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                background: 'hsl(var(--primary))', color: '#000',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.82rem', fontWeight: 700, marginTop: '2px',
-              }}>{i + 1}</div>
-              <h3 style={{
-                fontFamily: "'Playfair Display','Georgia',serif",
-                fontSize: 'clamp(1.3rem,6vw,1.7rem)',
-                fontWeight: 900, color: '#fff', lineHeight: 1.2,
-              }}>{item.title}</h3>
-            </div>
-
-            {/* Bottom blur overlay so cards below peek nicely */}
-            {i < skillItems.length - 1 && (
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                height: '30%',
-                background: 'linear-gradient(to bottom,transparent,rgba(10,10,15,0.6))',
-              }} />
+              {item.title}
+            </h3>
+            {item.description && (
+              <p style={{
+                fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)',
+                display: 'flex', alignItems: 'center', gap: '4px',
+              }}>
+                <RotateCcw size={10} /> اضغط لمعرفة المزيد
+              </p>
             )}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* CSS to toggle desktop/mobile layouts */}
-      <style>{`
-        @media (min-width: 768px) {
-          .skills-grid-desktop { display: grid !important; }
-          .skills-stack-mobile { display: none !important; }
-        }
-        @media (max-width: 767px) {
-          .skills-grid-desktop { display: none !important; }
-          .skills-stack-mobile { display: block !important; }
-        }
-      `}</style>
-    </section>
+        {/* ── BACK ── */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          transform: 'rotateY(180deg)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+          background: 'linear-gradient(135deg, #0d1f1a 0%, #0a1412 100%)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: '24px 22px',
+        }}>
+          {/* Number + title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+            <div style={{
+              width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+              background: 'hsl(var(--primary))', color: '#000',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.78rem', fontWeight: 800,
+            }}>
+              {index + 1}
+            </div>
+            <h3 style={{
+              fontFamily: "'Playfair Display','Georgia',serif",
+              fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+              fontWeight: 900, color: 'hsl(var(--primary))', lineHeight: 1.2,
+            }}>
+              {item.title}
+            </h3>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', marginBottom: '16px' }} />
+
+          {/* Description */}
+          <p style={{
+            fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)',
+            lineHeight: 1.7, flex: 1,
+          }}>
+            {item.description || 'ستتعلم في هذا الجزء أهم المهارات والمعلومات المرتبطة بهذا الموضوع.'}
+          </p>
+
+          {/* Hint */}
+          <p style={{
+            fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)',
+            marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px',
+          }}>
+            <RotateCcw size={10} /> اضغط للعودة
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 
 /* ─────────────────────────────────────────
-   SECTION LIST (curriculum sidebar)
+   SKILLS SECTION  (grid of flip cards)
+───────────────────────────────────────── */
+const SkillsSection = ({ skillItems, onViewLessonPlan }) => (
+  <section style={{ padding: '80px 48px 0' }}>
+    <style>{`
+      .skills-flip-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+      }
+      @media (max-width: 640px) {
+        .skills-flip-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+      }
+    `}</style>
+
+    {/* Header */}
+    <div style={{ marginBottom: '28px' }}>
+      <h2 style={{
+        fontFamily: "'Playfair Display','Georgia',serif",
+        fontSize: 'clamp(1.4rem, 3vw, 1.8rem)',
+        fontWeight: 900, color: '#fff', marginBottom: '6px',
+      }}>
+        Skills You'll Learn
+      </h2>
+      <button
+        onClick={onViewLessonPlan}
+        style={{
+          background: 'none', border: 'none', color: 'hsl(var(--primary))',
+          fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
+          textUnderlineOffset: '3px',
+        }}
+      >
+        View lesson plan
+      </button>
+    </div>
+
+    {/* Grid */}
+    <div className="skills-flip-grid">
+      {skillItems.map((item, i) => (
+        <FlipCard key={i} item={item} index={i} />
+      ))}
+    </div>
+  </section>
+);
+
+/* ─────────────────────────────────────────
+   SECTION LIST
 ───────────────────────────────────────── */
 const SectionList = ({ course, expandedSections, setExpandedSections, navigate }) => (
   <>
@@ -229,7 +263,8 @@ const SectionList = ({ course, expandedSections, setExpandedSections, navigate }
             }}>
             <div style={{
               flexShrink: 0, marginTop: '2px',
-              width: '16px', height: '16px', borderRadius: '50%', border: `1px solid ${lesson.free ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.2)'}`,
+              width: '16px', height: '16px', borderRadius: '50%',
+              border: `1px solid ${lesson.free ? 'hsl(var(--primary))' : 'rgba(255,255,255,0.2)'}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               {lesson.free
@@ -271,13 +306,13 @@ const CourseDetailPage = () => {
   const { currentUser } = useAuth();
   const course = courses.find(c => c.id === id);
 
-  const [expandedSections,   setExpandedSections]   = useState({});
-  const [showCurriculum,     setShowCurriculum]     = useState(false);
-  const [wishlisted,         setWishlisted]         = useState(false);
-  const [wishlistBusy,       setWishlistBusy]       = useState(false);
-  const [defaultWhatYouGet,  setDefaultWhatYouGet]  = useState(DEFAULT_WHAT_YOU_GET);
-  const [activeVideoTab,     setActiveVideoTab]     = useState('trailer');
-  const [stickyCtaVisible,   setStickyCtaVisible]   = useState(false);
+  const [expandedSections,  setExpandedSections]  = useState({});
+  const [showCurriculum,    setShowCurriculum]    = useState(false);
+  const [wishlisted,        setWishlisted]        = useState(false);
+  const [wishlistBusy,      setWishlistBusy]      = useState(false);
+  const [defaultWhatYouGet, setDefaultWhatYouGet] = useState(DEFAULT_WHAT_YOU_GET);
+  const [activeVideoTab,    setActiveVideoTab]    = useState('trailer');
+  const [stickyCtaVisible,  setStickyCtaVisible]  = useState(false);
   const heroRef = useRef(null);
 
   useEffect(() => {
@@ -337,127 +372,79 @@ const CourseDetailPage = () => {
     </div>
   );
 
-  const totalLessons  = course.sections?.reduce((acc, s) => acc + (s.lessons?.length || 0), 0) || 0;
-  const freeLessons   = course.sections?.reduce((acc, s) => acc + (s.lessons?.filter(l => l.free).length || 0), 0) || 0;
-  const categoryLabel = categories.find(c => c.id === course.category)?.label || course.category || '';
-  const whatYouGet    = course.what_you_get?.length ? course.what_you_get : defaultWhatYouGet;
-  const outcomes      = course.outcomes || [];
-  const skillItems    = (course.skill_items?.length ? course.skill_items : outcomes.map(o => ({ title: o, image: course.image }))).slice(0, 6);
+  const totalLessons   = course.sections?.reduce((acc, s) => acc + (s.lessons?.length || 0), 0) || 0;
+  const freeLessons    = course.sections?.reduce((acc, s) => acc + (s.lessons?.filter(l => l.free).length || 0), 0) || 0;
+  const categoryLabel  = categories.find(c => c.id === course.category)?.label || course.category || '';
+  const outcomes       = course.outcomes || [];
+  const skillItems     = (course.skill_items?.length
+    ? course.skill_items
+    : outcomes.map(o => ({ title: o, description: '', image: course.image }))
+  ).slice(0, 8);
   const relatedCourses = courses.filter(c => c.id !== id && c.category === course.category).slice(0, 8);
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#fff', fontFamily: "'Inter','Outfit',sans-serif" }}>
       <Header />
 
-      {/* ══ 1. COURSE HERO ══ */}
-      <section
-        ref={heroRef}
-        className="cp-hero"
-        style={{ display: 'flex', minHeight: '92vh', paddingTop: '64px' }}
-      >
+      {/* ══ 1. HERO ══ */}
+      <section ref={heroRef} className="cp-hero" style={{ display: 'flex', minHeight: '92vh', paddingTop: '64px' }}>
         <div className="cp-hero-img" style={{ width: '50%', position: 'relative', overflow: 'hidden' }}>
           {course.image
             ? <img src={course.image} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }} />
             : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, hsl(var(--primary)/0.3), transparent)' }} />
           }
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(to right, transparent 55%, #0a0a0f 100%), linear-gradient(to top, #0a0a0f 0%, transparent 25%)'
-          }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, transparent 55%, #0a0a0f 100%), linear-gradient(to top, #0a0a0f 0%, transparent 25%)' }} />
         </div>
 
-        <div className="cp-hero-info" style={{
-          flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          padding: '80px 52px 60px 44px', background: '#0a0a0f',
-        }}>
-          <p style={{
-            color: 'hsl(var(--primary))', fontSize: '0.72rem', fontWeight: 700,
-            letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '14px'
-          }}>
+        <div className="cp-hero-info" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '80px 52px 60px 44px', background: '#0a0a0f' }}>
+          <p style={{ color: 'hsl(var(--primary))', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '14px' }}>
             {categoryLabel}{course.accredited ? ' · CME Accredited' : ''}
           </p>
-
-          <h1 style={{
-            fontFamily: "'Playfair Display','Georgia',serif",
-            fontSize: 'clamp(1.8rem,3.5vw,3rem)', fontWeight: 900, lineHeight: 1.05,
-            color: '#fff', marginBottom: '10px',
-          }}>
+          <h1 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: 'clamp(1.8rem,3.5vw,3rem)', fontWeight: 900, lineHeight: 1.05, color: '#fff', marginBottom: '10px' }}>
             {course.title}
           </h1>
-
           {course.instructor && (
             <p style={{ fontSize: '0.92rem', color: 'rgba(255,255,255,0.5)', marginBottom: '16px', fontStyle: 'italic' }}>
               With {course.instructor}
             </p>
           )}
-
           {course.description && (
-            <p style={{
-              fontSize: '0.88rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.75,
-              marginBottom: '20px', maxWidth: '430px',
-            }}>
+            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, marginBottom: '20px', maxWidth: '430px' }}>
               {course.description}
             </p>
           )}
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px', flexWrap: 'wrap' }}>
             {totalLessons > 0 && <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{totalLessons} Lessons</span>}
             {course.duration_hours && (
-              <>
-                <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-                <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{course.duration_hours}h</span>
-              </>
+              <><span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
+              <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{course.duration_hours}h</span></>
             )}
             {course.previewVideo && (
-              <>
-                <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-                <button
-                  onClick={() => document.getElementById('trailer-section')?.scrollIntoView({ behavior: 'smooth' })}
-                  style={{ background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}
-                >
-                  Watch Trailer
-                </button>
-              </>
+              <><span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
+              <button onClick={() => document.getElementById('trailer-section')?.scrollIntoView({ behavior: 'smooth' })}
+                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                Watch Trailer
+              </button></>
             )}
           </div>
 
-          <div style={{
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(42,157,143,0.2)',
-            borderRadius: '14px', padding: '22px', maxWidth: '360px', textAlign: 'center',
-          }}>
+          {/* Price box */}
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(42,157,143,0.2)', borderRadius: '14px', padding: '22px', maxWidth: '360px', textAlign: 'center' }}>
             <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>Enroll in this course</p>
-            <p style={{
-              fontFamily: "'Playfair Display','Georgia',serif",
-              fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '16px',
-            }}>
+            <p style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '16px' }}>
               {course.price
                 ? <>{`$${course.price}`} <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', fontFamily: 'inherit', fontWeight: 400 }}>/ lifetime</span></>
                 : <span style={{ color: '#4ade80' }}>Free</span>
               }
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => navigate(`/course/${course.id}/learn`)}
-                style={{
-                  flex: 1, background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer',
-                  padding: '13px', borderRadius: '8px', fontWeight: 700, fontSize: '0.92rem',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                  transition: 'all 0.2s',
-                }}
-              >
+              <button onClick={() => navigate(`/course/${course.id}/learn`)}
+                style={{ flex: 1, background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '13px', borderRadius: '8px', fontWeight: 700, fontSize: '0.92rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s' }}>
                 <Play size={15} fill="black" />
                 {currentUser ? 'Start Learning' : 'Enroll Now'}
               </button>
-              <button
-                onClick={toggleWishlist}
-                disabled={wishlistBusy}
-                style={{
-                  width: '46px', background: wishlisted ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.06)',
-                  border: `1px solid ${wishlisted ? 'rgba(239,68,68,0.35)' : 'rgba(255,255,255,0.12)'}`,
-                  borderRadius: '8px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
+              <button onClick={toggleWishlist} disabled={wishlistBusy}
+                style={{ width: '46px', background: wishlisted ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.06)', border: `1px solid ${wishlisted ? 'rgba(239,68,68,0.35)' : 'rgba(255,255,255,0.12)'}`, borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Heart size={16} color={wishlisted ? '#ef4444' : 'rgba(255,255,255,0.5)'} fill={wishlisted ? '#ef4444' : 'none'} />
               </button>
             </div>
@@ -466,15 +453,15 @@ const CourseDetailPage = () => {
         </div>
       </section>
 
-      {/* ══ 2. STICKY SKILLS STACK ══ */}
+      {/* ══ 2. FLIP SKILL CARDS ══ */}
       {skillItems.length > 0 && (
-        <StickySkillsSection
+        <SkillsSection
           skillItems={skillItems}
           onViewLessonPlan={() => setShowCurriculum(true)}
         />
       )}
 
-      {/* ══ 3. TRAILER + SAMPLE ══ */}
+      {/* ══ 3. TRAILER ══ */}
       {course.previewVideo && (
         <section id="trailer-section" style={{ padding: '80px 48px 0' }}>
           <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '24px' }}>
@@ -483,21 +470,13 @@ const CourseDetailPage = () => {
           <div className="cp-trailer-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '16px', alignItems: 'start' }}>
             <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', aspectRatio: '16/9', background: '#000' }}>
               {activeVideoTab === 'trailer' && course.previewVideo ? (
-                <iframe
-                  src={getBunnyEmbedUrl(course.previewVideo, { autoplay: true, muted: false, controls: true })}
+                <iframe src={getBunnyEmbedUrl(course.previewVideo, { autoplay: true, muted: false, controls: true })}
                   style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                  title="Course Trailer"
-                />
+                  allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title="Course Trailer" />
               ) : course.sampleVideo ? (
-                <iframe
-                  src={getBunnyEmbedUrl(course.sampleVideo, { autoplay: true, muted: false, controls: true })}
+                <iframe src={getBunnyEmbedUrl(course.sampleVideo, { autoplay: true, muted: false, controls: true })}
                   style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                  title="Course Sample"
-                />
+                  allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title="Course Sample" />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
                   <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>No sample available</p>
@@ -505,12 +484,7 @@ const CourseDetailPage = () => {
               )}
               <div style={{ position: 'absolute', top: '14px', right: '14px', display: 'flex', gap: '16px', zIndex: 5 }}>
                 {['trailer', 'sample'].map(tab => (
-                  <button key={tab} onClick={() => setActiveVideoTab(tab)} style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: activeVideoTab === tab ? '#fff' : 'rgba(255,255,255,0.45)',
-                    fontSize: '0.88rem', fontWeight: 700, textTransform: 'capitalize',
-                    textShadow: '0 1px 4px rgba(0,0,0,0.8)',
-                  }}>
+                  <button key={tab} onClick={() => setActiveVideoTab(tab)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: activeVideoTab === tab ? '#fff' : 'rgba(255,255,255,0.45)', fontSize: '0.88rem', fontWeight: 700, textTransform: 'capitalize', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
                     {tab}
                   </button>
                 ))}
@@ -518,8 +492,7 @@ const CourseDetailPage = () => {
             </div>
 
             <div style={{ borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer' }}
-                onClick={() => navigate(`/course/${course.id}/learn`)}>
+              <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer' }} onClick={() => navigate(`/course/${course.id}/learn`)}>
                 {course.image
                   ? <img src={course.image} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : <div style={{ width: '100%', height: '100%', background: 'hsl(var(--primary)/0.2)' }} />
@@ -531,9 +504,7 @@ const CourseDetailPage = () => {
                 </div>
               </div>
               <div style={{ padding: '16px' }}>
-                <span style={{ display: 'inline-block', background: 'hsl(var(--primary))', color: '#000', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '4px', marginBottom: '10px' }}>
-                  Free Sample
-                </span>
+                <span style={{ display: 'inline-block', background: 'hsl(var(--primary))', color: '#000', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', padding: '3px 10px', borderRadius: '4px', marginBottom: '10px' }}>Free Sample</span>
                 <p style={{ fontSize: '0.92rem', fontWeight: 700, color: '#fff', marginBottom: '4px', lineHeight: 1.3 }}>
                   {course.sections?.[0]?.lessons?.[0]?.title || `Lesson 1: Introduction`}
                 </p>
@@ -542,10 +513,8 @@ const CourseDetailPage = () => {
                 </p>
               </div>
               <div style={{ padding: '0 16px 16px' }}>
-                <button
-                  onClick={() => navigate(`/course/${course.id}/learn`)}
-                  style={{ width: '100%', background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '12px', borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem' }}
-                >
+                <button onClick={() => navigate(`/course/${course.id}/learn`)}
+                  style={{ width: '100%', background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '12px', borderRadius: '8px', fontWeight: 700, fontSize: '0.88rem' }}>
                   {currentUser ? 'Start Learning' : 'Enroll to Watch Full Course'}
                 </button>
               </div>
@@ -558,14 +527,10 @@ const CourseDetailPage = () => {
         </section>
       )}
 
-      {/* ══ 4. FROM HERE GO ANYWHERE ══ */}
+      {/* ══ 4. RELATED COURSES ══ */}
       {relatedCourses.length > 0 && (
         <section style={{ padding: '80px 0 0' }}>
-          <CourseRow
-            title="From Here, Go Anywhere"
-            courses={relatedCourses}
-            seeAllPath="/courses"
-          />
+          <CourseRow title="From Here, Go Anywhere" courses={relatedCourses} seeAllPath="/courses" />
         </section>
       )}
 
@@ -590,30 +555,18 @@ const CourseDetailPage = () => {
       {totalLessons > 0 && (
         <section style={{ padding: '80px 48px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: '1.8rem', fontWeight: 900, color: '#fff' }}>
-              Course Content
-            </h2>
-            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-              {totalLessons} lessons · {freeLessons} free previews
-            </span>
+            <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: '1.8rem', fontWeight: 900, color: '#fff' }}>Course Content</h2>
+            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>{totalLessons} lessons · {freeLessons} free previews</span>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden', maxWidth: '720px' }}>
-            <SectionList
-              course={course}
-              expandedSections={expandedSections}
-              setExpandedSections={setExpandedSections}
-              navigate={navigate}
-            />
+            <SectionList course={course} expandedSections={expandedSections} setExpandedSections={setExpandedSections} navigate={navigate} />
           </div>
         </section>
       )}
 
       {/* ══ 7. CERTIFICATES BANNER ══ */}
       <section className="cp-cert-banner" style={{ margin: '80px 48px 0', display: 'flex', borderRadius: '16px', overflow: 'hidden', minHeight: '260px' }}>
-        <div style={{
-          flex: 1, background: 'linear-gradient(135deg,#1a1f0a 0%,#141a08 100%)',
-          padding: '48px 52px', display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        }}>
+        <div style={{ flex: 1, background: 'linear-gradient(135deg,#1a1f0a 0%,#141a08 100%)', padding: '48px 52px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <p style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '14px' }}>
             NourishMind <strong style={{ display: 'block', color: '#fff', fontSize: '0.9rem', letterSpacing: '2px', marginTop: '2px' }}>CERTIFICATES</strong>
           </p>
@@ -623,15 +576,8 @@ const CourseDetailPage = () => {
           <p style={{ fontSize: '0.87rem', color: 'rgba(255,255,255,0.55)', marginBottom: '22px' }}>
             Proof you've trained with the Arab world's leading nutritional psychiatrist.
           </p>
-          <button
-            onClick={() => navigate(`/course/${course.id}/learn`)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              background: '#c8ff00', color: '#000', border: 'none', cursor: 'pointer',
-              padding: '11px 22px', borderRadius: '8px', fontWeight: 700, fontSize: '0.87rem',
-              alignSelf: 'flex-start', transition: 'all 0.2s',
-            }}
-          >
+          <button onClick={() => navigate(`/course/${course.id}/learn`)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#c8ff00', color: '#000', border: 'none', cursor: 'pointer', padding: '11px 22px', borderRadius: '8px', fontWeight: 700, fontSize: '0.87rem', alignSelf: 'flex-start' }}>
             Get Certified →
           </button>
         </div>
@@ -644,24 +590,14 @@ const CourseDetailPage = () => {
       </section>
 
       {/* ══ 8. CTA BANNER ══ */}
-      <section style={{
-        margin: '80px 48px 80px',
-        display: 'flex', alignItems: 'center',
-        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '16px', overflow: 'hidden', minHeight: '300px',
-      }}>
+      <section style={{ margin: '80px 48px 80px', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden', minHeight: '300px' }}>
         {course.instructor_image && (
-          <div className="cp-cta-banner-img" style={{
-            width: '300px', flexShrink: 0, marginTop: '-40px', marginBottom: '-40px', marginLeft: '20px',
-            borderRadius: '12px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
-          }}>
+          <div className="cp-cta-banner-img" style={{ width: '300px', flexShrink: 0, marginTop: '-40px', marginBottom: '-40px', marginLeft: '20px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
             <img src={course.instructor_image} alt={course.instructor} style={{ width: '100%', height: '360px', objectFit: 'cover', objectPosition: 'top', display: 'block', borderRadius: '12px' }} />
           </div>
         )}
         <div className="cp-cta-banner-info" style={{ flex: 1, padding: '48px 48px' }}>
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'hsl(var(--primary))', marginBottom: '10px' }}>
-            NourishMind · at Work
-          </p>
+          <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'hsl(var(--primary))', marginBottom: '10px' }}>NourishMind · at Work</p>
           <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: 'clamp(1.4rem,2.5vw,2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: '14px' }}>
             Level Up Your<br />Medical Team
           </h2>
@@ -669,16 +605,12 @@ const CourseDetailPage = () => {
             See why leading hospitals and medical organizations rely on NourishMind for continuous medical education.
           </p>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => navigate(`/course/${course.id}/learn`)}
-              style={{ background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '12px 24px', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem' }}
-            >
+            <button onClick={() => navigate(`/course/${course.id}/learn`)}
+              style={{ background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '12px 24px', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem' }}>
               Enroll Now{course.price ? ` — $${course.price}` : ''}
             </button>
-            <button
-              onClick={() => navigate('/courses')}
-              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '12px 24px', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem' }}
-            >
+            <button onClick={() => navigate('/courses')}
+              style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', padding: '12px 24px', borderRadius: '8px', fontWeight: 600, fontSize: '0.9rem' }}>
               Browse All →
             </button>
           </div>
@@ -702,10 +634,8 @@ const CourseDetailPage = () => {
               {totalLessons} lessons{course.accredited ? ' · CME Accredited' : ''} · Lifetime Access
             </p>
           </div>
-          <button
-            onClick={() => navigate(`/course/${course.id}/learn`)}
-            style={{ background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '12px 24px', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}
-          >
+          <button onClick={() => navigate(`/course/${course.id}/learn`)}
+            style={{ background: 'hsl(var(--primary))', color: '#000', border: 'none', cursor: 'pointer', padding: '12px 24px', borderRadius: '8px', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0 }}>
             {course.price ? `Enroll Now — $${course.price}` : 'Start Free'}
           </button>
         </div>
