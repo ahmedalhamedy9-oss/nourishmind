@@ -593,27 +593,49 @@ const CourseDetailPage = () => {
       )}
 
       {/* ══ 7. CERTIFICATES BANNER ══ */}
-      <section className="cp-cert-banner" style={{ margin: '80px 48px 0', display: 'flex', borderRadius: '16px', overflow: 'hidden', minHeight: '260px' }}>
-        <div style={{ flex: 1, background: 'linear-gradient(135deg,#1a1f0a 0%,#141a08 100%)', padding: '48px 52px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <section className="cp-cert-banner" style={{
+        margin: '80px 48px 0',
+        position: 'relative',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        minHeight: '280px',
+      }}>
+        {/* Background image — full bleed behind everything */}
+        {course.image && (
+          <img
+            src={course.image}
+            alt=""
+            style={{
+              position: 'absolute', inset: 0,
+              width: '100%', height: '100%',
+              objectFit: 'cover', objectPosition: 'center top',
+              filter: 'brightness(0.35)',
+            }}
+          />
+        )}
+
+        {/* Dark green overlay card — sits on top of image */}
+        <div style={{
+          position: 'relative', zIndex: 2,
+          background: 'rgba(15,28,10,0.72)',
+          backdropFilter: 'blur(2px)',
+          padding: '44px 48px',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          minHeight: '280px',
+        }}>
           <p style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: '14px' }}>
             NourishMind <strong style={{ display: 'block', color: '#fff', fontSize: '0.9rem', letterSpacing: '2px', marginTop: '2px' }}>CERTIFICATES</strong>
           </p>
           <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: 'clamp(1.4rem,2.5vw,2rem)', fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: '10px' }}>
             The Fastest Way to<br />Advance Your Career
           </h2>
-          <p style={{ fontSize: '0.87rem', color: 'rgba(255,255,255,0.55)', marginBottom: '22px' }}>
+          <p style={{ fontSize: '0.87rem', color: 'rgba(255,255,255,0.6)', marginBottom: '22px', maxWidth: '420px' }}>
             Proof you've trained with the Arab world's leading nutritional psychiatrist.
           </p>
           <button onClick={() => navigate(`/course/${course.id}/learn`)}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#c8ff00', color: '#000', border: 'none', cursor: 'pointer', padding: '11px 22px', borderRadius: '8px', fontWeight: 700, fontSize: '0.87rem', alignSelf: 'flex-start' }}>
             Get Certified →
           </button>
-        </div>
-        <div style={{ width: '40%', position: 'relative', overflow: 'hidden' }}>
-          {course.image
-            ? <img src={course.image} alt="Certificate" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.7)' }} />
-            : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, hsl(var(--primary)/0.2), transparent)' }} />
-          }
         </div>
       </section>
 
