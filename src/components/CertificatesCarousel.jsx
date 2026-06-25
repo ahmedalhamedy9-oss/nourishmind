@@ -96,7 +96,7 @@ const CertificatesCarousel = () => {
       filter:    blur ? `blur(${blur}px)` : 'none',
       transition: 'all 0.5s cubic-bezier(0.4,0,0.2,1)',
       cursor:    pos !== 0 ? 'pointer' : 'default',
-      width:     '340px',
+      width:     'clamp(200px,40vw,340px)',
     };
   };
 
@@ -216,7 +216,7 @@ const CertificatesCarousel = () => {
       {activeCert && (
         <div style={{
           textAlign: 'center', marginTop: '28px',
-          padding: '0 48px',
+          padding: '0 clamp(16px,5vw,48px)',
           animation: 'certFadeUp 0.4s ease both',
         }}
           key={current}

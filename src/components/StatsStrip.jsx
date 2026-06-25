@@ -54,6 +54,7 @@ const StatsStrip = () => {
   return (
     <div
       ref={ref}
+      className="stats-strip-grid"
       style={{
         margin: '0 32px',
         borderRadius: '16px',

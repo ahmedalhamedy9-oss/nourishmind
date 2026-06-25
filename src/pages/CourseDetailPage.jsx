@@ -251,12 +251,13 @@ const CourseDetailPage = () => {
       {/* ══ 1. COURSE HERO ══ */}
       <section
         ref={heroRef}
+        className="cp-hero"
         style={{
           display: 'flex', minHeight: '100vh', paddingTop: '64px',
         }}
       >
         {/* Left: Course Image */}
-        <div style={{ width: '50%', position: 'relative', overflow: 'hidden', minHeight: '100vh' }}>
+        <div className="cp-hero-img" style={{ width: '50%', position: 'relative', overflow: 'hidden', minHeight: '100vh' }}>
           {course.image
             ? <img src={course.image} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }} />
             : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, hsl(var(--primary)/0.3), transparent)' }} />
@@ -282,7 +283,7 @@ const CourseDetailPage = () => {
         </div>
 
         {/* Right: Course Info */}
-        <div style={{
+        <div className="cp-hero-info" style={{
           flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
           padding: '80px 52px 60px 44px', background: '#0a0a0f',
         }}>
@@ -418,7 +419,7 @@ const CourseDetailPage = () => {
           <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '24px' }}>
             Watch the Trailer
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '16px', alignItems: 'start' }}>
+          <div className="cp-trailer-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '16px', alignItems: 'start' }}>
             {/* Main video */}
             <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', aspectRatio: '16/9', background: '#000' }}>
               {activeVideoTab === 'trailer' && course.previewVideo ? (
@@ -552,7 +553,7 @@ const CourseDetailPage = () => {
       )}
 
       {/* ══ 7. CERTIFICATES BANNER ══ */}
-      <section style={{ margin: '80px 48px 0', display: 'flex', borderRadius: '16px', overflow: 'hidden', minHeight: '260px' }}>
+      <section className="cp-cert-banner" style={{ margin: '80px 48px 0', display: 'flex', borderRadius: '16px', overflow: 'hidden', minHeight: '260px' }}>
         <div style={{
           flex: 1, background: 'linear-gradient(135deg,#1a1f0a 0%,#141a08 100%)',
           padding: '48px 52px', display: 'flex', flexDirection: 'column', justifyContent: 'center',
@@ -594,14 +595,14 @@ const CourseDetailPage = () => {
         borderRadius: '16px', overflow: 'hidden', minHeight: '300px',
       }}>
         {course.instructor_image && (
-          <div style={{
+          <div className="cp-cta-banner-img" style={{
             width: '300px', flexShrink: 0, marginTop: '-40px', marginBottom: '-40px', marginLeft: '20px',
             borderRadius: '12px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
           }}>
             <img src={course.instructor_image} alt={course.instructor} style={{ width: '100%', height: '360px', objectFit: 'cover', objectPosition: 'top', display: 'block', borderRadius: '12px' }} />
           </div>
         )}
-        <div style={{ flex: 1, padding: '48px 48px' }}>
+        <div className="cp-cta-banner-info" style={{ flex: 1, padding: '48px 48px' }}>
           <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'hsl(var(--primary))', marginBottom: '10px' }}>
             NourishMind · at Work
           </p>
@@ -634,7 +635,7 @@ const CourseDetailPage = () => {
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
         background: 'rgba(10,10,15,0.96)', borderTop: '1px solid rgba(255,255,255,0.08)',
-        padding: '14px 48px', backdropFilter: 'blur(8px)',
+        padding: '14px clamp(16px,4vw,48px)', backdropFilter: 'blur(8px)',
         transform: stickyCtaVisible ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.3s ease-out',
       }}>

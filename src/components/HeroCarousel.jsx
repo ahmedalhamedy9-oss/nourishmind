@@ -145,10 +145,10 @@ const HeroCarousel = () => {
       })}
 
       {/* ══ CONTENT ══ */}
-      <div style={{
+      <div className="hero-content-wrap" style={{
         position:'absolute', inset:0, zIndex:10,
         display:'flex', flexDirection:'column', justifyContent:'center',
-        padding:'0 48px', paddingTop:'72px', pointerEvents:'none',
+        padding:'0 clamp(16px,5vw,48px)', paddingTop:'72px', pointerEvents:'none',
       }}>
         <div key={animKey} style={{
           maxWidth:'580px',
@@ -166,7 +166,7 @@ const HeroCarousel = () => {
 
           <h1 style={{
             fontFamily:"'Playfair Display','Georgia',serif",
-            fontSize:'clamp(2.2rem,5vw,4rem)', fontWeight:900,
+            fontSize:'clamp(1.5rem,5vw,4rem)', fontWeight:900,
             lineHeight:1.05, color:'#fff', marginBottom:'18px',
             whiteSpace:'pre-line', textShadow:'0 2px 20px rgba(0,0,0,0.5)',
           }}>{slide.title}</h1>
