@@ -44,21 +44,41 @@ const FlipCard = ({ item, index }) => {
       onClick={() => setFlipped(f => !f)}
       style={{
         cursor: 'pointer',
-        aspectRatio: '3/4',
+        /* 
+          Fixed height on mobile so cards don't get too tall.
+          On desktop auto height via aspect-ratio.
+        */
+        height: '200px',
         perspective: '1000px',
-        borderRadius: '16px',
+        borderRadius: '14px',
         userSelect: 'none',
+        position: 'relative',
       }}
     >
+      {/* ── tap hint badge — always visible on front ── */}
+      {!flipped && (
+        <div style={{
+          position: 'absolute', top: '10px', right: '10px', zIndex: 10,
+          background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+          border: '1px solid rgba(255,255,255,0.18)',
+          borderRadius: '20px', padding: '3px 9px',
+          display: 'flex', alignItems: 'center', gap: '4px',
+          pointerEvents: 'none',
+        }}>
+          <RotateCcw size={9} color="rgba(255,255,255,0.7)" />
+          <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.7)', fontWeight: 600, whiteSpace: 'nowrap' }}>اضغط</span>
+        </div>
+      )}
+
       {/* Flip container */}
       <div style={{
         position: 'relative',
         width: '100%',
         height: '100%',
         transformStyle: 'preserve-3d',
-        transition: 'transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1)',
+        transition: 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)',
         transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-        borderRadius: '16px',
+        borderRadius: '14px',
       }}>
 
         {/* ── FRONT ── */}
@@ -66,54 +86,49 @@ const FlipCard = ({ item, index }) => {
           position: 'absolute', inset: 0,
           backfaceVisibility: 'hidden',
           WebkitBackfaceVisibility: 'hidden',
-          borderRadius: '16px',
+          borderRadius: '14px',
           overflow: 'hidden',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
         }}>
           {/* Background */}
           {item.image
             ? <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            : <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg, hsl(var(--primary)/0.5) 0%, hsl(var(--primary)/0.15) 100%)` }} />
+            : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, hsl(var(--primary)/0.45) 0%, hsl(var(--primary)/0.12) 100%)' }} />
           }
-          {/* Gradient overlay */}
+          {/* Dark overlay */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.7) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 45%, rgba(0,0,0,0.72) 100%)',
           }} />
 
           {/* Number badge */}
           <div style={{
-            position: 'absolute', top: '16px', left: '16px',
-            width: '34px', height: '34px', borderRadius: '50%',
+            position: 'absolute', top: '12px', left: '12px',
+            width: '28px', height: '28px', borderRadius: '50%',
             background: 'hsl(var(--primary))', color: '#000',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.85rem', fontWeight: 800,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+            fontSize: '0.75rem', fontWeight: 800,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
           }}>
             {index + 1}
           </div>
 
-          {/* Title bottom */}
+          {/* Title — bottom of card */}
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: '20px 18px',
+            padding: '12px 14px',
           }}>
             <h3 style={{
               fontFamily: "'Playfair Display','Georgia',serif",
-              fontSize: 'clamp(1rem, 2.5vw, 1.3rem)',
-              fontWeight: 900, color: '#fff', lineHeight: 1.25,
-              marginBottom: '8px',
+              fontSize: 'clamp(0.82rem, 3.5vw, 1rem)',
+              fontWeight: 900, color: '#fff', lineHeight: 1.3,
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}>
               {item.title}
             </h3>
-            {item.description && (
-              <p style={{
-                fontSize: '0.7rem', color: 'rgba(255,255,255,0.55)',
-                display: 'flex', alignItems: 'center', gap: '4px',
-              }}>
-                <RotateCcw size={10} /> اضغط لمعرفة المزيد
-              </p>
-            )}
           </div>
         </div>
 
@@ -123,29 +138,28 @@ const FlipCard = ({ item, index }) => {
           backfaceVisibility: 'hidden',
           WebkitBackfaceVisibility: 'hidden',
           transform: 'rotateY(180deg)',
-          borderRadius: '16px',
+          borderRadius: '14px',
           overflow: 'hidden',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-          background: 'linear-gradient(135deg, #0d1f1a 0%, #0a1412 100%)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+          background: 'linear-gradient(135deg, #0d2018 0%, #0a1412 100%)',
+          border: '1px solid rgba(255,255,255,0.09)',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          padding: '24px 22px',
+          padding: '14px',
         }}>
-          {/* Number + title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+          {/* Number + title row */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '10px' }}>
             <div style={{
-              width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+              width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
               background: 'hsl(var(--primary))', color: '#000',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.78rem', fontWeight: 800,
+              fontSize: '0.68rem', fontWeight: 800, marginTop: '1px',
             }}>
               {index + 1}
             </div>
             <h3 style={{
               fontFamily: "'Playfair Display','Georgia',serif",
-              fontSize: 'clamp(0.9rem, 2vw, 1.1rem)',
+              fontSize: 'clamp(0.75rem, 3vw, 0.9rem)',
               fontWeight: 900, color: 'hsl(var(--primary))', lineHeight: 1.2,
             }}>
               {item.title}
@@ -153,23 +167,30 @@ const FlipCard = ({ item, index }) => {
           </div>
 
           {/* Divider */}
-          <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', marginBottom: '16px' }} />
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', marginBottom: '10px', flexShrink: 0 }} />
 
-          {/* Description */}
+          {/* Description — scrollable if too long */}
           <p style={{
-            fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)',
-            lineHeight: 1.7, flex: 1,
+            fontSize: 'clamp(0.72rem, 2.8vw, 0.82rem)',
+            color: 'rgba(255,255,255,0.78)',
+            lineHeight: 1.6,
+            flex: 1,
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
           }}>
             {item.description || 'ستتعلم في هذا الجزء أهم المهارات والمعلومات المرتبطة بهذا الموضوع.'}
           </p>
 
-          {/* Hint */}
-          <p style={{
-            fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)',
-            marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px',
+          {/* Back hint */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '4px',
+            marginTop: '8px', flexShrink: 0,
           }}>
-            <RotateCcw size={10} /> اضغط للعودة
-          </p>
+            <RotateCcw size={9} color="rgba(255,255,255,0.25)" />
+            <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.25)' }}>اضغط للعودة</span>
+          </div>
         </div>
       </div>
     </div>
@@ -180,26 +201,33 @@ const FlipCard = ({ item, index }) => {
    SKILLS SECTION  (grid of flip cards)
 ───────────────────────────────────────── */
 const SkillsSection = ({ skillItems, onViewLessonPlan }) => (
-  <section style={{ padding: '80px 48px 0' }}>
+  <section style={{ padding: '60px 20px 0' }}>
     <style>{`
       .skills-flip-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
-      @media (max-width: 640px) {
+      @media (min-width: 480px) {
         .skills-flip-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 12px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 14px;
         }
+      }
+      @media (min-width: 768px) {
+        .skills-flip-grid {
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+        }
+        .skills-section-wrap { padding: 80px 48px 0 !important; }
       }
     `}</style>
 
     {/* Header */}
-    <div style={{ marginBottom: '28px' }}>
+    <div style={{ marginBottom: '20px' }}>
       <h2 style={{
         fontFamily: "'Playfair Display','Georgia',serif",
-        fontSize: 'clamp(1.4rem, 3vw, 1.8rem)',
+        fontSize: 'clamp(1.3rem, 5vw, 1.8rem)',
         fontWeight: 900, color: '#fff', marginBottom: '6px',
       }}>
         Skills You'll Learn
@@ -208,7 +236,7 @@ const SkillsSection = ({ skillItems, onViewLessonPlan }) => (
         onClick={onViewLessonPlan}
         style={{
           background: 'none', border: 'none', color: 'hsl(var(--primary))',
-          fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
+          fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline',
           textUnderlineOffset: '3px',
         }}
       >
