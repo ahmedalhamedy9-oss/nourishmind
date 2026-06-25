@@ -19,7 +19,7 @@ const useScrollReveal = (threshold = 0.15) => {
           observer.disconnect(); // animate once only
         }
       },
-      { threshold }
+      { threshold, rootMargin: '0px 0px -20px 0px' }
     );
 
     observer.observe(el);

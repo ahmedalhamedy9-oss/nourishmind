@@ -29,7 +29,6 @@ const RevealSection = ({
         opacity:    inView ? 1 : 0,
         transform:  inView ? 'translateY(0px)' : `translateY(${y}px)`,
         transition: `opacity ${duration}ms ease ${delay}ms, transform ${duration}ms ease ${delay}ms`,
-        willChange: 'opacity, transform',
         ...style,
       }}
     >
