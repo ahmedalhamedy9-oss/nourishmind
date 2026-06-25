@@ -191,3 +191,21 @@ body { overflow-x: hidden; overflow-y: scroll; }
     height: clamp(150px, 45vw, 200px) !important;
   }
 }
+
+/* ── Skills Cards: desktop grid / mobile sticky stack ── */
+.skills-desktop-grid { display: none !important; }
+.skills-mobile-stack { display: block; }
+
+@media (min-width: 768px) {
+  .skills-desktop-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .skills-mobile-stack { display: none; }
+}
+
+@media (min-width: 1024px) {
+  .skills-desktop-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
