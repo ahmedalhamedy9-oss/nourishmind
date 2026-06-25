@@ -79,33 +79,33 @@ html { scroll-behavior: smooth; }
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
 /* ============================================
-   NourishMind — Responsive Styles
-   Mobile: < 640px
-   Tablet: 641px – 900px
-   Desktop: > 900px
+   NourishMind Responsive — Mobile / Tablet
    ============================================ */
+
+/* ── Prevent horizontal overflow globally ── */
+html, body { overflow-x: hidden; max-width: 100vw; }
+* { box-sizing: border-box; }
 
 /* ── HERO CAROUSEL ── */
 @media (max-width: 768px) {
   .hero-content-wrap {
     padding: 0 16px !important;
     padding-top: 72px !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
   }
-  .hero-title {
-    font-size: clamp(1.5rem, 6vw, 2.4rem) !important;
+  .hero-content-wrap h1 {
+    font-size: clamp(1.4rem, 6vw, 2.2rem) !important;
+    white-space: normal !important;
   }
-  .hero-description {
-    font-size: 0.88rem !important;
-    margin-bottom: 20px !important;
-  }
-  .hero-cta-wrap {
-    flex-wrap: wrap;
-    gap: 8px !important;
-  }
-  .hero-btn {
-    padding: 10px 18px !important;
+  .hero-content-wrap p {
     font-size: 0.85rem !important;
+    max-width: 100% !important;
+  }
+  .hero-content-wrap > div {
+    max-width: 100% !important;
   }
 }
 
@@ -113,37 +113,29 @@ html { scroll-behavior: smooth; }
 @media (max-width: 900px) {
   .stats-strip-grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    margin: 0 16px !important;
+    margin: 0 12px !important;
   }
-  .stats-strip-grid > div:nth-child(odd) {
+  .stats-strip-grid > div {
+    border-right: none !important;
+    padding: 16px 8px !important;
+  }
+  .stats-strip-grid > div:nth-child(1),
+  .stats-strip-grid > div:nth-child(3) {
     border-right: 1px solid rgba(255,255,255,0.07) !important;
   }
   .stats-strip-grid > div:nth-child(1),
   .stats-strip-grid > div:nth-child(2) {
     border-bottom: 1px solid rgba(255,255,255,0.07);
-    padding-bottom: 20px;
   }
-  .stats-strip-grid > div:nth-child(3),
-  .stats-strip-grid > div:nth-child(4) {
-    padding-top: 20px;
-  }
-  /* Remove desktop right borders */
-  .stats-strip-grid > div:nth-child(2),
-  .stats-strip-grid > div:nth-child(4) {
-    border-right: none !important;
-  }
-}
-@media (max-width: 640px) {
-  .stats-strip-grid {
-    grid-template-columns: 1fr 1fr !important;
-    margin: 0 12px !important;
-    padding: 20px 0 !important;
+  .stats-strip-grid span:first-child {
+    font-size: clamp(1.2rem, 5vw, 2rem) !important;
+    word-break: break-word !important;
+    white-space: normal !important;
   }
 }
 
-/* ── COURSE DETAIL PAGE ── */
+/* ── COURSE DETAIL — HERO ── */
 @media (max-width: 768px) {
-  /* Hero: stack vertically */
   .cp-hero {
     flex-direction: column !important;
     min-height: auto !important;
@@ -154,101 +146,47 @@ html { scroll-behavior: smooth; }
     max-height: 300px !important;
   }
   .cp-hero-info {
-    padding: 24px 16px 80px !important;
+    padding: 20px 16px 90px !important;
+    width: 100% !important;
   }
-  .cp-price-box {
-    max-width: 100% !important;
+  .cp-hero-info h1 {
+    font-size: clamp(1.4rem, 6vw, 2.2rem) !important;
   }
-  /* Sections padding */
-  .cp-section-pad {
-    padding: 48px 16px 0 !important;
-  }
-  /* Sticky cards */
-  .cp-sticky-card {
-    width: calc(100% - 32px) !important;
-  }
-  /* Trailer grid: single column */
   .cp-trailer-grid {
     grid-template-columns: 1fr !important;
   }
-  /* Certificates banner */
   .cp-cert-banner {
     flex-direction: column !important;
-    margin: 48px 16px 0 !important;
+    margin: 40px 12px 0 !important;
   }
   .cp-cert-banner-right {
     width: 100% !important;
-    height: 180px !important;
+    height: 160px !important;
   }
-  .cp-cert-banner-left {
-    padding: 28px 20px !important;
-  }
-  /* CTA banner */
   .cp-cta-banner {
     flex-direction: column !important;
-    margin: 48px 16px 60px !important;
-    padding-bottom: 28px !important;
+    margin: 40px 12px 60px !important;
   }
   .cp-cta-banner-img {
-    width: calc(100% - 32px) !important;
-    margin: 16px auto -8px !important;
-    height: 200px !important;
+    width: calc(100% - 24px) !important;
+    margin: 12px auto 0 !important;
+    height: 180px !important;
   }
   .cp-cta-banner-img img {
-    height: 200px !important;
+    height: 180px !important;
   }
   .cp-cta-banner-info {
-    padding: 24px 20px 0 !important;
+    padding: 20px 16px 0 !important;
+    width: 100% !important;
   }
-  /* Sticky bottom CTA */
-  .cp-sticky-cta-inner {
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-  }
-  .cp-sticky-cta {
-    padding: 12px 16px !important;
+  .cp-section-pad {
+    padding: 40px 16px 0 !important;
   }
 }
 
 /* ── CERTIFICATES CAROUSEL ── */
 @media (max-width: 640px) {
   .cert-stage {
-    height: clamp(160px, 50vw, 220px) !important;
-  }
-  .cert-card-wrap {
-    width: clamp(180px, 70vw, 260px) !important;
-  }
-  .cert-header-pad {
-    padding: 0 16px !important;
-  }
-  .cert-info-pad {
-    padding: 0 16px !important;
-  }
-}
-@media (max-width: 900px) and (min-width: 641px) {
-  .cert-stage {
-    height: clamp(200px, 30vw, 240px) !important;
-  }
-  .cert-card-wrap {
-    width: clamp(220px, 38vw, 300px) !important;
-  }
-}
-
-/* ── COURSE ROWS ── */
-@media (max-width: 640px) {
-  .course-row-header {
-    padding: 0 12px !important;
-  }
-  .course-row-track {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-  }
-}
-
-/* ── GENERAL ── */
-@media (max-width: 640px) {
-  .section-pad-48 {
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    height: clamp(150px, 45vw, 200px) !important;
   }
 }
