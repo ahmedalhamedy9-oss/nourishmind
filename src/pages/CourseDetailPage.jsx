@@ -372,7 +372,7 @@ const CourseDetailPage = () => {
                 <Heart size={16} color={wishlisted ? '#ef4444' : 'rgba(255,255,255,0.5)'} fill={wishlisted ? '#ef4444' : 'none'} />
               </button>
             </div>
-            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', marginTop: '10px' }}>30-day money-back guaranteed</p>
+
           </div>
         </div>
       </section>

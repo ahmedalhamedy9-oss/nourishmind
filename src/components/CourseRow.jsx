@@ -131,7 +131,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
       </div>
 
       {/* Cards */}
-      <div className="relative">
+      <div className="relative" style={{ overflowX: "clip", overflowY: "visible" }}>
         <button
           onClick={() => scroll(-1)}
           className="absolute left-0 top-0 bottom-0 z-20 w-10 bg-black/70 items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity hover:bg-black/90 hidden sm:flex"
@@ -141,7 +141,7 @@ const CourseRow = ({ title, courses, variant = 'normal', seeAllPath, userProgres
 
         <div
           ref={ref}
-          className={`flex gap-4 overflow-x-auto px-4 sm:px-12 pb-4 ${variant === 'top10' ? 'pt-4' : 'pt-2'}`}
+          className={`flex gap-4 overflow-x-auto px-4 sm:px-12 pb-6 ${variant === 'top10' ? 'pt-16' : 'pt-14'}`}
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {courses.map((course, i) => (

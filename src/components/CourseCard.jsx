@@ -62,6 +62,7 @@ const CourseCard = ({ course, rank }) => {
   };
 
   // ── Preview video (Bunny) ──
+  const [isHovered,  setIsHovered]  = useState(false); // immediate hover state
   const [showIframe, setShowIframe] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [showVideo,  setShowVideo]  = useState(false);
@@ -76,6 +77,7 @@ const CourseCard = ({ course, rank }) => {
 
   const handleMouseEnter = () => {
     if (isMobile) return;
+    setIsHovered(true);
     hoverRef.current = true;
     if (!hasBunny) return;
     hoverTimer.current = setTimeout(() => {
@@ -87,6 +89,7 @@ const CourseCard = ({ course, rank }) => {
   };
 
   const handleMouseLeave = () => {
+    setIsHovered(false);
     hoverRef.current = false;
     clearTimeout(hoverTimer.current);
     clearTimeout(videoTimer.current);
@@ -158,9 +161,9 @@ const CourseCard = ({ course, rank }) => {
         <div
           className="relative rounded-xl overflow-hidden"
           style={{
-            aspectRatio: '2/3', zIndex: 1,
-            boxShadow: showVideo ? '0 20px 50px rgba(0,0,0,0.8)' : '0 8px 28px rgba(0,0,0,0.5)',
-            transform: showVideo ? 'scale(1.08) translateY(-10px)' : 'scale(1)',
+            aspectRatio: '2/3',
+            boxShadow: isHovered ? '0 20px 50px rgba(0,0,0,0.8)' : '0 8px 28px rgba(0,0,0,0.5)',
+            transform: isHovered ? 'scale(1.08) translateY(-10px)' : 'scale(1)',
             transition: 'all 0.35s cubic-bezier(0.2,0,0.2,1)',
           }}
         >
