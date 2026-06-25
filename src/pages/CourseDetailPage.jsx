@@ -618,7 +618,7 @@ const CourseDetailPage = () => {
       </section>
 
       {/* ══ 8. CTA BANNER ══ */}
-      <section style={{ margin: '80px 48px 80px', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden', minHeight: '300px' }}>
+      <section className="cp-cta-banner" style={{ margin: '80px 48px 80px', display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', overflow: 'hidden', minHeight: '300px' }}>
         {course.instructor_image && (
           <div className="cp-cta-banner-img" style={{ width: '300px', flexShrink: 0, marginTop: '-40px', marginBottom: '-40px', marginLeft: '20px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
             <img src={course.instructor_image} alt={course.instructor} style={{ width: '100%', height: '360px', objectFit: 'cover', objectPosition: 'top', display: 'block', borderRadius: '12px' }} />
