@@ -253,11 +253,11 @@ const CourseDetailPage = () => {
         ref={heroRef}
         className="cp-hero"
         style={{
-          display: 'flex', minHeight: '100vh', paddingTop: '64px',
+          display: 'flex', minHeight: '92vh', paddingTop: '64px',
         }}
       >
         {/* Left: Course Image */}
-        <div className="cp-hero-img" style={{ width: '50%', position: 'relative', overflow: 'hidden', minHeight: '100vh' }}>
+        <div className="cp-hero-img" style={{ width: '50%', position: 'relative', overflow: 'hidden' }}>
           {course.image
             ? <img src={course.image} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top center', display: 'block' }} />
             : <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, hsl(var(--primary)/0.3), transparent)' }} />
@@ -267,19 +267,7 @@ const CourseDetailPage = () => {
             position: 'absolute', inset: 0,
             background: 'linear-gradient(to right, transparent 55%, #0a0a0f 100%), linear-gradient(to top, #0a0a0f 0%, transparent 25%)'
           }} />
-          {/* Trailer/Sample tabs */}
-          <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '16px', zIndex: 5 }}>
-            {['trailer', 'sample'].map(tab => (
-              <button key={tab} onClick={() => setActiveVideoTab(tab)} style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                color: activeVideoTab === tab ? '#fff' : 'rgba(255,255,255,0.45)',
-                fontSize: '0.88rem', fontWeight: 700, transition: 'color 0.2s',
-                textTransform: 'capitalize',
-              }}>
-                {tab}
-              </button>
-            ))}
-          </div>
+{/* Trailer/Sample tabs moved to video player section */}
         </div>
 
         {/* Right: Course Info */}
