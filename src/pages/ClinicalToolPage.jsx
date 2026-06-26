@@ -17,14 +17,17 @@ const useClinicalAccess = () => {
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDoc(doc(db, 'clinical_subscriptions', currentUser.uid));
+        const snap = await getDoc(doc(db, 'users', currentUser.uid));
         if (!snap.exists()) { if (!cancelled) setStatus('no_access'); return; }
-        const sub = snap.data();
-        if (sub.status === 'active' && sub.expires_at?.toDate() > new Date()) {
-          if (!cancelled) setStatus('granted');
-        } else {
-          if (!cancelled) setStatus('expired');
+        const userData = snap.data();
+        if (userData.clinicalAccess === true) {
+          const expiry = userData.clinicalAccessExpiry;
+          if (!expiry || new Date(expiry?.toDate?.() ?? expiry) > new Date()) {
+            if (!cancelled) setStatus('granted'); return;
+          }
+          if (!cancelled) setStatus('expired'); return;
         }
+        if (!cancelled) setStatus('no_access');
       } catch { if (!cancelled) setStatus('no_access'); }
     })();
     return () => { cancelled = true; };
