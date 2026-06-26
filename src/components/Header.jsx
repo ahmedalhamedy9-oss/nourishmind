@@ -11,9 +11,8 @@ const NAV_LINKS = [
   { path: '/courses', label: 'Courses' },
   { path: '/about',   label: 'About' },
   { path: '/pricing', label: 'Pricing' },
+  { path: '/tools',   label: 'PsychDecide', icon: true },
 ];
-
-const TOOLS_PATH = '/tools';
 
 const Logo = () => (
   <Link to="/" className="flex items-center shrink-0">
@@ -118,19 +117,14 @@ const Header = () => {
           <Logo />
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-4">
-            {NAV_LINKS.map(({ path, label }) => (
-              <Link key={path} to={path} className="relative transition-colors duration-200"
-                style={{ color:isActive(path)?'#5fbfb0':'rgba(200,230,225,0.75)', fontWeight:isActive(path)?600:400 }}>
+            {NAV_LINKS.map(({ path, label, icon }) => (
+              <Link key={path} to={path} className="relative transition-colors duration-200 flex items-center gap-1.5"
+                style={{ color:isActive(path)||location.pathname.startsWith(path)&&path!=='/':'#5fbfb0':'rgba(200,230,225,0.75)', fontWeight:isActive(path)||location.pathname.startsWith(path)&&path!=='/'?600:400 }}>
+                {icon && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>}
                 {label}
-                {isActive(path) && <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full" style={{ background:'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />}
+                {(isActive(path)||(location.pathname.startsWith(path)&&path!=='/')) && <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full" style={{ background:'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />}
               </Link>
             ))}
-            <Link to={TOOLS_PATH} className="relative transition-colors duration-200 flex items-center gap-1.5"
-              style={{ color:location.pathname.startsWith('/tools')?'#5fbfb0':'rgba(200,230,225,0.75)', fontWeight:location.pathname.startsWith('/tools')?600:400 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
-              PsychDecide
-              {location.pathname.startsWith('/tools') && <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full" style={{ background:'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />}
-            </Link>
           </nav>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
