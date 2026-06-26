@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Header from '@/components/Header';
 
@@ -23,8 +23,13 @@ const useClinicalAccess = () => {
         if (!snap.exists()) { if (!cancelled) setStatus('no_access'); return; }
         const userData = snap.data();
         // Check if user has this tool in their clinicalTools array
-        const tools = userData.clinicalTools || [];
-        if (tools.some(id => id === TOOL_ID || id.includes('clinical'))) {
+        const userTools = userData.clinicalTools || [];
+        // Get tool IDs from Firestore tools collection and match by path
+        const toolsSnap = await getDocs(collection(db, 'tools'));
+        const clinicalToolIds = toolsSnap.docs
+          .filter(d => d.data().path === '/tools/clinical')
+          .map(d => d.id);
+        if (userTools.some(tid => clinicalToolIds.includes(tid))) {
           if (!cancelled) setStatus('granted'); return;
         }
         if (!cancelled) setStatus('no_access');
