@@ -491,11 +491,21 @@ const CourseDetailPage = () => {
 
       {/* ══ 3. TRAILER ══ */}
       {course.previewVideo && (
-        <section id="trailer-section" style={{ padding: '80px 48px 0' }}>
-          <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: '1.8rem', fontWeight: 900, color: '#fff', marginBottom: '24px' }}>
+        <section id="trailer-section" style={{ padding: '60px 20px 0' }}>
+          <style>{`
+            @media (min-width: 768px) {
+              .trailer-section-wrap { padding: 80px 48px 0 !important; }
+              .cp-trailer-grid { grid-template-columns: 1fr 340px !important; }
+            }
+            @media (max-width: 767px) {
+              .cp-trailer-grid { grid-template-columns: 1fr !important; }
+              .cp-trailer-side { display: none !important; }
+            }
+          `}</style>
+          <h2 style={{ fontFamily: "'Playfair Display','Georgia',serif", fontSize: 'clamp(1.4rem,5vw,1.8rem)', fontWeight: 900, color: '#fff', marginBottom: '18px' }}>
             Watch the Trailer
           </h2>
-          <div className="cp-trailer-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '16px', alignItems: 'start' }}>
+          <div className="cp-trailer-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '16px', alignItems: 'start' }}>
             <div style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', aspectRatio: '16/9', background: '#000' }}>
               {activeVideoTab === 'trailer' && course.previewVideo ? (
                 <iframe src={getBunnyEmbedUrl(course.previewVideo, { autoplay: true, muted: false, controls: true })}
@@ -519,7 +529,7 @@ const CourseDetailPage = () => {
               </div>
             </div>
 
-            <div style={{ borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="cp-trailer-side" style={{ borderRadius: '14px', overflow: 'hidden', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden', cursor: 'pointer' }} onClick={() => navigate(`/course/${course.id}/learn`)}>
                 {course.image
                   ? <img src={course.image} alt={course.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
