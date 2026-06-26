@@ -15,6 +15,7 @@ import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import AdminPage from '@/pages/AdminPage';
 import CertificatePage from '@/pages/CertificatePage';
 import ClinicalToolPage from '@/pages/ClinicalToolPage';
+import ToolsPage from '@/pages/ToolsPage';
 
 /* Splash only on first visit per session; Door always shows */
 const hasSeenSplash = sessionStorage.getItem('nm_splash_done') === '1';
@@ -54,6 +55,7 @@ const AppRoutes = ({ onAuthReady }) => {
       <Route path="/course/:id/learn"  element={<CoursePlayerPage />} />
       <Route path="/certificates"      element={<PrivateRoute><CertificatePage /></PrivateRoute>} />
       <Route path="/admin"             element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="/tools"             element={<PrivateRoute><ToolsPage /></PrivateRoute>} />
       <Route path="/tools/clinical"    element={<PrivateRoute><ClinicalToolPage /></PrivateRoute>} />
       <Route path="*"                  element={<Navigate to="/" />} />
     </Routes>
