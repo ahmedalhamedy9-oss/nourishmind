@@ -4,11 +4,11 @@ import {
   Plus, Pencil, Trash2, X, Check, BookOpen, Tag, Upload,
   Award, Star, MessageSquare, DollarSign, Users, Search,
   ChevronDown, ChevronUp, Image, Info, FileText, Home,
-  Phone, Bell,
+  Phone, Bell, Wrench,
 } from 'lucide-react';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
-  serverTimestamp, onSnapshot, query, orderBy, setDoc, getDoc
+  serverTimestamp, onSnapshot, query, orderBy, setDoc, getDoc, getDocs
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
