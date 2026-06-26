@@ -324,10 +324,10 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
         ⚠️ للأطباء والمتخصصين فقط. هذه الأداة دعم للقرار السريري وليست بديلاً عن التقييم الطبي. القرار النهائي دائماً للطبيب المعالج.
       </div>
 
-      <div className="flex flex-col md:flex-row gap-0">
+      <div className="flex flex-col md:flex-row gap-0" style={{ minHeight:'calc(100vh - 80px)' }}>
 
         {/* ── Form Panel ── */}
-        <div className="w-full md:w-96 flex-shrink-0 border-b md:border-b-0 md:border-l border-white/8 p-5 md:sticky md:top-16"
+        <div className="w-full md:w-96 flex-shrink-0 border-b md:border-b-0 md:border-l border-white/8 overflow-y-auto p-5 md:sticky md:top-0"
           style={{ maxHeight:'100vh', background:'rgba(13,26,23,0.95)' }}>
 
           <SectionLabel>بيانات المريض</SectionLabel>
