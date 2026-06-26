@@ -490,26 +490,29 @@ const AdminPage = () => {
               {addingClinicalSub&&(
                 <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-4 mb-4 flex flex-col gap-3">
                   <p className="text-white text-sm font-semibold">إضافة مشترك جديد</p>
-                  <div className="flex gap-2">
-                    <Input value={newClinicalEmail} onChange={e=>setNewClinicalEmail(e.target.value)} placeholder="الإيميل..." className="flex-1"/>
+                  <div className="flex gap-2 flex-wrap">
+                    <select value={newClinicalEmail} onChange={e=>setNewClinicalEmail(e.target.value)}
+                      className="flex-1 min-w-0 bg-[#0a1510] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-teal-500/50">
+                      <option value="">اختر المستخدم...</option>
+                      {allUsers.filter(u=>!clinicalSubs.find(s=>s.id===u.id)).map(u=>(
+                        <option key={u.id} value={u.id}>{u.name||u.email||u.id} {u.email?'('+u.email+')':''}</option>
+                      ))}
+                    </select>
                     <button onClick={async()=>{
-                      if(!newClinicalEmail.trim())return;
+                      if(!newClinicalEmail)return alert('اختر مستخدم أولاً');
                       try{
-                        // Find user by email
-                        const usersSnap=await getDocs(collection(db,'users'));
-                        const userDoc=usersSnap.docs.find(d=>d.data().email===newClinicalEmail.trim());
-                        if(!userDoc){alert('مفيش يوزر بالإيميل ده — تأكد إنه مسجل في الموقع أولاً');return;}
-                        const uid=userDoc.id;
+                        const user=allUsers.find(u=>u.id===newClinicalEmail);
                         const expDate=new Date(); expDate.setFullYear(expDate.getFullYear()+1);
-                        await setDoc(doc(db,'clinical_subscriptions',uid),{
+                        await setDoc(doc(db,'clinical_subscriptions',newClinicalEmail),{
                           status:'active',
                           plan:'pro',
-                          email:newClinicalEmail.trim(),
+                          email:user?.email||'',
+                          name:user?.name||'',
                           created_at:serverTimestamp(),
                           expires_at:expDate,
                           added_by:'admin'
                         });
-                        setClinicalSubs(p=>[...p,{id:uid,status:'active',plan:'pro',email:newClinicalEmail.trim()}]);
+                        setClinicalSubs(p=>[...p,{id:newClinicalEmail,status:'active',plan:'pro',email:user?.email||'',name:user?.name||''}]);
                         setNewClinicalEmail('');
                         setAddingClinicalSub(false);
                       }catch(e){alert('Error: '+e.message);}
@@ -518,7 +521,6 @@ const AdminPage = () => {
                     </button>
                     <button onClick={()=>{setAddingClinicalSub(false);setNewClinicalEmail('');}} className="text-xs px-3 py-2 rounded-xl text-gray-400 border border-white/10">إلغاء</button>
                   </div>
-                  <p className="text-xs text-gray-500">⚠️ الإيميل لازم يكون مسجل في الموقع أولاً</p>
                 </div>
               )}
 
@@ -531,7 +533,8 @@ const AdminPage = () => {
                 {clinicalSubs.filter(s=>(s.email||s.id).toLowerCase().includes(clinicalSubSearch.toLowerCase())).map(sub=>(
                   <div key={sub.id} className="flex items-center justify-between bg-[#0d1a17] border border-white/10 rounded-xl px-4 py-3">
                     <div>
-                      <p className="text-white text-sm">{sub.email||sub.id}</p>
+                      <p className="text-white text-sm font-semibold">{sub.name||sub.email||sub.id}</p>
+                      {sub.email&&sub.name&&<p className="text-xs text-gray-500">{sub.email}</p>}
                       <div className="flex gap-3 mt-1">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sub.status==='active'?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>{sub.status}</span>
                         <span className="text-xs text-gray-500">{sub.plan||'pro'}</span>
