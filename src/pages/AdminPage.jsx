@@ -79,6 +79,10 @@ const AdminPage = () => {
   const{currentUser}=useAuth();
   const[activeTab,setActiveTab]=useState('courses');
   const[tools,setTools]=useState([]);
+  const[clinicalSubs,setClinicalSubs]=useState([]);
+  const[clinicalSubSearch,setClinicalSubSearch]=useState('');
+  const[addingClinicalSub,setAddingClinicalSub]=useState(false);
+  const[newClinicalEmail,setNewClinicalEmail]=useState('');
   const[savingTool,setSavingTool]=useState(false);
   const[toolModal,setToolModal]=useState(null);
   const[courses,setCourses]=useState(PLACEHOLDER_COURSES);
@@ -140,6 +144,7 @@ const AdminPage = () => {
     getDoc(doc(db,'settings','stats')).then(snap=>{if(snap.exists())setStats(s=>({...s,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
     getDocs(collection(db,'tools')).then(snap=>{setTools(snap.docs.map(d=>({id:d.id,...d.data()})));}).catch(()=>{});
+    getDocs(collection(db,'clinical_subscriptions')).then(snap=>{setClinicalSubs(snap.docs.map(d=>({id:d.id,...d.data()})));}).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
 
@@ -459,6 +464,85 @@ const AdminPage = () => {
                 </div>
               ))}
               {!tools.length&&<div className="text-center py-12 text-gray-600"><Wrench className="w-10 h-10 mx-auto mb-3 opacity-30"/><p className="text-sm">No tools yet. Add your first tool.</p></div>}
+            </div>
+
+            {/* Clinical Subscriptions */}
+            <div className="mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-white font-bold text-base">🔐 Clinical Tool Subscribers</p>
+                  <p className="text-gray-500 text-xs mt-0.5">{clinicalSubs.length} مشترك</p>
+                </div>
+                <button onClick={()=>setAddingClinicalSub(true)} className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl text-white" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)'}}>
+                  <Plus className="w-3.5 h-3.5"/> إضافة مشترك
+                </button>
+              </div>
+
+              {addingClinicalSub&&(
+                <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-4 mb-4 flex flex-col gap-3">
+                  <p className="text-white text-sm font-semibold">إضافة مشترك جديد</p>
+                  <div className="flex gap-2">
+                    <Input value={newClinicalEmail} onChange={e=>setNewClinicalEmail(e.target.value)} placeholder="User ID أو Email..." className="flex-1"/>
+                    <button onClick={async()=>{
+                      if(!newClinicalEmail.trim())return;
+                      try{
+                        const uid = newClinicalEmail.trim();
+                        const expDate = new Date(); expDate.setFullYear(expDate.getFullYear()+1);
+                        await setDoc(doc(db,'clinical_subscriptions',uid),{
+                          status:'active',
+                          plan:'pro',
+                          created_at:serverTimestamp(),
+                          expires_at:expDate,
+                          added_by:'admin'
+                        });
+                        setClinicalSubs(p=>[...p,{id:uid,status:'active',plan:'pro'}]);
+                        setNewClinicalEmail('');
+                        setAddingClinicalSub(false);
+                      }catch(e){alert('Error: '+e.message);}
+                    }} className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white shrink-0" style={{background:'#4a9b8e'}}>
+                      <Check className="w-3.5 h-3.5"/> حفظ
+                    </button>
+                    <button onClick={()=>{setAddingClinicalSub(false);setNewClinicalEmail('');}} className="text-xs px-3 py-2 rounded-xl text-gray-400 border border-white/10">إلغاء</button>
+                  </div>
+                  <p className="text-xs text-gray-500">⚠️ ادخل الـ User ID من Firebase Auth (مش الإيميل) — تلاقيه في تبويب Users</p>
+                </div>
+              )}
+
+              <div className="relative mb-3 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"/>
+                <Input value={clinicalSubSearch} onChange={e=>setClinicalSubSearch(e.target.value)} placeholder="Search by ID..." className="pl-9"/>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {clinicalSubs.filter(s=>s.id.toLowerCase().includes(clinicalSubSearch.toLowerCase())).map(sub=>(
+                  <div key={sub.id} className="flex items-center justify-between bg-[#0d1a17] border border-white/10 rounded-xl px-4 py-3">
+                    <div>
+                      <p className="text-white text-sm font-mono">{sub.id}</p>
+                      <div className="flex gap-3 mt-1">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sub.status==='active'?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>{sub.status}</span>
+                        <span className="text-xs text-gray-500">{sub.plan||'pro'}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={async()=>{
+                        const newStatus = sub.status==='active'?'inactive':'active';
+                        await updateDoc(doc(db,'clinical_subscriptions',sub.id),{status:newStatus});
+                        setClinicalSubs(p=>p.map(s=>s.id===sub.id?{...s,status:newStatus}:s));
+                      }} className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white transition-colors">
+                        {sub.status==='active'?'إيقاف':'تفعيل'}
+                      </button>
+                      <button onClick={async()=>{
+                        if(!confirm('حذف المشترك؟'))return;
+                        await deleteDoc(doc(db,'clinical_subscriptions',sub.id));
+                        setClinicalSubs(p=>p.filter(s=>s.id!==sub.id));
+                      }} className="p-1.5 rounded-lg border border-white/10 text-gray-500 hover:text-red-400 hover:border-red-500/30 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5"/>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {!clinicalSubs.length&&<p className="text-gray-600 text-sm text-center py-6">لا يوجد مشتركين بعد</p>}
+              </div>
             </div>
             {toolModal&&(
               <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={()=>setToolModal(null)}>
