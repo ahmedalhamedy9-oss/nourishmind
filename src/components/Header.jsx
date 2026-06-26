@@ -117,14 +117,17 @@ const Header = () => {
           <Logo />
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium ml-4">
-            {NAV_LINKS.map(({ path, label, icon }) => (
-              <Link key={path} to={path} className="relative transition-colors duration-200 flex items-center gap-1.5"
-                style={{ color:isActive(path)||location.pathname.startsWith(path)&&path!=='/':'#5fbfb0':'rgba(200,230,225,0.75)', fontWeight:isActive(path)||location.pathname.startsWith(path)&&path!=='/'?600:400 }}>
-                {icon && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>}
-                {label}
-                {(isActive(path)||(location.pathname.startsWith(path)&&path!=='/')) && <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full" style={{ background:'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />}
-              </Link>
-            ))}
+            {NAV_LINKS.map(({ path, label, icon }) => {
+              const active = path === '/' ? isActive(path) : location.pathname.startsWith(path);
+              return (
+                <Link key={path} to={path} className="relative transition-colors duration-200 flex items-center gap-1.5"
+                  style={{ color: active ? '#5fbfb0' : 'rgba(200,230,225,0.75)', fontWeight: active ? 600 : 400 }}>
+                  {icon && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>}
+                  {label}
+                  {active && <span className="absolute -bottom-1 left-0 right-0 h-0.5 rounded-full" style={{ background:'linear-gradient(90deg,#4a9b8e,#5fbfb0)' }} />}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
@@ -205,7 +208,7 @@ const Header = () => {
             </button>
           )}
           <div className="flex flex-col px-4 pt-3 pb-2 gap-0.5">
-            {NAV_LINKS.map(({ path, label }) => (
+            {NAV_LINKS.map(({ path, label, icon }) => (
               <Link key={path} to={path} onClick={closeMenu}
                 className="py-3 px-2 text-sm font-medium border-b border-white/5 transition-colors"
                 style={{ color:isActive(path)?'#5fbfb0':'rgba(200,230,225,0.8)' }}>
