@@ -17,6 +17,7 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 import LessonEditor from '@/components/LessonEditor';
 
 const TABS = [
+  { id: 'tools', label: 'Clinical Tools', icon: Wrench },
   { id: 'courses',     label: 'Courses',      icon: BookOpen },
   { id: 'lessons',     label: 'Lessons',       icon: BookOpen },
   { id: 'categories',  label: 'Categories',    icon: Tag },
@@ -77,6 +78,9 @@ const AdminPage = () => {
   const navigate=useNavigate();
   const{currentUser}=useAuth();
   const[activeTab,setActiveTab]=useState('courses');
+  const[tools,setTools]=useState([]);
+  const[savingTool,setSavingTool]=useState(false);
+  const[toolModal,setToolModal]=useState(null);
   const[courses,setCourses]=useState(PLACEHOLDER_COURSES);
   const[users,setUsers]=useState([]);
   const[categories,setCategories]=useState(DEFAULT_CATS);
@@ -135,6 +139,7 @@ const AdminPage = () => {
     getDoc(doc(db,'settings','heroCarousel')).then(snap=>{if(snap.exists()&&Array.isArray(snap.data().slides))setHeroSlides(snap.data().slides);}).catch(()=>{});
     getDoc(doc(db,'settings','stats')).then(snap=>{if(snap.exists())setStats(s=>({...s,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
+    getDocs(collection(db,'tools')).then(snap=>{setTools(snap.docs.map(d=>({id:d.id,...d.data()})));}).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
 
@@ -430,6 +435,79 @@ const AdminPage = () => {
           {activeTab==='coursepage'&&(<div>{sectionTitle('Course Page Defaults',<Btn onClick={saveCoursePage} disabled={savingCoursePage}><Check className="w-4 h-4"/>{savingCoursePage?'Saving…':'Save'}</Btn>)}<div className="bg-[#0d1a17] border border-white/10 rounded-xl p-5"><p className="text-white font-bold text-sm mb-3">✅ Default "What You Get" List</p><p className="text-xs text-gray-500 mb-3">كل سطر = item واحد.</p><Textarea value={coursePage.default_what_you_get} onChange={e=>setCoursePage(cp=>({...cp,default_what_you_get:e.target.value}))} rows={6} placeholder={"Expert-led video lessons\nCertificate of completion\nLifetime access\nMobile & desktop access"}/></div></div>)}
 
           {/* CONTACT / WHATSAPP */}
+          
+          {activeTab==='tools'&&(<div>
+            {sectionTitle('Clinical Tools', <button onClick={()=>setToolModal({id:'',name:'',subtitle:'',description:'',icon:'🧠',image:'',path:'/tools/clinical',badge:'Physician',badgeColor:'#4a9b8e',available:true})} className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl text-white" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)'}}><span>+</span> Add Tool</button>)}
+            <div className="flex flex-col gap-4">
+              {tools.map(tool=>(
+                <div key={tool.id} className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 flex items-center justify-center" style={{background:'rgba(74,155,142,0.1)',border:'1px solid rgba(74,155,142,0.2)'}}>
+                    {tool.image?<img src={tool.image} alt={tool.name} className="w-full h-full object-cover"/>:<span className="text-3xl">{tool.icon||'🔧'}</span>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-white font-bold text-sm">{tool.name}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${tool.available?'bg-green-500/20 text-green-400':'bg-gray-500/20 text-gray-400'}`}>{tool.available?'Active':'Coming Soon'}</span>
+                    </div>
+                    <p className="text-xs text-teal-400 mb-1">{tool.subtitle}</p>
+                    <p className="text-xs text-gray-500 truncate">{tool.path}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={()=>setToolModal(tool)} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-primary/40 transition-colors"><Pencil className="w-4 h-4"/></button>
+                    <button onClick={async()=>{if(!confirm('Delete '+tool.name+'?'))return;await deleteDoc(doc(db,'tools',tool.id));setTools(t=>t.filter(x=>x.id!==tool.id));}} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                  </div>
+                </div>
+              ))}
+              {!tools.length&&<div className="text-center py-12 text-gray-600"><Wrench className="w-10 h-10 mx-auto mb-3 opacity-30"/><p className="text-sm">No tools yet. Add your first tool.</p></div>}
+            </div>
+            {toolModal&&(
+              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={()=>setToolModal(null)}>
+                <div className="bg-[#0d1a17] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+                  <div className="flex items-center justify-between p-6 border-b border-white/10">
+                    <h2 className="text-white font-bold text-lg">{toolModal.id?'Edit Tool':'Add New Tool'}</h2>
+                    <button onClick={()=>setToolModal(null)} className="text-gray-400 hover:text-white"><X className="w-5 h-5"/></button>
+                  </div>
+                  <div className="p-6 flex flex-col gap-4">
+                    <Field label="Tool Name *"><Input value={toolModal.name} onChange={e=>setToolModal(t=>({...t,name:e.target.value}))} placeholder="PsychDecide"/></Field>
+                    <Field label="Subtitle"><Input value={toolModal.subtitle||''} onChange={e=>setToolModal(t=>({...t,subtitle:e.target.value}))} placeholder="Clinical Decision Support · Nutritional Psychiatry"/></Field>
+                    <Field label="Description"><Textarea value={toolModal.description||''} onChange={e=>setToolModal(t=>({...t,description:e.target.value}))} rows={2} placeholder="وصف قصير للأداة"/></Field>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Icon (emoji)"><Input value={toolModal.icon||'🧠'} onChange={e=>setToolModal(t=>({...t,icon:e.target.value}))} placeholder="🧠"/></Field>
+                      <Field label="Route Path"><Input value={toolModal.path||''} onChange={e=>setToolModal(t=>({...t,path:e.target.value}))} placeholder="/tools/clinical"/></Field>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Badge Text"><Input value={toolModal.badge||''} onChange={e=>setToolModal(t=>({...t,badge:e.target.value}))} placeholder="Physician"/></Field>
+                      <Field label="Badge Color"><Input value={toolModal.badgeColor||'#4a9b8e'} onChange={e=>setToolModal(t=>({...t,badgeColor:e.target.value}))} placeholder="#4a9b8e"/></Field>
+                    </div>
+                    <Field label="Tool Image">
+                      <ImgUpload label="Upload Image" folder="nourishmind/tools" currentUrl={toolModal.image} onUpload={url=>setToolModal(t=>({...t,image:url}))}/>
+                      <Input value={toolModal.image||''} onChange={e=>setToolModal(t=>({...t,image:e.target.value}))} placeholder="https://..." className="mt-1"/>
+                    </Field>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={!!toolModal.available} onChange={e=>setToolModal(t=>({...t,available:e.target.checked}))} className="accent-primary w-4 h-4"/>
+                      <span className="text-sm text-gray-300">Available (not Coming Soon)</span>
+                    </label>
+                  </div>
+                  <div className="flex justify-end gap-3 p-6 border-t border-white/10">
+                    <button onClick={()=>setToolModal(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
+                    <button disabled={savingTool} onClick={async()=>{
+                      if(!toolModal.name.trim())return alert('Name is required');
+                      setSavingTool(true);
+                      try{
+                        const data={name:toolModal.name,subtitle:toolModal.subtitle||'',description:toolModal.description||'',icon:toolModal.icon||'🧠',image:toolModal.image||'',path:toolModal.path||'/tools/clinical',badge:toolModal.badge||'',badgeColor:toolModal.badgeColor||'#4a9b8e',available:!!toolModal.available};
+                        if(toolModal.id){await setDoc(doc(db,'tools',toolModal.id),data);setTools(t=>t.map(x=>x.id===toolModal.id?{id:toolModal.id,...data}:x));}
+                        else{const ref=await addDoc(collection(db,'tools'),data);setTools(t=>[...t,{id:ref.id,...data}]);}
+                        setToolModal(null);
+                      }catch(e){alert('Error: '+e.message);}
+                      setSavingTool(false);
+                    }} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white rounded-xl" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)',opacity:savingTool?0.5:1}}>
+                      <Check className="w-4 h-4"/>{savingTool?'Saving…':'Save Tool'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>)}
           {activeTab==='contact'&&(
             <div>
               {sectionTitle('Contact & WhatsApp', <Btn onClick={saveContact} disabled={savingContact}><Check className="w-4 h-4"/>{savingContact?'Saving…':'Save'}</Btn>)}
