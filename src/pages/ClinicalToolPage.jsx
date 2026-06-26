@@ -8,6 +8,8 @@ import Header from '@/components/Header';
 /* ════════════════════════════════════════════════
    ACCESS GUARD
 ════════════════════════════════════════════════ */
+const TOOL_ID = 'clinical'; // ID of this tool in Firestore 'tools' collection path
+
 const useClinicalAccess = () => {
   const { currentUser, isAdmin } = useAuth();
   const [status, setStatus] = useState('loading');
@@ -20,12 +22,10 @@ const useClinicalAccess = () => {
         const snap = await getDoc(doc(db, 'users', currentUser.uid));
         if (!snap.exists()) { if (!cancelled) setStatus('no_access'); return; }
         const userData = snap.data();
-        if (userData.clinicalAccess === true) {
-          const expiry = userData.clinicalAccessExpiry;
-          if (!expiry || new Date(expiry?.toDate?.() ?? expiry) > new Date()) {
-            if (!cancelled) setStatus('granted'); return;
-          }
-          if (!cancelled) setStatus('expired'); return;
+        // Check if user has this tool in their clinicalTools array
+        const tools = userData.clinicalTools || [];
+        if (tools.some(id => id === TOOL_ID || id.includes('clinical'))) {
+          if (!cancelled) setStatus('granted'); return;
         }
         if (!cancelled) setStatus('no_access');
       } catch { if (!cancelled) setStatus('no_access'); }
