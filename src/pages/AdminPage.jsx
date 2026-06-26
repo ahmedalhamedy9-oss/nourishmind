@@ -136,7 +136,6 @@ const AdminPage = () => {
     getDoc(doc(db,'settings','heroCarousel')).then(snap=>{if(snap.exists()&&Array.isArray(snap.data().slides))setHeroSlides(snap.data().slides);}).catch(()=>{});
     getDoc(doc(db,'settings','stats')).then(snap=>{if(snap.exists())setStats(s=>({...s,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
-    ).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
 
