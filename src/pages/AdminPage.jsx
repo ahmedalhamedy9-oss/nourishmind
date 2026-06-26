@@ -17,7 +17,6 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 import LessonEditor from '@/components/LessonEditor';
 
 const TABS = [
-  { id: 'tools', label: 'Clinical Tools', icon: Wrench },
   { id: 'courses',     label: 'Courses',      icon: BookOpen },
   { id: 'lessons',     label: 'Lessons',       icon: BookOpen },
   { id: 'categories',  label: 'Categories',    icon: Tag },
@@ -78,13 +77,7 @@ const AdminPage = () => {
   const navigate=useNavigate();
   const{currentUser}=useAuth();
   const[activeTab,setActiveTab]=useState('courses');
-  const[tools,setTools]=useState([]);
-  const[clinicalSubs,setClinicalSubs]=useState([]);
-  const[clinicalSubSearch,setClinicalSubSearch]=useState('');
-  const[addingClinicalSub,setAddingClinicalSub]=useState(false);
-  const[newClinicalEmail,setNewClinicalEmail]=useState('');
-  const[savingTool,setSavingTool]=useState(false);
-  const[toolModal,setToolModal]=useState(null);
+
   const[courses,setCourses]=useState(PLACEHOLDER_COURSES);
   const[users,setUsers]=useState([]);
   const[categories,setCategories]=useState(DEFAULT_CATS);
@@ -143,17 +136,7 @@ const AdminPage = () => {
     getDoc(doc(db,'settings','heroCarousel')).then(snap=>{if(snap.exists()&&Array.isArray(snap.data().slides))setHeroSlides(snap.data().slides);}).catch(()=>{});
     getDoc(doc(db,'settings','stats')).then(snap=>{if(snap.exists())setStats(s=>({...s,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
-    getDocs(collection(db,'tools')).then(async snap=>{
-      if(snap.empty){
-        // Auto-create default PsychDecide tool
-        const defaultTool={name:'PsychDecide',subtitle:'Clinical Decision Support · Nutritional Psychiatry',description:'أداة دعم القرار السريري المتكاملة للأطباء وأخصائيي الصحة النفسية وأخصائيي التغذية',icon:'🧠',image:'',path:'/tools/clinical',badge:'Physician',badgeColor:'#4a9b8e',available:true};
-        const ref=await addDoc(collection(db,'tools'),defaultTool);
-        setTools([{id:ref.id,...defaultTool}]);
-      } else {
-        setTools(snap.docs.map(d=>({id:d.id,...d.data()})));
-      }
-    }).catch(()=>{});
-    getDocs(collection(db,'clinical_subscriptions')).then(snap=>{setClinicalSubs(snap.docs.map(d=>({id:d.id,...d.data()})));}).catch(()=>{});
+    ).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
 
@@ -349,7 +332,7 @@ const AdminPage = () => {
           {activeTab==='pricing'&&(<div>{sectionTitle('Pricing',<Btn onClick={savePricing} disabled={savingPricing}><Check className="w-4 h-4"/>{savingPricing?'Saving…':'Save Pricing'}</Btn>)}<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">{pricingPlans.map((plan,i)=>(<div key={plan.id} className="bg-[#0d1a17] border border-white/10 rounded-2xl p-6 flex flex-col gap-4"><div className="flex items-center justify-between"><p className="text-white font-bold">{plan.name}</p>{plan.badge&&<span className="bg-primary/20 text-primary text-xs px-2 py-0.5 rounded-full font-bold">{plan.badge}</span>}</div><div className="flex items-end gap-1"><span className="text-3xl font-black text-white">${plan.price_usd}</span><span className="text-gray-500 text-sm mb-1">/ {plan.period}</span></div><div className="flex flex-col gap-2"><Field label="Price (USD)"><Input type="number" value={plan.price_usd} onChange={e=>setPricingPlans(prev=>prev.map((p,j)=>j===i?{...p,price_usd:parseFloat(e.target.value)||0}:p))}/></Field><Field label="Period"><Input value={plan.period} onChange={e=>setPricingPlans(prev=>prev.map((p,j)=>j===i?{...p,period:e.target.value}:p))}/></Field><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={!!plan.highlighted} onChange={e=>setPricingPlans(prev=>prev.map((p,j)=>j===i?{...p,highlighted:e.target.checked}:p))} className="accent-primary w-4 h-4"/><span className="text-sm text-gray-300">Highlighted</span></label></div><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Features</p>{plan.features?.map((f,fi)=>(<div key={fi} className="flex items-center gap-2 mb-1.5"><Input value={f} onChange={e=>setPricingPlans(prev=>prev.map((p,j)=>{if(j!==i)return p;const features=[...p.features];features[fi]=e.target.value;return{...p,features};}))}/><button onClick={()=>setPricingPlans(prev=>prev.map((p,j)=>{if(j!==i)return p;return{...p,features:p.features.filter((_,k)=>k!==fi)};}))} className="text-gray-500 hover:text-red-400 shrink-0"><X className="w-4 h-4"/></button></div>))}<button onClick={()=>setPricingPlans(prev=>prev.map((p,j)=>j===i?{...p,features:[...(p.features||[]),''] }:p))} className="text-primary text-xs hover:underline flex items-center gap-1 mt-1"><Plus className="w-3 h-3"/>Add feature</button></div></div>))}</div></div>)}
 
           {/* USERS */}
-          {activeTab==='users'&&(<div>{sectionTitle('Users')}<div className="relative mb-6 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"/><Input value={userSearch} onChange={e=>setUserSearch(e.target.value)} placeholder="Search by email or name..." className="pl-9"/></div><div className="flex flex-col gap-3">{filteredUsers.map(user=>(<details key={user.id} className="bg-[#0d1a17] border border-white/10 rounded-xl overflow-hidden"><summary className="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-white/5 transition-colors">{user.avatar?<img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover shrink-0 border border-white/10"/>:<div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">{user.name?.[0]?.toUpperCase()||user.email?.[0]?.toUpperCase()||'?'}</div>}<div className="flex-1 min-w-0"><p className="text-white font-semibold text-sm truncate">{user.name||'No name'}</p><div className="flex gap-3 text-xs text-gray-500 flex-wrap"><span>{user.email}</span>{user.phone&&<span>{user.phone}</span>}</div></div><div className="flex items-center gap-2 shrink-0"><span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user.status==='suspended'?'bg-red-500/20 text-red-400':user.role==='admin'?'bg-primary/20 text-primary':'bg-white/5 text-gray-400'}`}>{user.status==='suspended'?'Suspended':user.role||'student'}</span><span className="text-xs text-gray-500">{user.enrolledCourses?.length||0} courses</span><ChevronDown className="w-4 h-4 text-gray-500"/></div></summary><div className="border-t border-white/10 p-5 flex flex-col gap-5"><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Edit Name</p><div className="flex gap-2"><Input defaultValue={user.name||''} id={`name-${user.id}`} placeholder="Full name" className="max-w-xs"/><Btn onClick={async()=>{const val=document.getElementById('name-'+user.id)?.value;if(!val)return;await updateDoc(doc(db,'users',user.id),{name:val});}}><Check className="w-4 h-4"/>Save</Btn></div></div><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Enrolled Courses</p><div className="flex flex-wrap gap-2 mb-3">{user.enrolledCourses?.map(cid=>{const c=courses.find(x=>x.id===cid);return(<div key={cid} className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs px-2 py-1 rounded-lg">{c?.title||cid}<button onClick={async()=>{const updated=(user.enrolledCourses||[]).filter(id=>id!==cid);await updateDoc(doc(db,'users',user.id),{enrolledCourses:updated});}} className="text-red-400 hover:text-red-300 ml-1 font-bold">x</button></div>);})}  {!user.enrolledCourses?.length&&<p className="text-gray-600 text-xs">No courses enrolled</p>}</div><div className="flex gap-2"><select id={`enroll-${user.id}`} className="bg-[#0a1412] border border-white/10 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary"><option value="">Add to course...</option>{courses.filter(c=>!user.enrolledCourses?.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select><Btn variant="ghost" className="text-xs py-1.5" onClick={async()=>{const sel=document.getElementById('enroll-'+user.id);if(!sel?.value)return;const updated=[...(user.enrolledCourses||[]),sel.value];await updateDoc(doc(db,'users',user.id),{enrolledCourses:updated});sel.value='';}}><Plus className="w-3 h-3"/>Enroll</Btn></div></div><div className="flex gap-2 pt-2 border-t border-white/10">{user.status==='suspended'?<Btn variant="ghost" className="text-xs" onClick={async()=>{await updateDoc(doc(db,'users',user.id),{status:'active'});}}>Activate Account</Btn>:<Btn variant="danger" className="text-xs" onClick={async()=>{if(!confirm('Suspend '+(user.name||user.email)+'?'))return;await updateDoc(doc(db,'users',user.id),{status:'suspended'});}}>Suspend Account</Btn>}</div></div></details>))}{!filteredUsers.length&&<p className="text-gray-600 text-sm">No users found.</p>}</div></div>)}
+          {activeTab==='users'&&(<div>{sectionTitle('Users')}<div className="relative mb-6 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"/><Input value={userSearch} onChange={e=>setUserSearch(e.target.value)} placeholder="Search by email or name..." className="pl-9"/></div><div className="flex flex-col gap-3">{filteredUsers.map(user=>(<details key={user.id} className="bg-[#0d1a17] border border-white/10 rounded-xl overflow-hidden"><summary className="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-white/5 transition-colors">{user.avatar?<img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover shrink-0 border border-white/10"/>:<div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm shrink-0">{user.name?.[0]?.toUpperCase()||user.email?.[0]?.toUpperCase()||'?'}</div>}<div className="flex-1 min-w-0"><p className="text-white font-semibold text-sm truncate">{user.name||'No name'}</p><div className="flex gap-3 text-xs text-gray-500 flex-wrap"><span>{user.email}</span>{user.phone&&<span>{user.phone}</span>}</div></div><div className="flex items-center gap-2 shrink-0"><span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user.status==='suspended'?'bg-red-500/20 text-red-400':user.role==='admin'?'bg-primary/20 text-primary':'bg-white/5 text-gray-400'}`}>{user.status==='suspended'?'Suspended':user.role||'student'}</span><span className="text-xs text-gray-500">{user.enrolledCourses?.length||0} courses</span><ChevronDown className="w-4 h-4 text-gray-500"/></div></summary><div className="border-t border-white/10 p-5 flex flex-col gap-5"><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Edit Name</p><div className="flex gap-2"><Input defaultValue={user.name||''} id={`name-${user.id}`} placeholder="Full name" className="max-w-xs"/><Btn onClick={async()=>{const val=document.getElementById('name-'+user.id)?.value;if(!val)return;await updateDoc(doc(db,'users',user.id),{name:val});}}><Check className="w-4 h-4"/>Save</Btn></div></div><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Enrolled Courses</p><div className="flex flex-wrap gap-2 mb-3">{user.enrolledCourses?.map(cid=>{const c=courses.find(x=>x.id===cid);return(<div key={cid} className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 text-primary text-xs px-2 py-1 rounded-lg">{c?.title||cid}<button onClick={async()=>{const updated=(user.enrolledCourses||[]).filter(id=>id!==cid);await updateDoc(doc(db,'users',user.id),{enrolledCourses:updated});}} className="text-red-400 hover:text-red-300 ml-1 font-bold">x</button></div>);})}  {!user.enrolledCourses?.length&&<p className="text-gray-600 text-xs">No courses enrolled</p>}</div><div className="flex gap-2"><select id={`enroll-${user.id}`} className="bg-[#0a1412] border border-white/10 text-white rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary"><option value="">Add to course...</option>{courses.filter(c=>!user.enrolledCourses?.includes(c.id)).map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select><Btn variant="ghost" className="text-xs py-1.5" onClick={async()=>{const sel=document.getElementById('enroll-'+user.id);if(!sel?.value)return;const updated=[...(user.enrolledCourses||[]),sel.value];await updateDoc(doc(db,'users',user.id),{enrolledCourses:updated});sel.value='';}}><Plus className="w-3 h-3"/>Enroll</Btn></div></div><div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Clinical Tool Access</p><div className="flex items-center gap-3 p-3 rounded-xl" style={{background:'rgba(74,155,142,0.06)',border:'1px solid rgba(74,155,142,0.15)'}}>{user.clinicalAccess?(<><div className="flex-1"><p className="text-sm font-semibold text-green-400">✓ مفعّل</p>{user.clinicalAccessExpiry&&<p className="text-xs text-gray-500 mt-0.5">ينتهي: {new Date(user.clinicalAccessExpiry?.toDate?.()??user.clinicalAccessExpiry).toLocaleDateString('ar-EG')}</p>}</div><button onClick={async()=>{await updateDoc(doc(db,'users',user.id),{clinicalAccess:false,clinicalAccessExpiry:null});}} className="text-xs px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">إلغاء الوصول</button></>):(<><p className="text-sm text-gray-500 flex-1">غير مفعّل</p><button onClick={async()=>{const exp=new Date();exp.setFullYear(exp.getFullYear()+1);await updateDoc(doc(db,'users',user.id),{clinicalAccess:true,clinicalAccessExpiry:exp});}} className="text-xs px-3 py-1.5 rounded-xl text-white font-bold transition-colors" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)'}}>تفعيل الوصول</button></>)}</div></div><div className="flex gap-2 pt-2 border-t border-white/10">{user.status==='suspended'?<Btn variant="ghost" className="text-xs" onClick={async()=>{await updateDoc(doc(db,'users',user.id),{status:'active'});}}>Activate Account</Btn>:<Btn variant="danger" className="text-xs" onClick={async()=>{if(!confirm('Suspend '+(user.name||user.email)+'?'))return;await updateDoc(doc(db,'users',user.id),{status:'suspended'});}}>Suspend Account</Btn>}</div></div></details>))}{!filteredUsers.length&&<p className="text-gray-600 text-sm">No users found.</p>}</div></div>)}
 
           {/* HERO */}
           {activeTab==='stats'&&(<div>
@@ -450,165 +433,6 @@ const AdminPage = () => {
 
           {/* CONTACT / WHATSAPP */}
           
-          {activeTab==='tools'&&(<div>
-            {sectionTitle('Clinical Tools', <button onClick={()=>setToolModal({id:'',name:'',subtitle:'',description:'',icon:'🧠',image:'',path:'/tools/clinical',badge:'Physician',badgeColor:'#4a9b8e',available:true})} className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl text-white" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)'}}><span>+</span> Add Tool</button>)}
-            <div className="flex flex-col gap-4">
-              {tools.map(tool=>(
-                <div key={tool.id} className="flex items-center gap-4 bg-[#0d1a17] border border-white/10 rounded-xl p-4">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 flex items-center justify-center" style={{background:'rgba(74,155,142,0.1)',border:'1px solid rgba(74,155,142,0.2)'}}>
-                    {tool.image?<img src={tool.image} alt={tool.name} className="w-full h-full object-cover"/>:<span className="text-3xl">{tool.icon||'🔧'}</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-white font-bold text-sm">{tool.name}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${tool.available?'bg-green-500/20 text-green-400':'bg-gray-500/20 text-gray-400'}`}>{tool.available?'Active':'Coming Soon'}</span>
-                    </div>
-                    <p className="text-xs text-teal-400 mb-1">{tool.subtitle}</p>
-                    <p className="text-xs text-gray-500 truncate">{tool.path}</p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <button onClick={()=>setToolModal(tool)} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-primary/40 transition-colors"><Pencil className="w-4 h-4"/></button>
-                    <button onClick={async()=>{if(!confirm('Delete '+tool.name+'?'))return;await deleteDoc(doc(db,'tools',tool.id));setTools(t=>t.filter(x=>x.id!==tool.id));}} className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors"><Trash2 className="w-4 h-4"/></button>
-                  </div>
-                </div>
-              ))}
-              {!tools.length&&<div className="text-center py-12 text-gray-600"><Wrench className="w-10 h-10 mx-auto mb-3 opacity-30"/><p className="text-sm">No tools yet. Add your first tool.</p></div>}
-            </div>
-
-            {/* Clinical Subscriptions */}
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-white font-bold text-base">🔐 Clinical Tool Subscribers</p>
-                  <p className="text-gray-500 text-xs mt-0.5">{clinicalSubs.length} مشترك</p>
-                </div>
-                <button onClick={()=>setAddingClinicalSub(true)} className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-xl text-white" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)'}}>
-                  <Plus className="w-3.5 h-3.5"/> إضافة مشترك
-                </button>
-              </div>
-
-              {addingClinicalSub&&(
-                <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-4 mb-4 flex flex-col gap-3">
-                  <p className="text-white text-sm font-semibold">إضافة مشترك جديد</p>
-                  <div className="flex gap-2 flex-wrap">
-                    <select value={newClinicalEmail} onChange={e=>setNewClinicalEmail(e.target.value)}
-                      className="flex-1 min-w-0 bg-[#0a1510] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-teal-500/50">
-                      <option value="">اختر المستخدم...</option>
-                      {allUsers.filter(u=>!clinicalSubs.find(s=>s.id===u.id)).map(u=>(
-                        <option key={u.id} value={u.id}>{u.name||u.email||u.id} {u.email?'('+u.email+')':''}</option>
-                      ))}
-                    </select>
-                    <button onClick={async()=>{
-                      if(!newClinicalEmail)return alert('اختر مستخدم أولاً');
-                      try{
-                        const user=allUsers.find(u=>u.id===newClinicalEmail);
-                        const expDate=new Date(); expDate.setFullYear(expDate.getFullYear()+1);
-                        await setDoc(doc(db,'clinical_subscriptions',newClinicalEmail),{
-                          status:'active',
-                          plan:'pro',
-                          email:user?.email||'',
-                          name:user?.name||'',
-                          created_at:serverTimestamp(),
-                          expires_at:expDate,
-                          added_by:'admin'
-                        });
-                        setClinicalSubs(p=>[...p,{id:newClinicalEmail,status:'active',plan:'pro',email:user?.email||'',name:user?.name||''}]);
-                        setNewClinicalEmail('');
-                        setAddingClinicalSub(false);
-                      }catch(e){alert('Error: '+e.message);}
-                    }} className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl text-white shrink-0" style={{background:'#4a9b8e'}}>
-                      <Check className="w-3.5 h-3.5"/> حفظ
-                    </button>
-                    <button onClick={()=>{setAddingClinicalSub(false);setNewClinicalEmail('');}} className="text-xs px-3 py-2 rounded-xl text-gray-400 border border-white/10">إلغاء</button>
-                  </div>
-                </div>
-              )}
-
-              <div className="relative mb-3 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"/>
-                <Input value={clinicalSubSearch} onChange={e=>setClinicalSubSearch(e.target.value)} placeholder="بحث بالإيميل..." className="pl-9"/>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {clinicalSubs.filter(s=>(s.email||s.id).toLowerCase().includes(clinicalSubSearch.toLowerCase())).map(sub=>(
-                  <div key={sub.id} className="flex items-center justify-between bg-[#0d1a17] border border-white/10 rounded-xl px-4 py-3">
-                    <div>
-                      <p className="text-white text-sm font-semibold">{sub.name||sub.email||sub.id}</p>
-                      {sub.email&&sub.name&&<p className="text-xs text-gray-500">{sub.email}</p>}
-                      <div className="flex gap-3 mt-1">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sub.status==='active'?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>{sub.status}</span>
-                        <span className="text-xs text-gray-500">{sub.plan||'pro'}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={async()=>{
-                        const newStatus = sub.status==='active'?'inactive':'active';
-                        await updateDoc(doc(db,'clinical_subscriptions',sub.id),{status:newStatus});
-                        setClinicalSubs(p=>p.map(s=>s.id===sub.id?{...s,status:newStatus}:s));
-                      }} className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-white transition-colors">
-                        {sub.status==='active'?'إيقاف':'تفعيل'}
-                      </button>
-                      <button onClick={async()=>{
-                        if(!confirm('حذف المشترك؟'))return;
-                        await deleteDoc(doc(db,'clinical_subscriptions',sub.id));
-                        setClinicalSubs(p=>p.filter(s=>s.id!==sub.id));
-                      }} className="p-1.5 rounded-lg border border-white/10 text-gray-500 hover:text-red-400 hover:border-red-500/30 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5"/>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {!clinicalSubs.length&&<p className="text-gray-600 text-sm text-center py-6">لا يوجد مشتركين بعد</p>}
-              </div>
-            </div>
-            {toolModal&&(
-              <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={()=>setToolModal(null)}>
-                <div className="bg-[#0d1a17] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
-                  <div className="flex items-center justify-between p-6 border-b border-white/10">
-                    <h2 className="text-white font-bold text-lg">{toolModal.id?'Edit Tool':'Add New Tool'}</h2>
-                    <button onClick={()=>setToolModal(null)} className="text-gray-400 hover:text-white"><X className="w-5 h-5"/></button>
-                  </div>
-                  <div className="p-6 flex flex-col gap-4">
-                    <Field label="Tool Name *"><Input value={toolModal.name} onChange={e=>setToolModal(t=>({...t,name:e.target.value}))} placeholder="PsychDecide"/></Field>
-                    <Field label="Subtitle"><Input value={toolModal.subtitle||''} onChange={e=>setToolModal(t=>({...t,subtitle:e.target.value}))} placeholder="Clinical Decision Support · Nutritional Psychiatry"/></Field>
-                    <Field label="Description"><Textarea value={toolModal.description||''} onChange={e=>setToolModal(t=>({...t,description:e.target.value}))} rows={2} placeholder="وصف قصير للأداة"/></Field>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Icon (emoji)"><Input value={toolModal.icon||'🧠'} onChange={e=>setToolModal(t=>({...t,icon:e.target.value}))} placeholder="🧠"/></Field>
-                      <Field label="Route Path"><Input value={toolModal.path||''} onChange={e=>setToolModal(t=>({...t,path:e.target.value}))} placeholder="/tools/clinical"/></Field>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Badge Text"><Input value={toolModal.badge||''} onChange={e=>setToolModal(t=>({...t,badge:e.target.value}))} placeholder="Physician"/></Field>
-                      <Field label="Badge Color"><Input value={toolModal.badgeColor||'#4a9b8e'} onChange={e=>setToolModal(t=>({...t,badgeColor:e.target.value}))} placeholder="#4a9b8e"/></Field>
-                    </div>
-                    <Field label="Tool Image">
-                      <ImgUpload label="Upload Image" folder="nourishmind/tools" currentUrl={toolModal.image} onUpload={url=>setToolModal(t=>({...t,image:url}))}/>
-                      <Input value={toolModal.image||''} onChange={e=>setToolModal(t=>({...t,image:e.target.value}))} placeholder="https://..." className="mt-1"/>
-                    </Field>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={!!toolModal.available} onChange={e=>setToolModal(t=>({...t,available:e.target.checked}))} className="accent-primary w-4 h-4"/>
-                      <span className="text-sm text-gray-300">Available (not Coming Soon)</span>
-                    </label>
-                  </div>
-                  <div className="flex justify-end gap-3 p-6 border-t border-white/10">
-                    <button onClick={()=>setToolModal(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-white">Cancel</button>
-                    <button disabled={savingTool} onClick={async()=>{
-                      if(!toolModal.name.trim())return alert('Name is required');
-                      setSavingTool(true);
-                      try{
-                        const data={name:toolModal.name,subtitle:toolModal.subtitle||'',description:toolModal.description||'',icon:toolModal.icon||'🧠',image:toolModal.image||'',path:toolModal.path||'/tools/clinical',badge:toolModal.badge||'',badgeColor:toolModal.badgeColor||'#4a9b8e',available:!!toolModal.available};
-                        if(toolModal.id){await setDoc(doc(db,'tools',toolModal.id),data);setTools(t=>t.map(x=>x.id===toolModal.id?{id:toolModal.id,...data}:x));}
-                        else{const ref=await addDoc(collection(db,'tools'),data);setTools(t=>[...t,{id:ref.id,...data}]);}
-                        setToolModal(null);
-                      }catch(e){alert('Error: '+e.message);}
-                      setSavingTool(false);
-                    }} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white rounded-xl" style={{background:'linear-gradient(135deg,#4a9b8e,#5bb8c4)',opacity:savingTool?0.5:1}}>
-                      <Check className="w-4 h-4"/>{savingTool?'Saving…':'Save Tool'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>)}
           {activeTab==='contact'&&(
             <div>
               {sectionTitle('Contact & WhatsApp', <Btn onClick={saveContact} disabled={savingContact}><Check className="w-4 h-4"/>{savingContact?'Saving…':'Save'}</Btn>)}
