@@ -143,7 +143,16 @@ const AdminPage = () => {
     getDoc(doc(db,'settings','heroCarousel')).then(snap=>{if(snap.exists()&&Array.isArray(snap.data().slides))setHeroSlides(snap.data().slides);}).catch(()=>{});
     getDoc(doc(db,'settings','stats')).then(snap=>{if(snap.exists())setStats(s=>({...s,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','about')).then(snap=>{if(snap.exists())setAbout(a=>({...a,...snap.data()}));}).catch(()=>{});
-    getDocs(collection(db,'tools')).then(snap=>{setTools(snap.docs.map(d=>({id:d.id,...d.data()})));}).catch(()=>{});
+    getDocs(collection(db,'tools')).then(async snap=>{
+      if(snap.empty){
+        // Auto-create default PsychDecide tool
+        const defaultTool={name:'PsychDecide',subtitle:'Clinical Decision Support · Nutritional Psychiatry',description:'أداة دعم القرار السريري المتكاملة للأطباء وأخصائيي الصحة النفسية وأخصائيي التغذية',icon:'🧠',image:'',path:'/tools/clinical',badge:'Physician',badgeColor:'#4a9b8e',available:true};
+        const ref=await addDoc(collection(db,'tools'),defaultTool);
+        setTools([{id:ref.id,...defaultTool}]);
+      } else {
+        setTools(snap.docs.map(d=>({id:d.id,...d.data()})));
+      }
+    }).catch(()=>{});
     getDocs(collection(db,'clinical_subscriptions')).then(snap=>{setClinicalSubs(snap.docs.map(d=>({id:d.id,...d.data()})));}).catch(()=>{});
     getDoc(doc(db,'settings','coursepage')).then(snap=>{if(snap.exists())setCoursePage(cp=>({...cp,...snap.data()}));}).catch(()=>{});
     getDoc(doc(db,'settings','contact')).then(snap=>{if(snap.exists())setContact(c=>({...c,...snap.data()}));}).catch(()=>{});
@@ -482,20 +491,25 @@ const AdminPage = () => {
                 <div className="bg-[#0d1a17] border border-white/10 rounded-xl p-4 mb-4 flex flex-col gap-3">
                   <p className="text-white text-sm font-semibold">إضافة مشترك جديد</p>
                   <div className="flex gap-2">
-                    <Input value={newClinicalEmail} onChange={e=>setNewClinicalEmail(e.target.value)} placeholder="User ID أو Email..." className="flex-1"/>
+                    <Input value={newClinicalEmail} onChange={e=>setNewClinicalEmail(e.target.value)} placeholder="الإيميل..." className="flex-1"/>
                     <button onClick={async()=>{
                       if(!newClinicalEmail.trim())return;
                       try{
-                        const uid = newClinicalEmail.trim();
-                        const expDate = new Date(); expDate.setFullYear(expDate.getFullYear()+1);
+                        // Find user by email
+                        const usersSnap=await getDocs(collection(db,'users'));
+                        const userDoc=usersSnap.docs.find(d=>d.data().email===newClinicalEmail.trim());
+                        if(!userDoc){alert('مفيش يوزر بالإيميل ده — تأكد إنه مسجل في الموقع أولاً');return;}
+                        const uid=userDoc.id;
+                        const expDate=new Date(); expDate.setFullYear(expDate.getFullYear()+1);
                         await setDoc(doc(db,'clinical_subscriptions',uid),{
                           status:'active',
                           plan:'pro',
+                          email:newClinicalEmail.trim(),
                           created_at:serverTimestamp(),
                           expires_at:expDate,
                           added_by:'admin'
                         });
-                        setClinicalSubs(p=>[...p,{id:uid,status:'active',plan:'pro'}]);
+                        setClinicalSubs(p=>[...p,{id:uid,status:'active',plan:'pro',email:newClinicalEmail.trim()}]);
                         setNewClinicalEmail('');
                         setAddingClinicalSub(false);
                       }catch(e){alert('Error: '+e.message);}
@@ -504,20 +518,20 @@ const AdminPage = () => {
                     </button>
                     <button onClick={()=>{setAddingClinicalSub(false);setNewClinicalEmail('');}} className="text-xs px-3 py-2 rounded-xl text-gray-400 border border-white/10">إلغاء</button>
                   </div>
-                  <p className="text-xs text-gray-500">⚠️ ادخل الـ User ID من Firebase Auth (مش الإيميل) — تلاقيه في تبويب Users</p>
+                  <p className="text-xs text-gray-500">⚠️ الإيميل لازم يكون مسجل في الموقع أولاً</p>
                 </div>
               )}
 
               <div className="relative mb-3 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"/>
-                <Input value={clinicalSubSearch} onChange={e=>setClinicalSubSearch(e.target.value)} placeholder="Search by ID..." className="pl-9"/>
+                <Input value={clinicalSubSearch} onChange={e=>setClinicalSubSearch(e.target.value)} placeholder="بحث بالإيميل..." className="pl-9"/>
               </div>
 
               <div className="flex flex-col gap-2">
-                {clinicalSubs.filter(s=>s.id.toLowerCase().includes(clinicalSubSearch.toLowerCase())).map(sub=>(
+                {clinicalSubs.filter(s=>(s.email||s.id).toLowerCase().includes(clinicalSubSearch.toLowerCase())).map(sub=>(
                   <div key={sub.id} className="flex items-center justify-between bg-[#0d1a17] border border-white/10 rounded-xl px-4 py-3">
                     <div>
-                      <p className="text-white text-sm font-mono">{sub.id}</p>
+                      <p className="text-white text-sm">{sub.email||sub.id}</p>
                       <div className="flex gap-3 mt-1">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${sub.status==='active'?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>{sub.status}</span>
                         <span className="text-xs text-gray-500">{sub.plan||'pro'}</span>
