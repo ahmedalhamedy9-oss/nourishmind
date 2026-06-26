@@ -316,7 +316,7 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
   }
 
   return (
-    <div className="min-h-screen" style={{ background:'linear-gradient(135deg,#070f0d 0%,#0d1a17 60%,#071210 100%)' }} dir="rtl">
+    <div className="min-h-screen pt-16" style={{ background:'linear-gradient(135deg,#070f0d 0%,#0d1a17 60%,#071210 100%)' }} dir="rtl">
 
       {/* Disclaimer */}
       <div className="mx-4 mt-4 px-4 py-3 rounded-xl text-xs leading-relaxed"
@@ -327,8 +327,8 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
       <div className="flex flex-col md:flex-row gap-0" style={{ minHeight:'calc(100vh - 80px)' }}>
 
         {/* ── Form Panel ── */}
-        <div className="w-full md:w-96 flex-shrink-0 border-b md:border-b-0 md:border-l border-white/8 overflow-y-auto p-5 md:sticky md:top-0"
-          style={{ maxHeight:'100vh', background:'rgba(13,26,23,0.95)' }}>
+        <div className="w-full md:w-96 flex-shrink-0 border-b md:border-b-0 md:border-l border-white/8 p-5 md:overflow-y-auto md:sticky md:top-16"
+          style={{ background:'rgba(13,26,23,0.95)' }}>
 
           <SectionLabel>بيانات المريض</SectionLabel>
 
