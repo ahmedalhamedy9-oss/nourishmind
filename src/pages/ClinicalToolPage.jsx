@@ -54,8 +54,9 @@ async function callClaude(prompt) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 8000,
+      thinking: { type: 'disabled' },
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     }),
