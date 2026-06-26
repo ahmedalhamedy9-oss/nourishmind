@@ -316,10 +316,10 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
         ⚠️ للأطباء والمتخصصين فقط. هذه الأداة دعم للقرار السريري وليست بديلاً عن التقييم الطبي. القرار النهائي دائماً للطبيب المعالج.
       </div>
 
-      <div className="flex gap-0" style={{ minHeight:'calc(100vh - 80px)' }}>
+      <div className="flex flex-col md:flex-row gap-0" style={{ minHeight:'calc(100vh - 80px)' }}>
 
         {/* ── Form Panel ── */}
-        <div className="w-96 flex-shrink-0 border-l border-white/8 overflow-y-auto p-5 sticky top-0"
+        <div className="w-full md:w-96 flex-shrink-0 border-b md:border-b-0 md:border-l border-white/8 overflow-y-auto p-5 md:sticky md:top-0"
           style={{ maxHeight:'100vh', background:'rgba(13,26,23,0.95)' }}>
 
           <SectionLabel>بيانات المريض</SectionLabel>
@@ -425,7 +425,7 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
         </div>
 
         {/* ── Results Panel ── */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
 
           {!loading && !results && (
             <div className="flex flex-col items-center justify-center h-full min-h-96 text-center gap-4">
@@ -458,7 +458,7 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
             </div>
 
             {/* PDF buttons */}
-            <div className="flex gap-3 mb-5">
+            <div className="flex flex-col sm:flex-row gap-2 mb-5">
               <button onClick={()=>generatePDF(form,results,'doctor')}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 style={{ border:'1px solid rgba(74,155,142,0.4)', color:'#5fbfb0', background:'transparent' }}>
@@ -472,7 +472,7 @@ Chrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhyth
             </div>
 
             {/* Tabs */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-1.5 mb-4">
               {SECTIONS.map(sec=>(
                 <button key={sec.id}
                   onClick={()=>setActiveTab(activeTab===sec.id?null:sec.id)}
