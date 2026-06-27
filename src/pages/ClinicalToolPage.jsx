@@ -131,13 +131,190 @@ function generatePDF(form, results, type) {
 
   const docContent = SECTIONS.map(s => makeSec(s.icon, s.title, results[s.id], s.color)).join('');
 
-  const patContent = '<div class="note">عزيزي المريض، هذه خطتك العلاجية بإشراف طبيبك. لا تعدل أي دواء بدون استشارته.</div>'
-    + makeSec('💊','أدويتك وكيفية أخذها', results.medications, '#4a9b8e')
-    + makeSec('🧪','التحاليل المطلوبة', results.labs, '#5bb8c4')
-    + makeSec('🥗','نظامك الغذائي', results.diet, '#4a9b8e')
-    + makeSec('🕐','أفضل أوقات الأكل', results.chrono, '#f59e0b')
-    + makeSec('🧴','المكملات الموصى بها', results.supplements, '#5bb8c4')
-    + makeSec('⚠️','تنبيهات مهمة', results.interactions, '#ef4444');
+  function buildPatientContent(form, results) {
+  // ── Helper: strip scientific terms ──────────────────────────────
+  function simplify(text) {
+    if (!text) return '';
+    // Remove lines with Circadian/CAR/GABA activity/BBB/CYP explanations
+    const lines = text.split('\n');
+    const filtered = lines.filter(line => {
+      const l = line.toLowerCase();
+      return !(
+        l.includes('circadian rhythm') ||
+        l.includes('car (') ||
+        l.includes('gaba activity') ||
+        l.includes('cyp') ||
+        l.includes('bbb') ||
+        l.includes('melatonin → serotonin') ||
+        l.includes('الأكل المتأخر ليلاً') && l.includes('leptin')
+      );
+    });
+    // Remove heavy scientific notation: text in parentheses like (→ ↑ Serotonin synthesis)
+    return filtered.join('\n')
+      .replace(/→\s*[↑↓][^،.\n]*/g, '')
+      .replace(/\([^)]*(?:GABA|Serotonin|Dopamine|BDNF|NMDA|BBB|CYP|HPA|CAR|Leptin|Cortisol awakening)[^)]*\)/gi, '')
+      .trim();
+  }
+
+  // ── Helper: extract lab names only (strip reasons) ──────────────
+  function extractLabs(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    const labLines = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('###') || trimmed.startsWith('---') || trimmed.startsWith('##')) continue;
+      // Table rows: | lab | reason | → take first cell only
+      if (trimmed.startsWith('|')) {
+        const cells = trimmed.split('|').map(c => c.trim()).filter(Boolean);
+        if (cells.length >= 1 && cells[0] !== '---' && !cells[0].includes('التحليل')) {
+          const labName = cells[0].replace(/\*+/g, '').trim();
+          if (labName && labName !== '---') {
+            labLines.push('<div class="check-row"><span class="checkbox">☐</span><span class="check-label">' + labName + '</span></div>');
+          }
+        }
+      } else if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+        // bullet list labs
+        const labName = trimmed.replace(/^[-*]+\s*/, '').replace(/\*+/g, '').split('|')[0].split(':')[0].trim();
+        if (labName) {
+          labLines.push('<div class="check-row"><span class="checkbox">☐</span><span class="check-label">' + labName + '</span></div>');
+        }
+      } else if (trimmed.match(/^[أ-ي]/) || trimmed.match(/^[A-Z]/)) {
+        // section headers like "أ) التحاليل الأساسية"
+        labLines.push('<div class="lab-group">' + trimmed + '</div>');
+      }
+    }
+    return labLines.join('\n');
+  }
+
+  // ── Helper: extract supplements with checkboxes ──────────────────
+  function extractSupplements(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    const out = [];
+    let currentName = '';
+    let currentDose = '';
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      // Supplement name lines: "**Name**" or numbered "1. **Name**"
+      const nameMatch = trimmed.match(/^(?:\d+\.\s*)?\*\*([^*]+)\*\*/);
+      if (nameMatch && !trimmed.includes('الجرعة') && !trimmed.includes('التوقيت') && !trimmed.includes('الصيغة') && !trimmed.includes('المدة') && !trimmed.includes('الدليل') && !trimmed.includes('الآلية') && !trimmed.includes('تحذير')) {
+        if (currentName) {
+          out.push('<div class="check-row supp-row"><span class="checkbox">☐</span><div class="supp-info"><span class="supp-name">' + currentName + '</span>' + (currentDose ? '<span class="supp-dose">' + currentDose + '</span>' : '') + '</div></div>');
+          currentDose = '';
+        }
+        currentName = nameMatch[1].trim();
+      }
+      // Dose lines
+      if (trimmed.includes('الجرعة:') || trimmed.includes('الجرعة :')) {
+        currentDose = trimmed.replace(/.*الجرعة\s*:\s*/, '').replace(/\*+/g, '').trim();
+      }
+    }
+    if (currentName) {
+      out.push('<div class="check-row supp-row"><span class="checkbox">☐</span><div class="supp-info"><span class="supp-name">' + currentName + '</span>' + (currentDose ? '<span class="supp-dose">' + currentDose + '</span>' : '') + '</div></div>');
+    }
+    return out.join('\n');
+  }
+
+  // ── Helper: extract schedule lines only ─────────────────────────
+  function extractSchedule(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    const out = [];
+    const skipPatterns = [
+      /circadian/i, /car \(/i, /gaba activity/i, /melatonin.*serotonin/i,
+      /cortisol awakening/i, /الأكل المتأخر.*leptin/i,
+      /نافذة الأكل المثالية/i, /tre/i, /time-restricted/i,
+      /أهمية/i, /يحتاج تعرضاً/i
+    ];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (skipPatterns.some(p => p.test(trimmed))) continue;
+      // Keep timing lines and food lines, strip scientific annotations
+      const cleaned = trimmed
+        .replace(/→\s*[↑↓][^،.\n،]*/g, '')
+        .replace(/\([^)]*(?:Serotonin|Dopamine|GABA|Cortisol|Melatonin|Tryptophan|Tyrosine)[^)]*\)/gi, '')
+        .trim();
+      if (cleaned) out.push(cleaned);
+    }
+    return out.join('\n');
+  }
+
+  // ── Helper: simplify food section ───────────────────────────────
+  function simplifyFood(text) {
+    if (!text) return '';
+    return text
+      .replace(/→\s*[↑↓][^،.\n]*/g, '')
+      .replace(/\([^)]*(?:Serotonin|Dopamine|GABA|BDNF|NMDA|BBB|CYP|Cortisol|Melatonin|Tryptophan|Anthocyanins|precursor|pathway)[^)]*\)/gi, '')
+      .replace(/— [A-Z][a-z]+ [A-Z][a-z]+/g, '')
+      .trim();
+  }
+
+  const css = `
+    .note{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:12px;line-height:1.8;color:#166534}
+    .rx-box{border:2px dashed #4a9b8e;border-radius:10px;padding:16px 18px;margin-bottom:18px;min-height:90px;background:#f8fffe}
+    .rx-title{font-size:13px;font-weight:700;color:#4a9b8e;margin-bottom:8px}
+    .rx-lines{display:flex;flex-direction:column;gap:10px}
+    .rx-line{border-bottom:1px solid #cde;padding-bottom:6px;min-height:22px}
+    .rx-hint{font-size:10px;color:#94a3b8;margin-top:6px}
+    .lab-group{font-size:12px;font-weight:700;color:#1e293b;margin:10px 0 4px;padding-right:4px;border-right:3px solid #5bb8c4}
+    .check-row{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid #f1f5f9}
+    .checkbox{font-size:16px;line-height:1;flex-shrink:0;color:#475569}
+    .check-label{font-size:12px;color:#334155;line-height:1.5}
+    .supp-row{align-items:center}
+    .supp-info{display:flex;flex-direction:column;gap:2px}
+    .supp-name{font-size:12px;font-weight:600;color:#1e293b}
+    .supp-dose{font-size:11px;color:#64748b}
+  `;
+
+  // ── Drug section: blank writing area ────────────────────────────
+  const drugSection = '<div class="rx-box">'
+    + '<div class="rx-title">💊 الدواء الموصوف</div>'
+    + '<div class="rx-lines">'
+    + '<div class="rx-line"></div>'
+    + '<div class="rx-line"></div>'
+    + '<div class="rx-line"></div>'
+    + '</div>'
+    + '<div class="rx-hint">يُكمل الطبيب المعالج هذا القسم بإيده</div>'
+    + '</div>';
+
+  // ── Labs section ─────────────────────────────────────────────────
+  const labsSection = '<div class="sec">'
+    + '<div class="sec-title" style="border-right-color:#5bb8c4;background:#5bb8c418">🧪 التحاليل المطلوبة</div>'
+    + '<div class="sec-body">' + extractLabs(results.labs) + '</div>'
+    + '</div>';
+
+  // ── Food section ─────────────────────────────────────────────────
+  const foodSection = '<div class="sec">'
+    + '<div class="sec-title" style="border-right-color:#4a9b8e;background:#4a9b8e18">🥗 نظامك الغذائي</div>'
+    + '<div class="sec-body" style="white-space:pre-wrap">' + simplifyFood(results.diet) + '</div>'
+    + '</div>';
+
+  // ── Schedule section ─────────────────────────────────────────────
+  const scheduleSection = '<div class="sec">'
+    + '<div class="sec-title" style="border-right-color:#f59e0b;background:#f59e0b18">🕐 جدول يومك</div>'
+    + '<div class="sec-body" style="white-space:pre-wrap">' + extractSchedule(results.chrono) + '</div>'
+    + '</div>';
+
+  // ── Supplements section ──────────────────────────────────────────
+  const suppSection = '<div class="sec">'
+    + '<div class="sec-title" style="border-right-color:#5bb8c4;background:#5bb8c418">🧴 المكملات الغذائية</div>'
+    + '<div class="sec-body">' + extractSupplements(results.supplements) + '</div>'
+    + '</div>';
+
+  return '<style>' + css + '</style>'
+    + '<div class="note">عزيزي المريض، هذه خطتك العلاجية بإشراف طبيبك. لا تعدل أي دواء بدون استشارته.</div>'
+    + drugSection
+    + labsSection
+    + foodSection
+    + scheduleSection
+    + suppSection;
+}
+
+
+  const patContent = buildPatientContent(form, results);
 
   const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
 <style>
