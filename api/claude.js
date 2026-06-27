@@ -1,35 +1,15 @@
-export const config = { runtime: 'edge' };
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req) {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
-
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: { message: 'Method not allowed' } }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: { message: 'Method not allowed' } });
 
   const apiKey = process.env.CLAUDE_API_KEY || process.env.VITE_CLAUDE_API_KEY;
-
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: { message: 'API key not configured on server' } }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-  }
+  if (!apiKey) return res.status(500).json({ error: { message: 'API key not configured' } });
 
   try {
-    const body = await req.json();
-
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -37,30 +17,17 @@ export default async function handler(req) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(req.body),
     });
 
-    const responseText = await anthropicRes.text();
-
-    let data;
+    const text = await anthropicRes.text();
     try {
-      data = JSON.parse(responseText);
+      const data = JSON.parse(text);
+      return res.status(anthropicRes.status).json(data);
     } catch {
-      return new Response(
-        JSON.stringify({ error: { message: `Anthropic returned non-JSON: ${responseText.slice(0, 200)}` } }),
-        { status: 502, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }
-      );
+      return res.status(502).json({ error: { message: 'Anthropic error: ' + text.slice(0, 300) } });
     }
-
-    return new Response(JSON.stringify(data), {
-      status: anthropicRes.status,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
-
   } catch (err) {
-    return new Response(JSON.stringify({ error: { message: err.message } }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    return res.status(500).json({ error: { message: err.message } });
   }
 }
