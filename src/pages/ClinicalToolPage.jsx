@@ -121,21 +121,23 @@ function validateClinical(form) {
 function generatePDF(form, results, type) {
   const isDoc = type === 'doctor';
   const date = new Date().toLocaleDateString('ar-EG');
-  const sec = (icon, title, content, color) => `
-    <div class="sec">
-      <div class="sec-title" style="border-right-color:${color};background:${color}18">${icon} ${title}</div>
-      <div class="sec-body">${content || '—'}</div>
-    </div>`;
 
-  const docContent = SECTIONS.map(s => sec(s.icon, s.title, results[s.id], s.color)).join('');
-  const patContent = `
-    <div class="note">عزيزي المريض، هذه خطتك العلاجية بإشراف طبيبك. لا تعدل أي دواء بدون استشارته.</div>
-    ${sec('💊','أدويتك وكيفية أخذها',results.medications,'#4a9b8e')}
-    ${sec('🧪','التحاليل المطلوبة',results.labs,'#5bb8c4')}
-    ${sec('🥗','نظامك الغذائي',results.diet,'#4a9b8e')}
-    ${sec('🕐','أفضل أوقات الأكل',results.chrono,'#f59e0b')}
-    ${sec('🧴','المكملات الموصى بها',results.supplements,'#5bb8c4')}
-    ${sec('⚠️','تنبيهات مهمة',results.interactions,'#ef4444')}`;
+  function makeSec(icon, title, body, color) {
+    return '<div class="sec">'
+      + '<div class="sec-title" style="border-right-color:' + color + ';background:' + color + '18">' + icon + ' ' + title + '</div>'
+      + '<div class="sec-body">' + (body || '—') + '</div>'
+      + '</div>';
+  }
+
+  const docContent = SECTIONS.map(s => makeSec(s.icon, s.title, results[s.id], s.color)).join('');
+
+  const patContent = '<div class="note">عزيزي المريض، هذه خطتك العلاجية بإشراف طبيبك. لا تعدل أي دواء بدون استشارته.</div>'
+    + makeSec('💊','أدويتك وكيفية أخذها', results.medications, '#4a9b8e')
+    + makeSec('🧪','التحاليل المطلوبة', results.labs, '#5bb8c4')
+    + makeSec('🥗','نظامك الغذائي', results.diet, '#4a9b8e')
+    + makeSec('🕐','أفضل أوقات الأكل', results.chrono, '#f59e0b')
+    + makeSec('🧴','المكملات الموصى بها', results.supplements, '#5bb8c4')
+    + makeSec('⚠️','تنبيهات مهمة', results.interactions, '#ef4444');
 
   const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">
 <style>
