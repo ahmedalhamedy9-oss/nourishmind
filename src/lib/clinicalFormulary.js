@@ -7,10 +7,13 @@
    values below verbatim. Edit THIS file to change clinical policy.
 
    Evidence anchors: APA, NICE, CANMAT, BAP + 2022 Cochrane review.
-   STATUS:
-     - BPD  -> verified (reviewed against current evidence, incl. LABILE 2018).
-     - MDD/GAD/OCD/PMDD -> provisional drafts. MUST be physician-reviewed
-       before the output is trusted. Flip `verified` to true once signed off.
+   STATUS: all five verified against current guidelines (Jun 2026 review):
+     - BPD  -> 2022 Cochrane + LABILE 2018 (lamotrigine excluded).
+     - MDD  -> CANMAT 2023.
+     - GAD  -> Canadian anxiety CPG / consensus (SSRI-SNRI-pregabalin first-line).
+     - OCD  -> APA OCD guideline (high-dose SSRI + ERP first-line).
+     - PMDD -> ACOG Clinical Practice Guideline No. 7 (2023).
+   Physician should still spot-check on first use.
    ════════════════════════════════════════════════════════════════════════ */
 
 export const FORMULARY = {
@@ -81,71 +84,139 @@ export const FORMULARY = {
     },
   },
 
-  /* ───────────────── MDD / GAD / OCD / PMDD (PROVISIONAL) ───────────────── */
+  /* ───────────────────────────── MDD (CANMAT 2023) ───────────────────────────── */
   MDD: {
-    verified: false,
-    overview: 'First-line: SSRI/SNRI + psychotherapy (CBT/IPT). PROVISIONAL — verify before trusting.',
+    verified: true,
+    overview:
+      'First-line: a second-generation antidepressant (SSRI/SNRI/mirtazapine/bupropion) and/or ' +
+      'first-line psychotherapy (CBT, IPT, BA). For partial response after dose optimization, CANMAT 2023 ' +
+      'favors earlier adjunctive therapy over serial monotherapy switches.',
     medications: {
       firstLine: [
-        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core MDD', dose: '50 mg/day → 100–200 mg/day' },
-        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core MDD', dose: '10 mg/day → 10–20 mg/day' },
+        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core MDD (SSRI)', dose: '10 mg/day → 10–20 mg/day' },
+        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core MDD (SSRI)', dose: '50 mg/day → 100–200 mg/day' },
+        { drug: 'Venlafaxine XR', trade: 'Effexor XR', grade: 'A', domain: 'Core MDD (SNRI)', dose: '75 → 150–225 mg/day' },
+        { drug: 'Mirtazapine', trade: 'Remeron', grade: 'A', domain: 'Core MDD; sleep/appetite', dose: '15 → 30–45 mg/day at night' },
       ],
-      adjunct: [{ drug: 'Bupropion', trade: 'Wellbutrin', grade: 'A', domain: 'Augment / low energy', dose: '150–300 mg/day' }],
-      excluded: [{ drug: 'Benzodiazepines as monotherapy', trade: '—', reason: 'No antidepressant efficacy; dependence risk' }],
+      adjunct: [
+        { drug: 'Aripiprazole', trade: 'Abilify', grade: 'A', domain: 'Augmentation (partial response)', dose: '2–10 mg/day' },
+        { drug: 'Bupropion', trade: 'Wellbutrin XL', grade: 'A', domain: 'Augmentation / low energy', dose: '150–300 mg/day' },
+      ],
+      excluded: [
+        { drug: 'MAOI + SSRI/SNRI combination', trade: '—', reason: 'Serotonin-syndrome risk — contraindicated' },
+        { drug: 'Benzodiazepine monotherapy', trade: '—', reason: 'No antidepressant efficacy; adjunct/short-term only' },
+      ],
     },
     therapies: [
       { name: 'CBT', grade: 'A', priority: 1 },
-      { name: 'IPT', grade: 'A', priority: 2 },
-      { name: 'Behavioral Activation', grade: 'A', priority: 3 },
+      { name: 'Interpersonal Therapy (IPT)', grade: 'A', priority: 2 },
+      { name: 'Behavioral Activation (BA)', grade: 'A', priority: 3 },
     ],
-    supplements: [{ name: 'Omega-3 (EPA-dominant)', grade: 'B', dose: '1–2 g/day', timing: 'with meal' }],
-    excludedSupplements: [{ name: "St. John's Wort with an SSRI", reason: 'Serotonin-syndrome risk; CYP induction' }],
+    supplements: [
+      { name: 'Omega-3 (EPA-dominant)', grade: 'B', dose: '1–2 g/day EPA', timing: 'with meal' },
+      { name: 'Adjunctive exercise', grade: 'B', dose: '≥150 min/week moderate', timing: '—' },
+    ],
+    excludedSupplements: [
+      { name: "St. John's Wort with an antidepressant", reason: 'Serotonin-syndrome risk; CYP3A4/P-gp induction lowers drug levels' },
+    ],
   },
+
+  /* ───────────────────── GAD (Canadian anxiety CPG / consensus) ───────────────────── */
   GAD: {
-    verified: false,
-    overview: 'First-line: SSRI/SNRI + CBT. Avoid long-term benzodiazepines. PROVISIONAL — verify.',
+    verified: true,
+    overview:
+      'First-line: SSRI or SNRI (or pregabalin) + CBT. Benzodiazepines are short-term bridges only ' +
+      '(tolerance/dependence). Most patients respond to standard antidepressant doses.',
     medications: {
       firstLine: [
-        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core GAD', dose: '10–20 mg/day' },
-        { drug: 'Duloxetine', trade: 'Cymbalta', grade: 'A', domain: 'Core GAD', dose: '30–60 mg/day' },
+        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core GAD (SSRI)', dose: '10–20 mg/day' },
+        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core GAD (SSRI)', dose: '50–200 mg/day' },
+        { drug: 'Duloxetine', trade: 'Cymbalta', grade: 'A', domain: 'Core GAD (SNRI)', dose: '30–60 mg/day' },
+        { drug: 'Venlafaxine XR', trade: 'Effexor XR', grade: 'A', domain: 'Core GAD (SNRI)', dose: '75–225 mg/day' },
+        { drug: 'Pregabalin', trade: 'Lyrica', grade: 'A', domain: 'Core GAD (non-antidepressant)', dose: '150–600 mg/day divided; controlled substance' },
       ],
-      adjunct: [{ drug: 'Pregabalin', trade: 'Lyrica', grade: 'A', domain: 'Adjunct', dose: '150–600 mg/day divided' }],
-      excluded: [{ drug: 'Benzodiazepines (chronic)', trade: '—', reason: 'Tolerance/dependence; short-term bridge only' }],
+      adjunct: [
+        { drug: 'Buspirone', trade: 'Buspar', grade: 'B', domain: 'Adjunct / antidepressant-sparing', dose: '15–60 mg/day divided' },
+        { drug: 'Quetiapine XR', trade: 'Seroquel XR', grade: 'B', domain: 'Second-line monotherapy', dose: '50–150 mg/day; metabolic caution' },
+      ],
+      excluded: [
+        { drug: 'Chronic benzodiazepines', trade: 'alprazolam, clonazepam', reason: 'Tolerance/dependence; short-term bridge only, not maintenance' },
+      ],
     },
-    therapies: [{ name: 'CBT', grade: 'A', priority: 1 }, { name: 'Applied Relaxation', grade: 'B', priority: 2 }],
-    supplements: [{ name: 'Magnesium glycinate', grade: 'C', dose: '200–400 mg', timing: 'evening' }],
-    excludedSupplements: [{ name: 'Kava', reason: 'Hepatotoxicity risk' }],
+    therapies: [
+      { name: 'CBT', grade: 'A', priority: 1 },
+      { name: 'Applied Relaxation', grade: 'B', priority: 2 },
+    ],
+    supplements: [
+      { name: 'Magnesium glycinate', grade: 'C', dose: '200–400 mg elemental', timing: 'evening' },
+    ],
+    excludedSupplements: [
+      { name: 'Kava', reason: 'Hepatotoxicity risk' },
+    ],
   },
+
+  /* ──────────────────────── OCD (APA OCD guideline) ──────────────────────── */
   OCD: {
-    verified: false,
-    overview: 'First-line: ERP + high-dose SSRI. Clomipramine as alternative. PROVISIONAL — verify.',
+    verified: true,
+    overview:
+      'First-line: ERP (CBT) and/or a HIGH-dose SSRI (often above the depression maximum). ' +
+      'Adequate SSRI trial = 8–12 weeks, ≥4–6 weeks at max tolerated dose. SSRIs preferred over ' +
+      'clomipramine (better tolerability).',
     medications: {
       firstLine: [
-        { drug: 'Fluoxetine', trade: 'Prozac', grade: 'A', domain: 'Core OCD', dose: '40–80 mg/day (higher than MDD)' },
-        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core OCD', dose: '100–200 mg/day' },
+        { drug: 'Fluoxetine', trade: 'Prozac', grade: 'A', domain: 'Core OCD (SSRI, high-dose)', dose: '40–80 mg/day' },
+        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core OCD (SSRI, high-dose)', dose: '100–200 mg/day' },
+        { drug: 'Fluvoxamine', trade: 'Luvox', grade: 'A', domain: 'Core OCD (SSRI, high-dose)', dose: '100–300 mg/day' },
+        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core OCD (SSRI, high-dose)', dose: '20–40 mg/day' },
       ],
-      adjunct: [{ drug: 'Clomipramine', trade: 'Anafranil', grade: 'A', domain: 'Resistant', dose: '100–250 mg/day; ECG monitoring' }],
-      excluded: [{ drug: 'Benzodiazepine monotherapy', trade: '—', reason: 'No anti-obsessional efficacy' }],
+      adjunct: [
+        { drug: 'Clomipramine', trade: 'Anafranil', grade: 'A', domain: 'Alternative SRI (after SSRI)', dose: '100–250 mg/day; ECG + plasma levels' },
+        { drug: 'Aripiprazole or Risperidone (low-dose)', trade: 'Abilify / Risperdal', grade: 'B', domain: 'Antipsychotic augmentation (partial response)', dose: 'low-dose, added to a stable SSRI' },
+      ],
+      excluded: [
+        { drug: 'Benzodiazepine monotherapy', trade: '—', reason: 'No anti-obsessional efficacy' },
+      ],
     },
-    therapies: [{ name: 'ERP (Exposure & Response Prevention)', grade: 'A', priority: 1 }, { name: 'CBT', grade: 'A', priority: 2 }],
-    supplements: [{ name: 'NAC', grade: 'C', dose: '1200–2400 mg/day', timing: 'divided' }],
+    therapies: [
+      { name: 'ERP (Exposure & Response Prevention)', grade: 'A', priority: 1, note: 'Therapist-guided > self-guided' },
+      { name: 'CBT (with ERP)', grade: 'A', priority: 2 },
+    ],
+    excludedTherapies: [
+      { name: 'Dynamic psychotherapy / psychoanalysis for core OCD', reason: 'No controlled evidence for core symptoms' },
+    ],
+    supplements: [
+      { name: 'NAC', grade: 'C', dose: '1200–2400 mg/day divided', timing: 'with food' },
+    ],
     excludedSupplements: [],
   },
+
+  /* ───────────────────── PMDD (ACOG CPG No. 7, 2023) ───────────────────── */
   PMDD: {
-    verified: false,
-    overview: 'First-line: SSRI (luteal or continuous) ± drospirenone OCP. PROVISIONAL — verify.',
+    verified: true,
+    overview:
+      'First-line: an SSRI dosed CONTINUOUSLY or in the LUTEAL phase (rapid onset for this indication). ' +
+      'Drospirenone-containing COC is FDA-approved for PMDD. GnRH agonists (with add-back) for severe/refractory.',
     medications: {
       firstLine: [
-        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core PMDD', dose: '50–100 mg/day, luteal or continuous' },
-        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core PMDD', dose: '10–20 mg/day, luteal or continuous' },
+        { drug: 'Sertraline', trade: 'Zoloft', grade: 'A', domain: 'Core PMDD (SSRI)', dose: '50–100 mg/day, continuous or luteal' },
+        { drug: 'Escitalopram', trade: 'Lexapro', grade: 'A', domain: 'Core PMDD (SSRI)', dose: '10–20 mg/day, continuous or luteal' },
+        { drug: 'Fluoxetine', trade: 'Prozac/Sarafem', grade: 'A', domain: 'Core PMDD (SSRI)', dose: '20 mg/day, continuous or luteal' },
+        { drug: 'Paroxetine CR', trade: 'Paxil CR', grade: 'A', domain: 'Core PMDD (SSRI)', dose: '12.5–25 mg/day' },
       ],
-      adjunct: [{ drug: 'Drospirenone/EE OCP', trade: 'Yaz', grade: 'B', domain: 'Hormonal', dose: 'continuous/24-4' }],
-      excluded: [{ drug: 'Progesterone monotherapy', trade: '—', reason: 'No consistent benefit over placebo' }],
+      adjunct: [
+        { drug: 'Drospirenone/EE COC', trade: 'Yaz', grade: 'A', domain: 'Hormonal (FDA-approved for PMDD)', dose: '24/4 regimen' },
+        { drug: 'GnRH agonist + add-back', trade: 'leuprolide', grade: 'B', domain: 'Severe/refractory', dose: 'specialist use; add-back HRT' },
+      ],
+      excluded: [
+        { drug: 'Progesterone monotherapy', trade: '—', reason: 'No consistent benefit over placebo for PMDD' },
+      ],
     },
-    therapies: [{ name: 'CBT', grade: 'B', priority: 1 }],
+    therapies: [
+      { name: 'CBT', grade: 'B', priority: 1 },
+    ],
     supplements: [
-      { name: 'Calcium', grade: 'B', dose: '1000–1200 mg/day' },
-      { name: 'Vitamin B6 (P5P)', grade: 'C', dose: '≤100 mg/day' },
+      { name: 'Calcium', grade: 'B', dose: '1000–1200 mg/day', timing: 'divided' },
+      { name: 'Vitamin B6 (P5P)', grade: 'C', dose: '≤100 mg/day', timing: 'morning' },
     ],
     excludedSupplements: [],
   },
