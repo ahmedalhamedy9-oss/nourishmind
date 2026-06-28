@@ -741,7 +741,7 @@ const ClinicalTool = () => {
             {/* Report header */}
             <div className="flex justify-between items-center mb-5 p-4 rounded-2xl" style={{ background:'rgba(13,26,23,0.8)', border:'1px solid rgba(255,255,255,0.08)' }}>
               <div>
-                <div className="font-bold text-white text-base">{form.patientName?`${form.patientName} — `''}{T.reportLabel}: {form.disorder}</div>
+                <div className="font-bold text-white text-base">{form.patientName?`${form.patientName} — `:''}{T.reportLabel}: {form.disorder}</div>
                 <div className="text-xs text-gray-500 mt-1">{form.gender} | {form.age}{T.yrs} {form.weight?`| ${form.weight}${T.kg}`:''} | {T.severity_lbl}: {form.severity||T.unspecified}</div>
               </div>
               <div className="text-center px-4 py-2 rounded-xl text-xs font-semibold"
