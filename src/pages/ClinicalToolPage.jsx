@@ -86,6 +86,223 @@ async function callClaude(prompt, lang = 'en') {
 }
 
 /* ════════════════════════════════════════════════
+   STRUCTURED OUTPUT (#1)
+   The model is FORCED to call clinical_report, so the
+   report comes back as a validated JSON object instead
+   of free-text [TAGS] parsed by regex. Locked sections
+   (meds/excluded/therapy/chrono/bodycomp/diet) are still
+   copied verbatim from the injected formulary.
+════════════════════════════════════════════════ */
+const REPORT_TOOL = {
+  name: 'clinical_report',
+  description:
+    'Return the full physician-only clinical report. Populate EVERY field. For medications, ' +
+    'excluded, therapy, chrono, bodycomp and diet you MUST copy the LOCKED FORMULARY and ' +
+    'PRE-COMPUTED METRICS from the case data verbatim — do not add, omit, re-grade, reclassify ' +
+    'or recalculate. Labs, nutrigenomics and interactions follow standard APA/NICE/CANMAT/BAP ' +
+    'guidelines. Nothing in medications or supplements may also appear in excluded. Never leave ' +
+    'an array empty; if nothing truly applies, add one item explaining why.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      medications: {
+        type: 'array',
+        description: 'Locked first-line / adjunct medications, verbatim from the formulary.',
+        items: {
+          type: 'object',
+          properties: {
+            drug: { type: 'string', description: 'Scientific name (trade name in parentheses).' },
+            line: { type: 'string', description: 'e.g. first-line, adjunct, second-line.' },
+            dose: { type: 'string', description: 'Weight-based dose / titration.' },
+            evidence: { type: 'string', description: 'Evidence level A/B/C.' },
+            notes: { type: 'string', description: 'Switching steps or key caveats. May be empty.' },
+          },
+          required: ['drug', 'line', 'dose', 'evidence'],
+        },
+      },
+      labs: {
+        type: 'array',
+        description: 'Required labs with rationale, grouped by category.',
+        items: {
+          type: 'object',
+          properties: {
+            category: { type: 'string', description: 'Basic / Micronutrients / Hormonal / Specialized.' },
+            test: { type: 'string' },
+            rationale: { type: 'string' },
+          },
+          required: ['category', 'test', 'rationale'],
+        },
+      },
+      bodycomp: { type: 'string', description: 'DEXA/InBody analysis or required metrics — use the pre-computed numbers verbatim.' },
+      diet: { type: 'string', description: 'Dietary plan; use the pre-computed calorie/protein targets verbatim.' },
+      chrono: { type: 'string', description: 'Chrononutrition; use the locked eating window.' },
+      nutrigenomics: {
+        type: 'array',
+        description: 'Relevant SNPs and recommendations.',
+        items: {
+          type: 'object',
+          properties: {
+            snp: { type: 'string' },
+            relevance: { type: 'string' },
+            recommendation: { type: 'string' },
+          },
+          required: ['snp', 'relevance'],
+        },
+      },
+      supplements: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            dose: { type: 'string' },
+            timing: { type: 'string' },
+            form: { type: 'string', description: 'e.g. glycinate, methylfolate.' },
+            evidence: { type: 'string', description: 'Evidence level A/B/C.' },
+            notes: { type: 'string' },
+          },
+          required: ['name', 'dose'],
+        },
+      },
+      interactions: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            type: { type: 'string', description: 'drug-drug / drug-food / supplement-drug.' },
+            items: { type: 'string', description: 'The interacting pair/group.' },
+            severity: { type: 'string', description: 'minor / moderate / major.' },
+            note: { type: 'string' },
+          },
+          required: ['type', 'items', 'note'],
+        },
+      },
+      therapy: {
+        type: 'array',
+        description: 'Therapeutic schools in locked priority order.',
+        items: {
+          type: 'object',
+          properties: {
+            approach: { type: 'string', description: 'CBT/DBT/ACT/Schema/GPM/ERP etc.' },
+            priority: { type: 'string', description: 'Priority order, e.g. 1, 2, 3.' },
+            evidence: { type: 'string', description: 'Evidence level A/B/C.' },
+            notes: { type: 'string' },
+          },
+          required: ['approach', 'priority', 'evidence'],
+        },
+      },
+      excluded: {
+        type: 'array',
+        description: 'ONLY the locked excluded items, each with a reason.',
+        items: {
+          type: 'object',
+          properties: {
+            item: { type: 'string' },
+            reason: { type: 'string' },
+          },
+          required: ['item', 'reason'],
+        },
+      },
+    },
+    required: ['medications', 'labs', 'bodycomp', 'diet', 'chrono', 'nutrigenomics', 'supplements', 'interactions', 'therapy', 'excluded'],
+  },
+};
+
+const REPORT_KEYS = ['medications', 'labs', 'bodycomp', 'diet', 'chrono', 'nutrigenomics', 'supplements', 'interactions', 'therapy', 'excluded'];
+const ARRAY_KEYS  = ['medications', 'labs', 'nutrigenomics', 'supplements', 'interactions', 'therapy', 'excluded'];
+
+async function callClaudeStructured(prompt, lang = 'en') {
+  const systemPrompt = lang === 'ar' ? SYSTEM_PROMPT_AR : SYSTEM_PROMPT_EN;
+  const r = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      temperature: 0,
+      max_tokens: 24000,
+      thinking: { type: 'disabled' },
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompt }],
+      tools: [REPORT_TOOL],
+      tool_choice: { type: 'tool', name: REPORT_TOOL.name },
+    }),
+  });
+  if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error?.message || 'Connection error'); }
+  const d = await r.json();
+  if (d.stop_reason === 'max_tokens') throw new Error('structured_truncated');
+  const block = Array.isArray(d.content) && d.content.find(b => b.type === 'tool_use' && b.name === REPORT_TOOL.name);
+  if (!block || !block.input || typeof block.input !== 'object') throw new Error('structured_missing_tool_use');
+  return block.input;
+}
+
+// Guard: object with all 10 keys, correct types, and some real array content.
+function validStructured(s) {
+  if (!s || typeof s !== 'object') return false;
+  for (const k of REPORT_KEYS) {
+    if (!(k in s)) return false;
+    if (ARRAY_KEYS.includes(k)) { if (!Array.isArray(s[k])) return false; }
+    else if (typeof s[k] !== 'string') return false;
+  }
+  const arrCount = ARRAY_KEYS.reduce((n, k) => n + (Array.isArray(s[k]) ? s[k].length : 0), 0);
+  return arrCount > 0;
+}
+
+// Deterministically render the structured object into the {id: string} shape the
+// existing UI tabs and PDF generator already consume. Tables are drawn by us, never
+// hand-drawn by the model — so a broken/truncated table is no longer possible.
+function renderStructured(s, isAr) {
+  const L = isAr
+    ? { dose: 'الجرعة', level: 'الدليل', timing: 'التوقيت', form: 'الصيغة', severity: 'الخطورة', priority: 'الأولوية', none: '—' }
+    : { dose: 'Dose', level: 'Level', timing: 'Timing', form: 'Form', severity: 'Severity', priority: 'Priority', none: '—' };
+  const out = {};
+
+  out.medications = (s.medications || []).map(m =>
+    `**${m.drug}** (${m.line}${m.evidence ? `, ${L.level} ${m.evidence}` : ''})\n`
+    + `${L.dose}: ${m.dose}` + (m.notes ? `\n${m.notes}` : '')
+  ).join('\n\n');
+
+  // group labs by category — header line + "- test — rationale" (PDF extractor compatible)
+  const byCat = {};
+  (s.labs || []).forEach(l => { (byCat[l.category] = byCat[l.category] || []).push(l); });
+  out.labs = Object.entries(byCat).map(([cat, rows]) =>
+    `${cat}\n` + rows.map(l => `- ${l.test} — ${l.rationale}`).join('\n')
+  ).join('\n\n');
+
+  out.bodycomp = s.bodycomp || L.none;
+  out.diet     = s.diet || L.none;
+  out.chrono   = s.chrono || L.none;
+
+  out.nutrigenomics = (s.nutrigenomics || []).map(n =>
+    `**${n.snp}**` + (n.relevance ? ` — ${n.relevance}` : '') + (n.recommendation ? `\n${n.recommendation}` : '')
+  ).join('\n\n');
+
+  // each supplement: name line, then a clean "Dose:" line (PDF extractor reads this)
+  out.supplements = (s.supplements || []).map(sup => {
+    const meta = [
+      sup.timing ? `${L.timing}: ${sup.timing}` : '',
+      sup.form ? `${L.form}: ${sup.form}` : '',
+      sup.evidence ? `${L.level}: ${sup.evidence}` : '',
+    ].filter(Boolean).join(' | ');
+    return `**${sup.name}**\n${L.dose}: ${sup.dose}`
+      + (meta ? `\n${meta}` : '')
+      + (sup.notes ? `\n${sup.notes}` : '');
+  }).join('\n\n');
+
+  out.interactions = (s.interactions || []).map(i =>
+    `- [${i.type}] ${i.items}: ${i.note}` + (i.severity ? ` (${L.severity}: ${i.severity})` : '')
+  ).join('\n');
+
+  out.therapy = (s.therapy || []).map(t =>
+    `**${t.approach}** (${L.priority} ${t.priority}${t.evidence ? `, ${L.level} ${t.evidence}` : ''})`
+    + (t.notes ? `\n${t.notes}` : '')
+  ).join('\n\n');
+
+  out.excluded = (s.excluded || []).map(e => `- ${e.item}: ${e.reason}`).join('\n');
+
+  return out;
+}
+
+/* ════════════════════════════════════════════════
    CONSTANTS
 ════════════════════════════════════════════════ */
 const DISORDERS = [
@@ -455,6 +672,7 @@ const ClinicalTool = () => {
   const [lang, setLang] = useState('en');
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [results, setResults] = useState(null);
+  const [resultsStructured, setResultsStructured] = useState(null); // #1: structured object, for future UI (#5)
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
   const [error, setError] = useState('');
@@ -564,36 +782,41 @@ const ClinicalTool = () => {
     ? `${buildContext()}\n\nأنت طبيب نفسي وأخصائي تغذية علاجية وأخصائي nutrigenomics خبير. حلل الحالة تحليلاً شاملاً ومتسقاً — أي دواء أو مكمل تذكره في التوصيات لا يجب أن يظهر في المستبعدات. يوجد في بيانات الحالة بالأعلى دليل دوائي مقفول (LOCKED FORMULARY) وأرقام محسوبة مسبقاً. يجب استخدامها حرفياً: لا تُضِف أو تحذف أو تُعِد تصنيف أي دواء/علاج/مكمل، ولا تُعِد حساب أي رقم — انسخ القيم المحسوبة كما هي. اعرض القرارات المقفولة واشرحها فقط، ولا تجتهد باختيارات جديدة. [MEDICATIONS]=الخط الأول/المساعد المقفول بدرجاته وجرعاته؛ [EXCLUDED]=المستبعدات المقفولة فقط؛ [THERAPY]=بترتيب الأولوية والدرجات المقفولة؛ [BODYCOMP]/[DIET]=الأرقام المحسوبة مسبقاً؛ [CHRONO]=نافذة الأكل المقفولة. الأقسام بلا إدخال مقفول (التحاليل، التغذية الجينية، التعارضات) تتبع إرشادات APA/NICE/CANMAT/BAP.\n\nأجب بهذا التنسيق بالضبط:\n\n[MEDICATIONS]\nالتوصيات الدوائية المثلى: الدواء الأول والبدائل مع الجرعات بناءً على الوزن. خطوات التحول إن طُلب. مستوى الدليل (A/B/C).\n\n[LABS]\nالتحاليل المطلوبة مقسمة: أ) أساسية ب) Micronutrients ج) هرمونية د) متخصصة — مع سبب كل تحليل.\n\n[BODYCOMP]\nتحليل DEXA/InBody إن توفرت، وإلا: المؤشرات المطلوبة وأهميتها.\n\n[DIET]\nالنظام الغذائي الأمثل: الأطعمة المفيدة والممنوعة، التوقيتات.\n\n[CHRONO]\nChrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhythm، Time-Restricted Eating.\n\n[NUTRIGENOMICS]\nالتغذية الجينية: أهم SNPs المرتبطة، الفحوصات الجينية الموصى بها.\n\n[SUPPLEMENTS]\nالمكملات الموصى بها: الجرعات والأوقات والصيغ، مستوى الدليل.\n\n[INTERACTIONS]\nالتعارضات: بين الأدوية، بين الأدوية والغذاء، بين المكملات والأدوية.\n\n[THERAPY]\nالمدارس العلاجية الأنسب من CBT/DBT/ACT/Schema/GPM/ERP.\n\n[EXCLUDED]\nالمستبعدات فقط (ما لم يُذكر سابقاً) مع سبب كل استبعاد.`
     : `${buildContext()}\n\nYou are an expert psychiatrist, therapeutic nutritionist, and nutrigenomics specialist. Analyze this case comprehensively and consistently — any medication or supplement mentioned in recommendations must NOT appear in the excluded section. A LOCKED CLINICAL FORMULARY and PRE-COMPUTED METRICS are included in the case data above. You MUST use them verbatim: do NOT add, omit, re-grade, or reclassify any drug/therapy/supplement, and do NOT recalculate any number — copy the pre-computed values exactly. Present and explain the locked decisions; never derive your own. [MEDICATIONS]=locked first-line/adjunct with their grades & dosing; [EXCLUDED]=ONLY the locked excluded items; [THERAPY]=locked priority order & grades; [BODYCOMP]/[DIET]=the pre-computed metrics; [CHRONO]=the locked eating window. Sections with no locked entry (labs, nutrigenomics, interactions) follow standard APA/NICE/CANMAT/BAP guidelines.\n\nRespond in exactly this format:\n\n[MEDICATIONS]\nOptimal medication recommendations: first-line and alternatives with weight-based dosing. Switching steps if requested. Evidence level (A/B/C).\n\n[LABS]\nRequired labs categorized: a) Basic b) Micronutrients c) Hormonal d) Specialized — with rationale for each.\n\n[BODYCOMP]\nDEXA/InBody analysis if available, otherwise: required metrics and their significance.\n\n[DIET]\nOptimal dietary plan: beneficial and contraindicated foods, timing, drug-food interactions.\n\n[CHRONO]\nChrononutrition: optimal meal timing, Circadian Rhythm impact, Time-Restricted Eating.\n\n[NUTRIGENOMICS]\nNutrigenomics: key relevant SNPs, recommended genetic tests.\n\n[SUPPLEMENTS]\nRecommended supplements: doses, timing, forms (glycinate, methylfolate), evidence level.\n\n[INTERACTIONS]\nInteractions: drug-drug, drug-food, supplement-drug.\n\n[THERAPY]\nMost appropriate therapeutic schools from CBT/DBT/ACT/Schema/GPM/ERP: techniques and priority.\n\n[EXCLUDED]\nExcluded options only (not mentioned above) with rationale for each exclusion.`;
 
+  // #1: prompt for the structured (tool-use) path. Context already carries the locked
+  // formulary + pre-computed metrics + safety gate; the schema carries the field shapes.
+  const buildStructuredPrompt = () => isAr
+    ? `${buildContext()}\n\nأنت طبيب نفسي وأخصائي تغذية علاجية وأخصائي nutrigenomics خبير. حلّل الحالة وأعِد التقرير عبر استدعاء أداة clinical_report. يوجد بالأعلى دليل دوائي مقفول (LOCKED FORMULARY) وأرقام محسوبة مسبقاً — انسخها حرفياً في medications وexcluded وtherapy وchrono وbodycomp وdiet: لا تُضِف أو تحذف أو تُعِد تصنيف أو تُعِد حساب أي شيء. أقسام labs وnutrigenomics وinteractions تتبع إرشادات APA/NICE/CANMAT/BAP. املأ كل الحقول، ولا تضع أي دواء/مكمل من التوصيات داخل المستبعدات.`
+    : `${buildContext()}\n\nYou are an expert psychiatrist, therapeutic nutritionist, and nutrigenomics specialist. Analyze this case and return the report by calling the clinical_report tool. A LOCKED CLINICAL FORMULARY and PRE-COMPUTED METRICS are in the case data above — copy them verbatim into medications, excluded, therapy, chrono, bodycomp and diet: do NOT add, omit, re-grade, reclassify or recalculate. Labs, nutrigenomics and interactions follow standard APA/NICE/CANMAT/BAP guidelines. Populate every field, and never place a recommended drug/supplement into the excluded list.`;
+
   async function analyze() {
     const validErr = validateForm();
     if (validErr) { setError(validErr); return; }
-    setError(''); setLoading(true); setResults(null); setActiveTab(null);
+    setError(''); setLoading(true); setResults(null); setResultsStructured(null); setActiveTab(null);
     setLoadingMsg(T.analyzing);
-    try {
+
+    const failMsg = isAr ? 'لم يتم تحميل هذا القسم — يرجى إعادة التحليل.' : 'Section not loaded — please re-analyze.';
+    const order = ['medications','labs','bodycomp','diet','chrono','nutrigenomics','supplements','interactions','therapy','excluded'];
+
+    // ── FALLBACK: the proven free-text [TAG] + regex path (kept verbatim) ──
+    const runFreeText = async () => {
       const parseFrom = (text, tag) => {
         const m = text.match(new RegExp('\\[' + tag + '\\]([\\s\\S]*?)(?=\\[(?:' + ALL_TAGS + ')\\]|$)', 'i'));
         return (m && m[1].trim()) ? m[1].trim() : '';
       };
-      // empty / broken-table guard: strip table delimiters & whitespace, require real content
       const validSection = (txt) => {
         if (!txt) return false;
         if (/^لم يتم تحميل|^Section not loaded/.test(txt.trim())) return false;
         return txt.replace(/[|\-\s]/g, '').length >= 30;
       };
-      const failMsg = isAr ? 'لم يتم تحميل هذا القسم — يرجى إعادة التحليل.' : 'Section not loaded — please re-analyze.';
-      const order = ['medications','labs','bodycomp','diet','chrono','nutrigenomics','supplements','interactions','therapy','excluded'];
       const buildSectionPrompt = (tags) => {
         const blocks = tags.map((t) => `[${t}]`).join('\n\n');
         return isAr
           ? `${buildContext()}\n\nأكمل الأقسام التالية فقط، بنفس قواعد الفورمولاري المقفول والأرقام المحسوبة وبوابة الأمان. أجب بهذه الوسوم فقط وبهذا التنسيق بالضبط:\n\n${blocks}`
           : `${buildContext()}\n\nProduce ONLY the following sections, using the same locked formulary, pre-computed metrics, and safety gate. Respond with these tags only, in exactly this format:\n\n${blocks}`;
       };
-
       const raw = await callClaude(buildPrompt(), lang);
       const parsed = {};
       order.forEach((k) => { parsed[k] = parseFrom(raw, k.toUpperCase()); });
-
-      // Validation + targeted retry for empty/broken sections (one round)
       const failed = order.filter((k) => !validSection(parsed[k]));
       if (failed.length) {
         setLoadingMsg(isAr ? 'إعادة تحميل أقسام ناقصة…' : 'Reloading incomplete sections…');
@@ -603,8 +826,28 @@ const ClinicalTool = () => {
         } catch (_) { /* keep what we have */ }
       }
       order.forEach((k) => { if (!validSection(parsed[k])) parsed[k] = failMsg; });
+      return parsed;
+    };
+
+    try {
+      let parsed = null;
+      let structured = null;
+
+      // ── PRIMARY: structured JSON via forced tool-use ──
+      try {
+        structured = await callClaudeStructured(buildStructuredPrompt(), lang);
+        if (!validStructured(structured)) throw new Error('structured_invalid');
+        parsed = renderStructured(structured, isAr);
+        order.forEach((k) => { if (!parsed[k] || !parsed[k].trim()) parsed[k] = failMsg; });
+      } catch (structErr) {
+        // structured failed → fall back to the proven path; never worse than before
+        structured = null;
+        setLoadingMsg(isAr ? 'إعادة المحاولة…' : 'Retrying…');
+        parsed = await runFreeText();
+      }
 
       setResults(parsed);
+      setResultsStructured(structured);
       setActiveTab('medications');
       setChatMessages([{ role:'ai', text: T.chatSuccess }]);
     } catch(e) { setError(e.message); }
@@ -637,7 +880,7 @@ const ClinicalTool = () => {
           style={{ background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', color:'#fbbf24' }}>
           {T.disclaimer}
         </div>
-        <LangToggle lang={lang} setLang={(l) => { setLang(l); setResults(null); setChatMessages([]); setActiveTab(null); }} />
+        <LangToggle lang={lang} setLang={(l) => { setLang(l); setResults(null); setResultsStructured(null); setChatMessages([]); setActiveTab(null); }} />
       </div>
 
       <div className="flex flex-col md:flex-row gap-0" style={{ minHeight:'calc(100vh - 80px)' }}>
