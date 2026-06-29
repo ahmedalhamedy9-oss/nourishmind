@@ -135,7 +135,7 @@ const REPORT_TOOL = {
       },
       bodycomp: { type: 'string', description: 'DEXA/InBody analysis or required metrics — use the pre-computed numbers verbatim.' },
       diet: { type: 'string', description: 'Dietary plan; use the pre-computed calorie/protein targets verbatim.' },
-      chrono: { type: 'string', description: 'Chrononutrition; use the locked eating window.' },
+      chrono: { type: 'string', description: 'Chrononutrition: present the LOCKED timing principle verbatim (e.g. early-TRE / phase-advance / luteal-conditional). Do NOT invent a specific clock window.' },
       nutrigenomics: {
         type: 'array',
         description: 'Relevant SNPs and recommendations.',
@@ -346,6 +346,8 @@ const EMPTY_FORM = {
   hasDexa:false, dexaFat:'', dexaMuscle:'', dexaBone:'',
   hasInbody:false, inbodyFat:'', inbodyMuscle:'', inbodyWater:'',
   knownGeneticVariants:'',
+  cyclePhase:'',
+  chronotype:'',
 };
 
 /* ════════════════════════════════════════════════
@@ -702,6 +704,17 @@ const ClinicalTool = () => {
     chooseDisorder:isAr ? 'اختر الاضطراب'           : 'Select disorder',
     severity:      isAr ? 'شدة الأعراض'             : 'Symptom Severity',
     chooseSev:     isAr ? 'اختر'                    : 'Select',
+    cyclePhase:    isAr ? 'طور الدورة الشهرية'       : 'Menstrual Cycle Phase',
+    choosePhase:   isAr ? 'اختر الطور'              : 'Select phase',
+    follicular:    isAr ? 'الطور الجريبي (Follicular)' : 'Follicular',
+    luteal:        isAr ? 'الطور الأصفري (Luteal)'   : 'Luteal',
+    phaseUnknown:  isAr ? 'غير معروف'               : 'Unknown',
+    chronotype:    isAr ? 'النمط الزمني (Chronotype)' : 'Chronotype',
+    chooseCt:      isAr ? 'اختر النمط'              : 'Select chronotype',
+    ctMorning:     isAr ? 'صباحي (Morning)'          : 'Morning',
+    ctInter:       isAr ? 'متوسط (Intermediate)'     : 'Intermediate',
+    ctEvening:     isAr ? 'مسائي (Evening)'          : 'Evening',
+    ctUnknown:     isAr ? 'غير معروف'               : 'Unknown',
     mild:          isAr ? 'خفيفة'                   : 'Mild',
     moderate:      isAr ? 'متوسطة'                  : 'Moderate',
     severe:        isAr ? 'شديدة'                   : 'Severe',
@@ -761,7 +774,7 @@ const ClinicalTool = () => {
 
   const clinicalLock = () => {
     const key = disorderKey(form.disorder);
-    const fb = renderFormularyBlock(key);
+    const fb = renderFormularyBlock(key, { cyclePhase: form.cyclePhase, chronotype: form.chronotype });
     const mt = renderMetrics(computeMetrics(form));
     const sg = renderSafetyGate(computeSafetyFlags(form, key));
     const ver = `FORMULARY_VERSION: ${FORMULARY_VERSION}`;
@@ -769,8 +782,8 @@ const ClinicalTool = () => {
   };
 
   const buildContext = () => isAr
-    ? `بيانات المريض:\n- الاسم: ${form.patientName || 'غير مذكور'}\n- العمر: ${form.age} سنة | الجنس: ${form.gender} | الوزن: ${form.weight||'غير محدد'} كجم | الطول: ${form.height||'غير محدد'} سم\n- الاضطراب: ${form.disorder} | الشدة: ${form.severity||'غير محددة'}\n- الأمراض المصاحبة: ${form.comorbidities||'لا يوجد'}\n- الأدوية الحالية: ${form.currentMeds||'لا يوجد'}\n- الحساسية والموانع: ${form.allergies||'لا يوجد'}\n- التاريخ النفسي: ${form.history||'لا يوجد'}\n- طلب وقف دواء: ${form.stopMed||'لا يوجد'}\n${form.hasDexa?`- DEXA: دهون ${form.dexaFat||'—'}% | عضلات ${form.dexaMuscle||'—'}kg | كثافة عظام ${form.dexaBone||'—'}`:'- DEXA: غير متوفر'}\n${form.hasInbody?`- InBody: دهون ${form.inbodyFat||'—'}% | عضلات ${form.inbodyMuscle||'—'}kg | ماء ${form.inbodyWater||'—'}L`:'- InBody: غير متوفر'}\n- تغيرات جينية: ${form.knownGeneticVariants||'غير معروفة'}\n\n${clinicalLock()}`
-    : `Patient Data:\n- Name: ${form.patientName || 'Not provided'}\n- Age: ${form.age} yrs | Gender: ${form.gender} | Weight: ${form.weight||'N/A'} kg | Height: ${form.height||'N/A'} cm\n- Disorder: ${form.disorder} | Severity: ${form.severity||'Not specified'}\n- Comorbidities: ${form.comorbidities||'None'}\n- Current Medications: ${form.currentMeds||'None'}\n- Allergies/Contraindications: ${form.allergies||'None'}\n- Psychiatric/Treatment History: ${form.history||'None'}\n- Medication to stop: ${form.stopMed||'None'}\n${form.hasDexa?`- DEXA: Fat ${form.dexaFat||'—'}% | Muscle ${form.dexaMuscle||'—'}kg | Bone density ${form.dexaBone||'—'}`:'- DEXA: Not available'}\n${form.hasInbody?`- InBody: Fat ${form.inbodyFat||'—'}% | Muscle ${form.inbodyMuscle||'—'}kg | Water ${form.inbodyWater||'—'}L`:'- InBody: Not available'}\n- Known genetic variants: ${form.knownGeneticVariants||'Unknown'}\n\n${clinicalLock()}`;
+    ? `بيانات المريض:\n- الاسم: ${form.patientName || 'غير مذكور'}\n- العمر: ${form.age} سنة | الجنس: ${form.gender} | الوزن: ${form.weight||'غير محدد'} كجم | الطول: ${form.height||'غير محدد'} سم\n- الاضطراب: ${form.disorder} | الشدة: ${form.severity||'غير محددة'}\n- الأمراض المصاحبة: ${form.comorbidities||'لا يوجد'}\n- الأدوية الحالية: ${form.currentMeds||'لا يوجد'}\n- الحساسية والموانع: ${form.allergies||'لا يوجد'}\n- التاريخ النفسي: ${form.history||'لا يوجد'}\n- طلب وقف دواء: ${form.stopMed||'لا يوجد'}\n${form.hasDexa?`- DEXA: دهون ${form.dexaFat||'—'}% | عضلات ${form.dexaMuscle||'—'}kg | كثافة عظام ${form.dexaBone||'—'}`:'- DEXA: غير متوفر'}\n${form.hasInbody?`- InBody: دهون ${form.inbodyFat||'—'}% | عضلات ${form.inbodyMuscle||'—'}kg | ماء ${form.inbodyWater||'—'}L`:'- InBody: غير متوفر'}\n- تغيرات جينية: ${form.knownGeneticVariants||'غير معروفة'}${form.disorder.includes('PMDD')?`\n- طور الدورة الشهرية: ${form.cyclePhase||'غير محدد'}`:''}\n- النمط الزمني (chronotype): ${form.chronotype||'غير محدد'}\n\n${clinicalLock()}`
+    : `Patient Data:\n- Name: ${form.patientName || 'Not provided'}\n- Age: ${form.age} yrs | Gender: ${form.gender} | Weight: ${form.weight||'N/A'} kg | Height: ${form.height||'N/A'} cm\n- Disorder: ${form.disorder} | Severity: ${form.severity||'Not specified'}\n- Comorbidities: ${form.comorbidities||'None'}\n- Current Medications: ${form.currentMeds||'None'}\n- Allergies/Contraindications: ${form.allergies||'None'}\n- Psychiatric/Treatment History: ${form.history||'None'}\n- Medication to stop: ${form.stopMed||'None'}\n${form.hasDexa?`- DEXA: Fat ${form.dexaFat||'—'}% | Muscle ${form.dexaMuscle||'—'}kg | Bone density ${form.dexaBone||'—'}`:'- DEXA: Not available'}\n${form.hasInbody?`- InBody: Fat ${form.inbodyFat||'—'}% | Muscle ${form.inbodyMuscle||'—'}kg | Water ${form.inbodyWater||'—'}L`:'- InBody: Not available'}\n- Known genetic variants: ${form.knownGeneticVariants||'Unknown'}${form.disorder.includes('PMDD')?`\n- Menstrual cycle phase: ${form.cyclePhase||'Not specified'}`:''}\n- Chronotype: ${form.chronotype||'Not specified'}\n\n${clinicalLock()}`;
 
   function validateForm() {
     if (!form.disorder || !form.age || !form.gender) return T.errRequired;
@@ -779,8 +792,8 @@ const ClinicalTool = () => {
   }
 
   const buildPrompt = () => isAr
-    ? `${buildContext()}\n\nأنت طبيب نفسي وأخصائي تغذية علاجية وأخصائي nutrigenomics خبير. حلل الحالة تحليلاً شاملاً ومتسقاً — أي دواء أو مكمل تذكره في التوصيات لا يجب أن يظهر في المستبعدات. يوجد في بيانات الحالة بالأعلى دليل دوائي مقفول (LOCKED FORMULARY) وأرقام محسوبة مسبقاً. يجب استخدامها حرفياً: لا تُضِف أو تحذف أو تُعِد تصنيف أي دواء/علاج/مكمل، ولا تُعِد حساب أي رقم — انسخ القيم المحسوبة كما هي. اعرض القرارات المقفولة واشرحها فقط، ولا تجتهد باختيارات جديدة. [MEDICATIONS]=الخط الأول/المساعد المقفول بدرجاته وجرعاته؛ [EXCLUDED]=المستبعدات المقفولة فقط؛ [THERAPY]=بترتيب الأولوية والدرجات المقفولة؛ [BODYCOMP]/[DIET]=الأرقام المحسوبة مسبقاً؛ [CHRONO]=نافذة الأكل المقفولة. الأقسام بلا إدخال مقفول (التحاليل، التغذية الجينية، التعارضات) تتبع إرشادات APA/NICE/CANMAT/BAP.\n\nأجب بهذا التنسيق بالضبط:\n\n[MEDICATIONS]\nالتوصيات الدوائية المثلى: الدواء الأول والبدائل مع الجرعات بناءً على الوزن. خطوات التحول إن طُلب. مستوى الدليل (A/B/C).\n\n[LABS]\nالتحاليل المطلوبة مقسمة: أ) أساسية ب) Micronutrients ج) هرمونية د) متخصصة — مع سبب كل تحليل.\n\n[BODYCOMP]\nتحليل DEXA/InBody إن توفرت، وإلا: المؤشرات المطلوبة وأهميتها.\n\n[DIET]\nالنظام الغذائي الأمثل: الأطعمة المفيدة والممنوعة، التوقيتات.\n\n[CHRONO]\nChrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhythm، Time-Restricted Eating.\n\n[NUTRIGENOMICS]\nالتغذية الجينية: أهم SNPs المرتبطة، الفحوصات الجينية الموصى بها.\n\n[SUPPLEMENTS]\nالمكملات الموصى بها: الجرعات والأوقات والصيغ، مستوى الدليل.\n\n[INTERACTIONS]\nالتعارضات: بين الأدوية، بين الأدوية والغذاء، بين المكملات والأدوية.\n\n[THERAPY]\nالمدارس العلاجية الأنسب من CBT/DBT/ACT/Schema/GPM/ERP.\n\n[EXCLUDED]\nالمستبعدات فقط (ما لم يُذكر سابقاً) مع سبب كل استبعاد.`
-    : `${buildContext()}\n\nYou are an expert psychiatrist, therapeutic nutritionist, and nutrigenomics specialist. Analyze this case comprehensively and consistently — any medication or supplement mentioned in recommendations must NOT appear in the excluded section. A LOCKED CLINICAL FORMULARY and PRE-COMPUTED METRICS are included in the case data above. You MUST use them verbatim: do NOT add, omit, re-grade, or reclassify any drug/therapy/supplement, and do NOT recalculate any number — copy the pre-computed values exactly. Present and explain the locked decisions; never derive your own. [MEDICATIONS]=locked first-line/adjunct with their grades & dosing; [EXCLUDED]=ONLY the locked excluded items; [THERAPY]=locked priority order & grades; [BODYCOMP]/[DIET]=the pre-computed metrics; [CHRONO]=the locked eating window. Sections with no locked entry (labs, nutrigenomics, interactions) follow standard APA/NICE/CANMAT/BAP guidelines.\n\nRespond in exactly this format:\n\n[MEDICATIONS]\nOptimal medication recommendations: first-line and alternatives with weight-based dosing. Switching steps if requested. Evidence level (A/B/C).\n\n[LABS]\nRequired labs categorized: a) Basic b) Micronutrients c) Hormonal d) Specialized — with rationale for each.\n\n[BODYCOMP]\nDEXA/InBody analysis if available, otherwise: required metrics and their significance.\n\n[DIET]\nOptimal dietary plan: beneficial and contraindicated foods, timing, drug-food interactions.\n\n[CHRONO]\nChrononutrition: optimal meal timing, Circadian Rhythm impact, Time-Restricted Eating.\n\n[NUTRIGENOMICS]\nNutrigenomics: key relevant SNPs, recommended genetic tests.\n\n[SUPPLEMENTS]\nRecommended supplements: doses, timing, forms (glycinate, methylfolate), evidence level.\n\n[INTERACTIONS]\nInteractions: drug-drug, drug-food, supplement-drug.\n\n[THERAPY]\nMost appropriate therapeutic schools from CBT/DBT/ACT/Schema/GPM/ERP: techniques and priority.\n\n[EXCLUDED]\nExcluded options only (not mentioned above) with rationale for each exclusion.`;
+    ? `${buildContext()}\n\nأنت طبيب نفسي وأخصائي تغذية علاجية وأخصائي nutrigenomics خبير. حلل الحالة تحليلاً شاملاً ومتسقاً — أي دواء أو مكمل تذكره في التوصيات لا يجب أن يظهر في المستبعدات. يوجد في بيانات الحالة بالأعلى دليل دوائي مقفول (LOCKED FORMULARY) وأرقام محسوبة مسبقاً. يجب استخدامها حرفياً: لا تُضِف أو تحذف أو تُعِد تصنيف أي دواء/علاج/مكمل، ولا تُعِد حساب أي رقم — انسخ القيم المحسوبة كما هي. اعرض القرارات المقفولة واشرحها فقط، ولا تجتهد باختيارات جديدة. [MEDICATIONS]=الخط الأول/المساعد المقفول بدرجاته وجرعاته؛ [EXCLUDED]=المستبعدات المقفولة فقط؛ [THERAPY]=بترتيب الأولوية والدرجات المقفولة؛ [BODYCOMP]/[DIET]=الأرقام المحسوبة مسبقاً؛ [CHRONO]=المبدأ الزمني المقفول حرفياً (لا تخترع نافذة ساعات محددة). الأقسام بلا إدخال مقفول (التحاليل، التغذية الجينية، التعارضات) تتبع إرشادات APA/NICE/CANMAT/BAP.\n\nأجب بهذا التنسيق بالضبط:\n\n[MEDICATIONS]\nالتوصيات الدوائية المثلى: الدواء الأول والبدائل مع الجرعات بناءً على الوزن. خطوات التحول إن طُلب. مستوى الدليل (A/B/C).\n\n[LABS]\nالتحاليل المطلوبة مقسمة: أ) أساسية ب) Micronutrients ج) هرمونية د) متخصصة — مع سبب كل تحليل.\n\n[BODYCOMP]\nتحليل DEXA/InBody إن توفرت، وإلا: المؤشرات المطلوبة وأهميتها.\n\n[DIET]\nالنظام الغذائي الأمثل: الأطعمة المفيدة والممنوعة، التوقيتات.\n\n[CHRONO]\nChrononutrition: أفضل توقيت للوجبات، تأثير Circadian Rhythm، Time-Restricted Eating.\n\n[NUTRIGENOMICS]\nالتغذية الجينية: أهم SNPs المرتبطة، الفحوصات الجينية الموصى بها.\n\n[SUPPLEMENTS]\nالمكملات الموصى بها: الجرعات والأوقات والصيغ، مستوى الدليل.\n\n[INTERACTIONS]\nالتعارضات: بين الأدوية، بين الأدوية والغذاء، بين المكملات والأدوية.\n\n[THERAPY]\nالمدارس العلاجية الأنسب من CBT/DBT/ACT/Schema/GPM/ERP.\n\n[EXCLUDED]\nالمستبعدات فقط (ما لم يُذكر سابقاً) مع سبب كل استبعاد.`
+    : `${buildContext()}\n\nYou are an expert psychiatrist, therapeutic nutritionist, and nutrigenomics specialist. Analyze this case comprehensively and consistently — any medication or supplement mentioned in recommendations must NOT appear in the excluded section. A LOCKED CLINICAL FORMULARY and PRE-COMPUTED METRICS are included in the case data above. You MUST use them verbatim: do NOT add, omit, re-grade, or reclassify any drug/therapy/supplement, and do NOT recalculate any number — copy the pre-computed values exactly. Present and explain the locked decisions; never derive your own. [MEDICATIONS]=locked first-line/adjunct with their grades & dosing; [EXCLUDED]=ONLY the locked excluded items; [THERAPY]=locked priority order & grades; [BODYCOMP]/[DIET]=the pre-computed metrics; [CHRONO]=the locked timing principle verbatim (do NOT invent a specific clock window). Sections with no locked entry (labs, nutrigenomics, interactions) follow standard APA/NICE/CANMAT/BAP guidelines.\n\nRespond in exactly this format:\n\n[MEDICATIONS]\nOptimal medication recommendations: first-line and alternatives with weight-based dosing. Switching steps if requested. Evidence level (A/B/C).\n\n[LABS]\nRequired labs categorized: a) Basic b) Micronutrients c) Hormonal d) Specialized — with rationale for each.\n\n[BODYCOMP]\nDEXA/InBody analysis if available, otherwise: required metrics and their significance.\n\n[DIET]\nOptimal dietary plan: beneficial and contraindicated foods, timing, drug-food interactions.\n\n[CHRONO]\nChrononutrition: optimal meal timing, Circadian Rhythm impact, Time-Restricted Eating.\n\n[NUTRIGENOMICS]\nNutrigenomics: key relevant SNPs, recommended genetic tests.\n\n[SUPPLEMENTS]\nRecommended supplements: doses, timing, forms (glycinate, methylfolate), evidence level.\n\n[INTERACTIONS]\nInteractions: drug-drug, drug-food, supplement-drug.\n\n[THERAPY]\nMost appropriate therapeutic schools from CBT/DBT/ACT/Schema/GPM/ERP: techniques and priority.\n\n[EXCLUDED]\nExcluded options only (not mentioned above) with rationale for each exclusion.`;
 
   // #1: prompt for the structured (tool-use) path. Context already carries the locked
   // formulary + pre-computed metrics + safety gate; the schema carries the field shapes.
@@ -921,6 +934,26 @@ const ClinicalTool = () => {
               <option value="Mild">{T.mild}</option>
               <option value="Moderate">{T.moderate}</option>
               <option value="Severe">{T.severe}</option>
+            </select>
+          </FormInput>
+
+          {form.disorder.includes('PMDD') && (
+            <FormInput label={T.cyclePhase}>
+              <select className={inputCls} value={form.cyclePhase} onChange={e=>set('cyclePhase',e.target.value)}>
+                <option value="">{T.choosePhase}</option>
+                <option value="Follicular">{T.follicular}</option>
+                <option value="Luteal">{T.luteal}</option>
+                <option value="Unknown">{T.phaseUnknown}</option>
+              </select>
+            </FormInput>
+          )}
+          <FormInput label={T.chronotype}>
+            <select className={inputCls} value={form.chronotype} onChange={e=>set('chronotype',e.target.value)}>
+              <option value="">{T.chooseCt}</option>
+              <option value="Morning">{T.ctMorning}</option>
+              <option value="Intermediate">{T.ctInter}</option>
+              <option value="Evening">{T.ctEvening}</option>
+              <option value="Unknown">{T.ctUnknown}</option>
             </select>
           </FormInput>
 
