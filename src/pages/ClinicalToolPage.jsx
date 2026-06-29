@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock } from '@/lib/clinicalFormulary';
+import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION } from '@/lib/clinicalFormulary';
 import Header from '@/components/Header';
 
 /* ════════════════════════════════════════════════
@@ -74,7 +74,7 @@ async function callClaude(prompt, lang = 'en') {
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
       temperature: 0,
-      max_tokens: 16000,
+      max_tokens: 24000,
       thinking: { type: 'disabled' },
       system: systemPrompt,
       messages: [{ role: 'user', content: prompt }],
@@ -545,7 +545,9 @@ const ClinicalTool = () => {
     const key = disorderKey(form.disorder);
     const fb = renderFormularyBlock(key);
     const mt = renderMetrics(computeMetrics(form));
-    return [mt, fb].filter(Boolean).join('\n\n');
+    const sg = renderSafetyGate(computeSafetyFlags(form, key));
+    const ver = `FORMULARY_VERSION: ${FORMULARY_VERSION}`;
+    return [sg, mt, fb, ver].filter(Boolean).join('\n\n');
   };
 
   const buildContext = () => isAr
@@ -568,15 +570,40 @@ const ClinicalTool = () => {
     setError(''); setLoading(true); setResults(null); setActiveTab(null);
     setLoadingMsg(T.analyzing);
     try {
-      const raw = await callClaude(buildPrompt(), lang);
-      const parse = (tag) => {
-        const m = raw.match(new RegExp('\\[' + tag + '\\]([\\s\\S]*?)(?=\\[(?:' + ALL_TAGS + ')\\]|$)', 'i'));
-        return (m && m[1].trim()) ? m[1].trim() : (isAr ? 'لم يتم تحميل هذا القسم — يرجى إعادة التحليل.' : 'Section not loaded — please re-analyze.');
+      const parseFrom = (text, tag) => {
+        const m = text.match(new RegExp('\\[' + tag + '\\]([\\s\\S]*?)(?=\\[(?:' + ALL_TAGS + ')\\]|$)', 'i'));
+        return (m && m[1].trim()) ? m[1].trim() : '';
       };
+      // empty / broken-table guard: strip table delimiters & whitespace, require real content
+      const validSection = (txt) => {
+        if (!txt) return false;
+        if (/^لم يتم تحميل|^Section not loaded/.test(txt.trim())) return false;
+        return txt.replace(/[|\-\s]/g, '').length >= 30;
+      };
+      const failMsg = isAr ? 'لم يتم تحميل هذا القسم — يرجى إعادة التحليل.' : 'Section not loaded — please re-analyze.';
+      const order = ['medications','labs','bodycomp','diet','chrono','nutrigenomics','supplements','interactions','therapy','excluded'];
+      const buildSectionPrompt = (tags) => {
+        const blocks = tags.map((t) => `[${t}]`).join('\n\n');
+        return isAr
+          ? `${buildContext()}\n\nأكمل الأقسام التالية فقط، بنفس قواعد الفورمولاري المقفول والأرقام المحسوبة وبوابة الأمان. أجب بهذه الوسوم فقط وبهذا التنسيق بالضبط:\n\n${blocks}`
+          : `${buildContext()}\n\nProduce ONLY the following sections, using the same locked formulary, pre-computed metrics, and safety gate. Respond with these tags only, in exactly this format:\n\n${blocks}`;
+      };
+
+      const raw = await callClaude(buildPrompt(), lang);
       const parsed = {};
-      ['medications','labs','bodycomp','diet','chrono','nutrigenomics','supplements','interactions','therapy','excluded'].forEach(k => {
-        parsed[k] = parse(k.toUpperCase());
-      });
+      order.forEach((k) => { parsed[k] = parseFrom(raw, k.toUpperCase()); });
+
+      // Validation + targeted retry for empty/broken sections (one round)
+      const failed = order.filter((k) => !validSection(parsed[k]));
+      if (failed.length) {
+        setLoadingMsg(isAr ? 'إعادة تحميل أقسام ناقصة…' : 'Reloading incomplete sections…');
+        try {
+          const raw2 = await callClaude(buildSectionPrompt(failed.map((k) => k.toUpperCase())), lang);
+          failed.forEach((k) => { const v = parseFrom(raw2, k.toUpperCase()); if (validSection(v)) parsed[k] = v; });
+        } catch (_) { /* keep what we have */ }
+      }
+      order.forEach((k) => { if (!validSection(parsed[k])) parsed[k] = failMsg; });
+
       setResults(parsed);
       setActiveTab('medications');
       setChatMessages([{ role:'ai', text: T.chatSuccess }]);

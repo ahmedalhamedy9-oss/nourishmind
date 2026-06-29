@@ -16,6 +16,8 @@
    Physician should still spot-check on first use.
    ════════════════════════════════════════════════════════════════════════ */
 
+export const FORMULARY_VERSION = 'v1.1 (2026-06-29)';
+
 export const FORMULARY = {
   /* ─────────────────────────── BPD (verified) ─────────────────────────── */
   BPD: {
@@ -330,4 +332,71 @@ export function renderFormularyBlock(key) {
     if (f.chrono.rule) out.push(`  • ${f.chrono.rule}`);
   }
   return out.join('\n');
+}
+
+
+/* ─────────────────────── Deterministic safety gate ───────────────────────
+   Cross-checks the patient form against the locked formulary + a curated,
+   extensible contraindication ruleset. Returns [{level, drug, msg}].
+   Levels: ALLERGY / CONTRAINDICATION (hard — never recommend) | CAUTION (flag). */
+export function computeSafetyFlags(form, key) {
+  const flags = [];
+  const f = key && FORMULARY[key];
+  const norm = (x) => String(x || '').toLowerCase();
+  const allergies = norm(form.allergies);
+  const current = norm(form.currentMeds);
+  const comorb = norm(form.comorbidities);
+  const female = form.gender === 'Female' || form.gender === 'أنثى';
+  const has = (txt, arr) => arr.some((a) => txt.includes(a));
+  const blank = (x) => !x || x === 'none' || x === 'لا يوجد';
+
+  const recs = [];
+  if (f) {
+    (f.medications?.firstLine || []).forEach((d) => recs.push(d));
+    (f.medications?.adjunct || []).forEach((d) => recs.push(d));
+  }
+  const tokens = (d) =>
+    [d.drug, d.trade]
+      .filter(Boolean)
+      .flatMap((x) => String(x).toLowerCase().split(/[\/,()]| or | and |\s/))
+      .map((t) => t.trim())
+      .filter((t) => t.length > 3);
+
+  // 1) ALLERGY cross-match against recommended drugs
+  if (!blank(allergies)) {
+    recs.forEach((d) => {
+      const hit = tokens(d).find((t) => allergies.includes(t));
+      if (hit) flags.push({ level: 'ALLERGY', drug: d.drug, msg: `Allergy text mentions "${hit}" — do NOT recommend ${d.drug}; offer a formulary alternative.` });
+    });
+  }
+
+  // 2) Curated contraindication ruleset
+  const maois = ['phenelzine', 'tranylcypromine', 'isocarboxazid', 'selegiline', 'moclobemide', 'maoi'];
+  if (has(current, maois))
+    flags.push({ level: 'CONTRAINDICATION', drug: 'SSRI/SNRI', msg: 'Current meds include an MAOI — co-prescribing any recommended SSRI/SNRI risks serotonin syndrome. Require washout; do NOT co-prescribe.' });
+
+  if (recs.some((d) => /valproate|divalproex|depakote/i.test(d.drug)) && female)
+    flags.push({ level: 'CONTRAINDICATION', drug: 'Valproate', msg: 'Teratogenic — contraindicated in females of childbearing potential unless pregnancy-prevention conditions are met. Prefer an alternative.' });
+
+  if (has(comorb, ['pregnan', 'breastfeed', 'lactation']))
+    flags.push({ level: 'CONTRAINDICATION', drug: 'Teratogens', msg: 'Pregnancy/lactation noted — avoid valproate/topiramate/paroxetine; choose best perinatal-safety agents and involve OB.' });
+
+  if (has(comorb, ['long qt', 'qtc', 'arrhythmia', 'cardiac', 'heart']))
+    flags.push({ level: 'CAUTION', drug: 'QTc-prolonging agents', msg: 'Cardiac/QTc history — baseline + on-treatment ECG before escitalopram >20 mg or clomipramine; avoid stacking QTc-prolonging agents.' });
+
+  if (has(comorb, ['hepatic', 'liver', 'cirrhosis', 'hepatitis']))
+    flags.push({ level: 'CAUTION', drug: 'Hepatic dosing', msg: 'Hepatic impairment — retitrate hepatically-metabolized agents; monitor LFTs; valproate relatively contraindicated.' });
+
+  if (has(comorb, ['renal', 'kidney', 'ckd', 'dialysis']))
+    flags.push({ level: 'CAUTION', drug: 'Renal dosing', msg: 'Renal impairment — dose-adjust renally-cleared agents (pregabalin, topiramate, lithium) to eGFR.' });
+
+  return flags;
+}
+
+export function renderSafetyGate(flags) {
+  if (!flags || !flags.length) return '';
+  const L = ['DETERMINISTIC SAFETY GATE (overrides the formulary — honor every item):'];
+  flags.forEach((fl) => L.push(`  [${fl.level}] ${fl.drug}: ${fl.msg}`));
+  L.push('Drugs marked ALLERGY or CONTRAINDICATION must NOT be recommended. Surface every warning explicitly in [MEDICATIONS] and [INTERACTIONS].');
+  return L.join('\n');
 }
