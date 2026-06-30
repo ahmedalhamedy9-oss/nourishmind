@@ -8,6 +8,7 @@ import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, 
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
 import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
+import { renderDynamicLabs } from '@/lib/labEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
@@ -965,7 +966,7 @@ const ClinicalTool = () => {
       if (parsed) {
         const key = disorderKey(form.disorder);
         const rxMed  = renderRxMedications({ key, lang });
-        const rxLab  = renderRxLabs({ key, lang });
+        const rxLab  = renderDynamicLabs({ key, form, lang });
         const rxExc  = renderRxExcluded({ key, lang });
         const rxThr  = renderRxTherapy({ key, lang });
         const rxFup  = renderRxFollowup({ key, lang });
