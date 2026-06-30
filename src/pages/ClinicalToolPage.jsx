@@ -7,6 +7,7 @@ import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, compu
 import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
 import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
+import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
@@ -974,6 +975,13 @@ const ClinicalTool = () => {
         if (rxThr) parsed.therapy = rxThr;
         parsed.followup = rxFup || '';
         setHideFollowup(!rxFup);
+
+        // 🥗 Diet & 🧴 Supplements — deterministic from nutritionFormulary
+        // (evidence-graded, with drug-supplement interaction & synergy safety).
+        const nDiet = renderNutritionDiet({ key, lang });
+        const nSupp = renderNutritionSupplements({ key, lang });
+        if (nDiet) parsed.diet = nDiet;
+        if (nSupp) parsed.supplements = nSupp;
       }
 
       // ── GENETICS GATE: the nutrigenomics section is suppressed entirely when
