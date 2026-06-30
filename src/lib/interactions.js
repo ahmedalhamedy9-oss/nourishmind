@@ -454,6 +454,21 @@ function pushMatch(out, seen, rule, agentIds, present) {
   });
 }
 
+/* Order a pair so the patient's EXISTING agent (current med / supplement) is
+ * the visible anchor, then the recommended drug. This makes "trigger ↔ each
+ * alternative" read as distinct, accurate pairs instead of one lumped list. */
+const ROLE_RANK = { current: 0, supplement: 1, adjunct: 2, firstLine: 3 };
+function agentRank(roles) {
+  let r = 9;
+  for (const role of roles || []) if (ROLE_RANK[role] < r) r = ROLE_RANK[role];
+  return r;
+}
+function orderedPairLabels(agents) {
+  return [...agents]
+    .sort((a, b) => agentRank(a.roles) - agentRank(b.roles) || a.label.localeCompare(b.label))
+    .map((a) => a.label);
+}
+
 /* ── 5. Render a deterministic INTERACTIONS block for the locked context ─── */
 export function renderInteractions(matches, { lang = 'en' } = {}) {
   const ar = lang === 'ar';
@@ -462,25 +477,16 @@ export function renderInteractions(matches, { lang = 'en' } = {}) {
       ? `لا توجد تعارضات دوائية معروفة من جدول PsychDecide بين العوامل المُدخلة (الإصدار ${INTERACTIONS_VERSION}). هذا لا ينفي تعارضات خارج الجدول — راجع مصدراً متخصصاً عند الشك.`
       : `No known interactions from the PsychDecide table among the entered agents (${INTERACTIONS_VERSION}). Absence here does not rule out interactions outside the table — consult a specialist reference when in doubt.`;
   }
-  // Group by rule so repeated pairs (e.g. one MAOI vs several alternatives)
-  // collapse into a single line listing every involved agent.
-  const groups = new Map();
-  for (const m of matches) {
-    if (!groups.has(m.ruleId)) {
-      groups.set(m.ruleId, { severity: m.severity, mechanism: m.mechanism, management: m.management, source: m.source, tier: m.tier, verified: m.verified, agents: new Set() });
-    }
-    m.agents.forEach((a) => groups.get(m.ruleId).agents.add(a.label));
-  }
-  const ordered = [...groups.values()].sort(
-    (x, y) => SEVERITY_ORDER.indexOf(x.severity) - SEVERITY_ORDER.indexOf(y.severity)
-  );
+  // One line per interacting PAIR (matches are already deduped & severity-sorted
+  // in computeInteractions). The trigger agent is anchored first so a current med
+  // vs several alternatives reads as distinct pairs, never one lumped list.
   const head = ar
     ? `DETERMINISTIC INTERACTION TABLE (${INTERACTIONS_VERSION}) — انسخ هذه التعارضات حرفياً في قسم [INTERACTIONS]؛ لا تضف ولا تحذف ولا تغيّر الشدة:`
     : `DETERMINISTIC INTERACTION TABLE (${INTERACTIONS_VERSION}) — copy these verbatim into [INTERACTIONS]; do NOT add, omit, or change severity:`;
-  const lines = ordered.map((g) => {
-    const agents = [...g.agents].join(' + ');
-    const flag = g.verified ? '' : ' ⚠ unverified';
-    return `  [${g.severity}] ${agents}\n     • Mechanism: ${g.mechanism}\n     • Management: ${g.management}\n     • Source (${g.tier}${flag}): ${g.source}`;
+  const lines = matches.map((m) => {
+    const agents = orderedPairLabels(m.agents).join(' + ');
+    const flag = m.verified ? '' : ' ⚠ unverified';
+    return `  [${m.severity}] ${agents}\n     • Mechanism: ${m.mechanism}\n     • Management: ${m.management}\n     • Source (${m.tier}${flag}): ${m.source}`;
   });
   return [head, ...lines].join('\n');
 }
@@ -517,31 +523,19 @@ function classifyType(ids, foodOnly) {
 
 export function interactionItems(input) {
   const matches = computeInteractions(input);
-  // collapse repeated pairs of the same rule into one grouped item
-  const groups = new Map();
-  for (const m of matches) {
-    if (!groups.has(m.ruleId)) {
-      groups.set(m.ruleId, {
-        severity: m.severity, mechanism: m.mechanism, management: m.management,
-        source: m.source, tier: m.tier, verified: m.verified, foodOnly: m.foodOnly,
-        ids: new Set(),
-      });
-    }
-    m.agents.forEach((a) => groups.get(m.ruleId).ids.add(a.id));
-  }
-  return [...groups.values()]
-    .sort((x, y) => SEVERITY_ORDER.indexOf(x.severity) - SEVERITY_ORDER.indexOf(y.severity))
-    .map((g) => {
-      const ids = [...g.ids];
-      const labels = ids.map((id) => AGENTS[id]?.label || id).join(' + ');
-      const flag = g.verified ? '' : ' — unverified';
-      return {
-        type: classifyType(ids, g.foodOnly),
-        items: labels,
-        severity: g.severity.toLowerCase(),
-        note: `Mechanism: ${g.mechanism} Management: ${g.management} Source (${g.tier}${flag}): ${g.source}`,
-      };
-    });
+  // One structured item per interacting PAIR (already deduped & severity-sorted).
+  // The trigger agent is anchored first; no lumping of distinct pairs.
+  return matches.map((m) => {
+    const ids = m.agents.map((a) => a.id);
+    const labels = orderedPairLabels(m.agents).join(' + ');
+    const flag = m.verified ? '' : ' — unverified';
+    return {
+      type: classifyType(ids, m.foodOnly),
+      items: labels,
+      severity: m.severity.toLowerCase(),
+      note: `Mechanism: ${m.mechanism} Management: ${m.management} Source (${m.tier}${flag}): ${m.source}`,
+    };
+  });
 }
 
 /* Final [INTERACTIONS] section string, formatted like the rest of the report:
