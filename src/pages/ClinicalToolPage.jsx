@@ -364,6 +364,13 @@ function validateClinical(form) {
 /* ════════════════════════════════════════════════
    PDF GENERATOR
 ════════════════════════════════════════════════ */
+/* Genetics gate: the 🧬 nutrigenomics section is conditional on the physician
+ * actually entering known variants. With no input the section is suppressed
+ * entirely (UI tabs + doctor PDF) rather than letting the model fabricate
+ * generic SNP/test content from nothing — same input-gated philosophy applied
+ * to the rest of the locked report. */
+const hasGeneticInput = (form) => !!String(form?.knownGeneticVariants || '').trim();
+
 function generatePDF(form, results, type, lang) {
   const isDoc = type === 'doctor';
   const isAr = lang === 'ar';
@@ -376,7 +383,8 @@ function generatePDF(form, results, type, lang) {
       + '</div>';
   }
 
-  const sections = isAr ? SECTIONS_AR : SECTIONS_EN;
+  const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
+    .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form));
   const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color)).join('');
 
   function buildPatientContent(form, results) {
@@ -685,6 +693,7 @@ const ClinicalTool = () => {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(null);
+  const [hideGenetics, setHideGenetics] = useState(false);
   const chatEndRef = useRef(null);
 
   const SECTIONS = lang === 'ar' ? SECTIONS_AR : SECTIONS_EN;
@@ -873,6 +882,17 @@ const ClinicalTool = () => {
           firstLineNames: firstLine, adjunctNames: adjunct,
           currentMeds: form.currentMeds, supplements: '', lang,
         });
+      }
+
+      // ── GENETICS GATE: the nutrigenomics section is suppressed entirely when
+      //    no known variants were entered (no model-fabricated SNP content). The
+      //    tab/PDF section disappears; this note is a defensive fallback only.
+      const genShown = hasGeneticInput(form);
+      setHideGenetics(!genShown);
+      if (parsed && !genShown) {
+        parsed.nutrigenomics = isAr
+          ? 'لم تُدخَل تغيرات جينية معروفة، لذلك حُذف هذا القسم. أدخل SNPs معروفة للحصول على توجيه دوائي/غذائي مبني على الجينات.'
+          : 'No known genetic variants entered, so this section is omitted. Enter known SNPs to receive pharmacogenomic/nutrigenomic guidance.';
       }
 
       setResults(parsed);
@@ -1112,7 +1132,7 @@ const ClinicalTool = () => {
 
             {/* Tabs */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {SECTIONS.map(sec=>(
+              {SECTIONS.filter(sec => sec.id !== 'nutrigenomics' || !hideGenetics).map(sec=>(
                 <button key={sec.id}
                   onClick={()=>setActiveTab(activeTab===sec.id?null:sec.id)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
