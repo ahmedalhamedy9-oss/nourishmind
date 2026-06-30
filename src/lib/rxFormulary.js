@@ -23,7 +23,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 
 export const RX_VERSION = 'v0.3-DRAFT (2026-07-01) — all 5 disorders built (GAD/MDD/OCD/BPD/PMDD), pending physician sign-off';
-export const RX_ACTIVE  = false; // inert until GAD reviewed + remaining 4 built
+export const RX_ACTIVE  = true; // live: comorbidity engine + rx data drive the report
 
 export const NEEDS = '⟦NEEDS_CONFIRMATION⟧'; // sentinel for physician-supplied data
 

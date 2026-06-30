@@ -5,6 +5,7 @@ import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
 import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
+import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
@@ -325,6 +326,7 @@ const SECTIONS_EN = [
   { id:'nutrigenomics', icon:'🧬', title:'Nutrigenomics',              color:'#ec4899' },
   { id:'supplements',   icon:'🧴', title:'Supplements',                color:'#5bb8c4' },
   { id:'interactions',  icon:'⚠️', title:'Interactions',               color:'#ef4444' },
+  { id:'comorbidity',   icon:'🔗', title:'Comorbidity Plan',           color:'#0ea5e9' },
   { id:'therapy',       icon:'🧠', title:'Therapeutic Approaches',     color:'#8b5cf6' },
   { id:'excluded',      icon:'🚫', title:'Excluded Options',           color:'#64748b' },
 ];
@@ -338,6 +340,7 @@ const SECTIONS_AR = [
   { id:'nutrigenomics', icon:'🧬', title:'التغذية الجينية',       color:'#ec4899' },
   { id:'supplements',   icon:'🧴', title:'المكملات الغذائية',     color:'#5bb8c4' },
   { id:'interactions',  icon:'⚠️', title:'التعارضات',             color:'#ef4444' },
+  { id:'comorbidity',   icon:'🔗', title:'خطة الاعتلال المصاحب',  color:'#0ea5e9' },
   { id:'therapy',       icon:'🧠', title:'المدارس العلاجية',      color:'#8b5cf6' },
   { id:'excluded',      icon:'🚫', title:'المستبعدات',            color:'#64748b' },
 ];
@@ -428,7 +431,8 @@ function generatePDF(form, results, type, lang) {
   }
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
-    .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form));
+    .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
+    .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()));
   const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color)).join('');
 
   function buildPatientContent(form, results) {
@@ -738,6 +742,7 @@ const ClinicalTool = () => {
   const [chatLoading, setChatLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(null);
   const [hideGenetics, setHideGenetics] = useState(false);
+  const [hideComorbidity, setHideComorbidity] = useState(true);
   const chatEndRef = useRef(null);
 
   const SECTIONS = lang === 'ar' ? SECTIONS_AR : SECTIONS_EN;
@@ -837,8 +842,9 @@ const ClinicalTool = () => {
     // Locked drug-data layer (selection #4 + monographs). INERT until clinically
     // signed off (DRUGDATA_ACTIVE=false → returns '' and is filtered out below).
     const dd = renderDrugDataGate({ disorderKey: key, lang });
+    const cm = renderComorbidityReport({ primaryKey: key, comorbidities: form.comorbidities, lang });
     const ver = `FORMULARY_VERSION: ${FORMULARY_VERSION}`;
-    return [sg, mt, fb, ig, dd, ver].filter(Boolean).join('\n\n');
+    return [sg, mt, fb, ig, dd, cm, ver].filter(Boolean).join('\n\n');
   };
 
   const buildContext = () => isAr
@@ -921,14 +927,28 @@ const ClinicalTool = () => {
 
       // ── TABLE-ONLY: the [INTERACTIONS] section is generated entirely from the
       //    deterministic engine, replacing whatever the model produced (identical
-      //    every run). Covers both the structured and free-text paths.
+      //    every run). Covers both the structured and free-text paths. The drug
+      //    set is WIDENED to include any comorbid in-formulary disorder so the
+      //    screen catches cross-protocol pairs.
       if (INTERACTIONS_ACTIVE && parsed) {
         const key = disorderKey(form.disorder);
-        const { firstLine, adjunct } = recommendedDrugNames(FORMULARY[key]);
+        const { firstLine, adjunct } = comorbidDrugNames({
+          primaryKey: key, comorbidities: form.comorbidities, recommendedDrugNames, FORMULARY,
+        });
         parsed.interactions = renderInteractionsReport({
           firstLineNames: firstLine, adjunctNames: adjunct,
           currentMeds: form.currentMeds, supplements: '', lang,
         });
+      }
+
+      // ── COMORBIDITY: deterministic, source-based merge layer. Surfaces the
+      //    locked modifiers/cross-coverage for the primary protocol when a
+      //    comorbid condition is entered. Section is hidden when empty.
+      {
+        const key = disorderKey(form.disorder);
+        const cmReport = renderComorbidityReport({ primaryKey: key, comorbidities: form.comorbidities, lang });
+        if (parsed) parsed.comorbidity = cmReport || '';
+        setHideComorbidity(!cmReport);
       }
 
       // ── GENETICS GATE: the nutrigenomics section is suppressed entirely when
@@ -1179,7 +1199,7 @@ const ClinicalTool = () => {
 
             {/* Tabs */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {SECTIONS.filter(sec => sec.id !== 'nutrigenomics' || !hideGenetics).map(sec=>(
+              {SECTIONS.filter(sec => (sec.id !== 'nutrigenomics' || !hideGenetics) && (sec.id !== 'comorbidity' || !hideComorbidity)).map(sec=>(
                 <button key={sec.id}
                   onClick={()=>setActiveTab(activeTab===sec.id?null:sec.id)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
