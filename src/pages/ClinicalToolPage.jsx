@@ -362,6 +362,49 @@ function validateClinical(form) {
 }
 
 /* ════════════════════════════════════════════════
+   REPORT TEXT FORMATTER (display layer — #3)
+   Pure presentation transform of already-locked section text. Used identically
+   by the on-screen report and the doctor PDF so both read clean instead of raw
+   markdown. Does NOT alter clinical content or determinism.
+   - escapes HTML first (content is trusted but injection-safe)
+   - **bold** → real bold
+   - markdown headers (#) stripped; bullets normalised to •
+   - markdown table rows → "a — b"; separator rows dropped
+   - un-glues "Header- item" (e.g. "Basic- Complete Blood Count") onto two lines
+   ════════════════════════════════════════════════ */
+const escapeHTML = (s) =>
+  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function formatReportHTML(text) {
+  if (!text || !String(text).trim()) return '—';
+  let t = escapeHTML(text);
+
+  // markdown table rows → "cell — cell"; drop pure separator rows (|---|---|)
+  t = t.split('\n').map((line) => {
+    const s = line.trim();
+    if (s.includes('|')) {
+      if (/^\|?[\s|:\-]+\|?$/.test(s)) return '';                 // separator row
+      const cells = s.split('|').map((c) => c.trim()).filter(Boolean);
+      if (cells.length >= 2) return '- ' + cells.join(' — ');
+    }
+    return line;
+  }).join('\n');
+
+  t = t
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')           // bold
+    .replace(/^\s{0,3}#{1,6}\s*/gm, '')                           // strip headers
+    // un-glue "Header- item" (glued: no space before the dash). A normal
+    // "Word - value" line keeps its space and is left untouched.
+    .replace(/^([^\n\-•|]{1,29}\S)-\s+(?=\S)/gm, '<strong>$1</strong>\n• ')
+    .replace(/^\s*[\*•]\s+/gm, '• ')                              // * / • bullets
+    .replace(/^\s*-\s+/gm, '• ')                                  // - bullets → •
+    .replace(/\n{3,}/g, '\n\n')                                   // collapse blanks
+    .trim();
+
+  return t;
+}
+
+/* ════════════════════════════════════════════════
    PDF GENERATOR
 ════════════════════════════════════════════════ */
 /* Genetics gate: the 🧬 nutrigenomics section is conditional on the physician
@@ -379,7 +422,7 @@ function generatePDF(form, results, type, lang) {
   function makeSec(icon, title, body, color) {
     return '<div class="sec">'
       + `<div class="sec-title" style="border-right-color:${color};background:${color}18">${icon} ${title}</div>`
-      + `<div class="sec-body">${body || (isAr ? '—' : '—')}</div>`
+      + `<div class="sec-body">${formatReportHTML(body)}</div>`
       + '</div>';
   }
 
@@ -1154,7 +1197,8 @@ const ClinicalTool = () => {
                   <span className="text-2xl">{SECTIONS.find(s=>s.id===activeTab)?.icon}</span>
                   <span className="font-bold text-white">{SECTIONS.find(s=>s.id===activeTab)?.title}</span>
                 </div>
-                <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap">{results[activeTab]}</div>
+                <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: formatReportHTML(results[activeTab]) }} />
               </Card>
             )}
 
