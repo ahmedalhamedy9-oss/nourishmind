@@ -1,9 +1,9 @@
 /* ============================================================================
  * PsychDecide — Deterministic Drug-Interaction Engine  (Roadmap item #2)
  * ----------------------------------------------------------------------------
- * STATUS: v0.3-draft — CLINICAL CONTENT PENDING DR. AHMED'S SIGN-OFF.
- * Until INTERACTIONS_ACTIVE is flipped to true, this module is INERT:
- * nothing imports renderInteractionGate() into the live context yet.
+ * STATUS: v1.0 — ACTIVE. Clinical table signed off by Dr. Ahmed (2026-06-30).
+ * INTERACTIONS_ACTIVE is true: clinicalLock() injects the locked table into the
+ * live context. One rule (lithium_serotonergic) remains verified:false by design.
  *
  * ── ON WHAT BASIS ARE RESULTS PRODUCED? (read this first) ──────────────────
  * 1. NOT model inference. Output is produced ONLY by deterministic matching of
@@ -29,10 +29,10 @@
  * scales without a combinatorial table. Math/lookups live in code.
  * ========================================================================== */
 
-export const INTERACTIONS_VERSION = 'v0.4-draft (2026-06-29)';
+export const INTERACTIONS_VERSION = 'v1.0 (2026-06-30)';
 
-// Master switch. Keep false until clinical sign-off; flip in the activation commit.
-export const INTERACTIONS_ACTIVE = false;
+// Master switch. ACTIVE: live since 2026-06-30 (clinical sign-off complete).
+export const INTERACTIONS_ACTIVE = true;
 
 /* ── 1. Canonical agents ──────────────────────────────────────────────────
  * id -> { label, tags[], aliases[] }. Aliases are lowercase substrings matched
