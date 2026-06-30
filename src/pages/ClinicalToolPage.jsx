@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
-import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE } from '@/lib/interactions';
+import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
+import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
 
 /* ════════════════════════════════════════════════
@@ -672,6 +673,7 @@ const LangToggle = ({ lang, setLang }) => (
    MAIN TOOL
 ════════════════════════════════════════════════ */
 const ClinicalTool = () => {
+  const { currentUser } = useAuth();
   const [lang, setLang] = useState('en');
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [results, setResults] = useState(null);
@@ -877,6 +879,24 @@ const ClinicalTool = () => {
       setResultsStructured(structured);
       setActiveTab('medications');
       setChatMessages([{ role:'ai', text: T.chatSuccess }]);
+
+      // ── #4 AUDIT LOG: record this generation (gated by AUDIT_ENABLED, never blocks) ──
+      logGeneration({
+        userId: currentUser?.uid || null,
+        userEmail: currentUser?.email || null,
+        disorder: form.disorder,
+        severity: form.severity,
+        lang,
+        inputs: { ...form },
+        formularyVersion: FORMULARY_VERSION,
+        interactionsVersion: INTERACTIONS_VERSION,
+        model: 'claude-sonnet-4-6',
+        temperature: 0,
+        path: structured ? 'structured' : 'free-text',
+        sectionsStatus: order.map((k) => ({ section: k, ok: !!parsed[k] && parsed[k] !== failMsg })),
+        output: parsed,
+        structuredRaw: structured || null,
+      });
     } catch(e) { setError(e.message); }
     setLoading(false); setLoadingMsg('');
   }
