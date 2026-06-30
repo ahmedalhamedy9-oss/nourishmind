@@ -4,7 +4,7 @@ import {
   Plus, Pencil, Trash2, X, Check, BookOpen, Tag, Upload,
   Award, Star, MessageSquare, DollarSign, Users, Search,
   ChevronDown, ChevronUp, Image, Info, FileText, Home,
-  Phone, Bell, Wrench,
+  Phone, Bell, Wrench, History,
 } from 'lucide-react';
 import {
   collection, addDoc, updateDoc, deleteDoc, doc,
@@ -15,9 +15,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PLACEHOLDER_COURSES, CATEGORIES as DEFAULT_CATS } from '@/lib/data';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 import LessonEditor from '@/components/LessonEditor';
+import { fetchAuditLogs } from '@/lib/audit';
 
 const TABS = [
   { id: 'tools',       label: 'Clinical Tools', icon: Wrench },
+  { id: 'audit',       label: '🧾 Audit Logs',  icon: History },
   { id: 'courses',     label: 'Courses',      icon: BookOpen },
   { id: 'lessons',     label: 'Lessons',       icon: BookOpen },
   { id: 'categories',  label: 'Categories',    icon: Tag },
@@ -93,6 +95,9 @@ const AdminPage = () => {
   const[lessonEditor,setLessonEditor]=useState(null);
   const[newCat,setNewCat]=useState({id:'',label:''});
   const[userSearch,setUserSearch]=useState('');
+  const[auditLogs,setAuditLogs]=useState([]);
+  const[auditLoading,setAuditLoading]=useState(false);
+  const[auditError,setAuditError]=useState('');
   const[savingPricing,setSavingPricing]=useState(false);
 
   // Hero state
@@ -134,6 +139,18 @@ const AdminPage = () => {
   const[savingContact,setSavingContact]=useState(false);
 
   useEffect(()=>{if(currentUser===null)navigate('/');},[currentUser]);
+
+  // Lazy-load audit logs when the tab is opened (admin sees all reports).
+  useEffect(()=>{
+    if(activeTab!=='audit')return;
+    let cancelled=false;
+    setAuditLoading(true);setAuditError('');
+    fetchAuditLogs({max:100})
+      .then(logs=>{if(!cancelled)setAuditLogs(logs);})
+      .catch(e=>{if(!cancelled)setAuditError(e?.message||'Failed to load logs');})
+      .finally(()=>{if(!cancelled)setAuditLoading(false);});
+    return()=>{cancelled=true;};
+  },[activeTab]);
 
   useEffect(()=>{
     getDoc(doc(db,'settings','hero')).then(snap=>{if(snap.exists())setHero(h=>({...h,...snap.data()}));}).catch(()=>{});
@@ -534,6 +551,62 @@ const AdminPage = () => {
                     💬 Test Link
                   </a>
                 )}
+              </div>
+            </div>
+          )}
+
+          {activeTab==='audit'&&(
+            <div>
+              {sectionTitle('Audit Logs', <Btn variant="ghost" className="text-xs" onClick={()=>{setAuditLoading(true);setAuditError('');fetchAuditLogs({max:100}).then(setAuditLogs).catch(e=>setAuditError(e?.message||'Failed to load')).finally(()=>setAuditLoading(false));}}><History className="w-4 h-4"/>Refresh</Btn>)}
+              <p className="text-gray-500 text-sm mb-4">{auditLoading?'Loading…':`${auditLogs.length} generation${auditLogs.length===1?'':'s'} logged`} · every report is recorded with masked patient name, inputs, versions, and full output</p>
+              {auditError&&<p className="text-red-400 text-sm mb-4">⚠ {auditError}</p>}
+              <div className="flex flex-col gap-3">
+                {auditLogs.map(log=>{
+                  const when=log.createdAt?.toDate?.()?.toLocaleString?.()||'—';
+                  const ok=(log.sectionsStatus||[]).filter(s=>s.ok).length;
+                  const total=(log.sectionsStatus||[]).length;
+                  return(
+                  <details key={log.id} className="bg-[#0d1a17] border border-white/10 rounded-xl overflow-hidden">
+                    <summary className="flex items-center gap-4 p-4 cursor-pointer list-none hover:bg-white/5 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <p className="text-white font-semibold text-sm truncate">{log.inputs?.patientName||log.patientName||'—'}</p>
+                          <span className="bg-primary/20 text-primary text-[10px] px-1.5 py-0.5 rounded font-bold">{log.disorder||'—'}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${log.path==='structured'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}`}>{log.path||'—'}</span>
+                        </div>
+                        <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
+                          <span>{when}</span>
+                          <span>{log.userEmail||log.userId||'—'}</span>
+                          <span>{ok}/{total} sections</span>
+                        </div>
+                      </div>
+                      <ChevronDown className="w-4 h-4 text-gray-500 shrink-0"/>
+                    </summary>
+                    <div className="border-t border-white/10 p-5 flex flex-col gap-4 text-xs">
+                      <div className="grid grid-cols-2 gap-2 text-gray-400">
+                        <span>Formulary: <span className="text-gray-200">{log.formularyVersion||'—'}</span></span>
+                        <span>Interactions: <span className="text-gray-200">{log.interactionsVersion||'—'}</span></span>
+                        <span>Model: <span className="text-gray-200">{log.model||'—'}</span></span>
+                        <span>Temperature: <span className="text-gray-200">{String(log.temperature)}</span></span>
+                        <span>Severity: <span className="text-gray-200">{log.inputs?.severity||log.severity||'—'}</span></span>
+                        <span>Language: <span className="text-gray-200">{log.lang||'—'}</span></span>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 font-semibold mb-1">Patient inputs</p>
+                        <pre className="bg-black/30 border border-white/10 rounded-lg p-3 overflow-x-auto text-gray-300 whitespace-pre-wrap">{JSON.stringify(log.inputs,null,2)}</pre>
+                      </div>
+                      <div>
+                        <p className="text-gray-400 font-semibold mb-1">Interactions (deterministic)</p>
+                        <pre className="bg-black/30 border border-white/10 rounded-lg p-3 overflow-x-auto text-gray-300 whitespace-pre-wrap">{log.output?.interactions||'—'}</pre>
+                      </div>
+                      <details>
+                        <summary className="text-primary cursor-pointer">Full report output ▾</summary>
+                        <pre className="bg-black/30 border border-white/10 rounded-lg p-3 overflow-x-auto text-gray-300 whitespace-pre-wrap mt-2">{JSON.stringify(log.output,null,2)}</pre>
+                      </details>
+                    </div>
+                  </details>);
+                })}
+                {!auditLoading&&!auditLogs.length&&!auditError&&<p className="text-gray-600 text-sm">No generations logged yet. Generate a report from the clinical tool, then refresh.</p>}
               </div>
             </div>
           )}
