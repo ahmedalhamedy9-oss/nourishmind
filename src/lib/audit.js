@@ -21,8 +21,8 @@ import {
   collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp,
 } from 'firebase/firestore';
 
-// Keep false until auditLogs security rules are deployed + tested, then flip.
-export const AUDIT_ENABLED = false;
+// ACTIVE: auditLogs security rules deployed + tested. Every generation is logged.
+export const AUDIT_ENABLED = true;  // live since 2026-06-30 (auditLogs rules deployed + tested)
 
 // Small, fast, non-cryptographic hash → 4 hex chars. Enough to disambiguate
 // names in the log without storing them in clear; not meant to be reversible-proof.
