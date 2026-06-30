@@ -1,9 +1,10 @@
 /* ============================================================================
  * PsychDecide — Deterministic Drug-Interaction Engine  (Roadmap item #2)
  * ----------------------------------------------------------------------------
- * STATUS: v1.0 — ACTIVE. Clinical table signed off by Dr. Ahmed (2026-06-30).
- * INTERACTIONS_ACTIVE is true: clinicalLock() injects the locked table into the
- * live context. One rule (lithium_serotonergic) remains verified:false by design.
+ * STATUS: v1.1 — ACTIVE, TABLE-ONLY. Clinical table signed off by Dr. Ahmed.
+ * The [INTERACTIONS] section is generated ENTIRELY from this table via
+ * renderInteractionsReport() (model output for that section is discarded) —
+ * identical every run. 17 rules; lithium_serotonergic remains verified:false.
  *
  * ── ON WHAT BASIS ARE RESULTS PRODUCED? (read this first) ──────────────────
  * 1. NOT model inference. Output is produced ONLY by deterministic matching of
@@ -29,7 +30,7 @@
  * scales without a combinatorial table. Math/lookups live in code.
  * ========================================================================== */
 
-export const INTERACTIONS_VERSION = 'v1.0 (2026-06-30)';
+export const INTERACTIONS_VERSION = 'v1.1 (2026-06-30)';
 
 // Master switch. ACTIVE: live since 2026-06-30 (clinical sign-off complete).
 export const INTERACTIONS_ACTIVE = true;
@@ -104,7 +105,15 @@ export const AGENTS = {
   omega3:       { label: 'Omega-3 (high dose)', tags: ['mild_antiplatelet'], aliases: ['omega-3', 'omega 3', 'fish oil', 'epa', 'dha'] },
   ginkgo:       { label: 'Ginkgo biloba', tags: ['mild_antiplatelet'], aliases: ['ginkgo'] },
   melatonin:    { label: 'Melatonin', tags: ['cns_depressant_mild'], aliases: ['melatonin'] },
+
+  // — Dietary / lifestyle —
+  alcohol:  { label: 'Alcohol', tags: ['cns_depressant', 'seizure_lowering', 'alcohol'], aliases: ['alcohol', 'ethanol', 'كحول'] },
+  caffeine: { label: 'Caffeine (high intake)', tags: ['caffeine', 'cyp1a2_substrate'], aliases: ['caffeine', 'كافيين'] },
 };
+
+/* Agent classes used to label interaction TYPE in the report. */
+export const FOOD_IDS = new Set(['alcohol', 'caffeine']);
+export const SUPPLEMENT_IDS = new Set(['st_johns_wort', 'five_htp', 'tryptophan', 'sam_e', 'omega3', 'ginkgo', 'melatonin']);
 
 /* ── 2. Rules ─────────────────────────────────────────────────────────────
  * Each rule: { id, when:[A,B], severity, mechanism, management, source, tier,
@@ -249,7 +258,7 @@ export const RULES = [
     id: 'cns_depressant_stack',
     when: ['tag:cns_depressant', 'tag:cns_depressant'],
     severity: 'MAJOR',
-    mechanism: 'Additive CNS/respiratory depression (pregabalin/gabapentin + opioids/benzodiazepines).',
+    mechanism: 'Additive CNS/respiratory depression (pregabalin/gabapentin + opioids/benzodiazepines/alcohol).',
     management: 'Avoid combination; if unavoidable, lowest doses, counsel on sedation/respiratory risk.',
     source: 'FDA Drug Safety Communication, gabapentinoids, 19 Dec 2019 (latest FDA regulatory action; still current).',
     tier: 'regulatory',
@@ -261,8 +270,8 @@ export const RULES = [
     id: 'bupropion_seizure',
     when: ['id:bupropion', 'tag:seizure_lowering'],
     severity: 'MODERATE',
-    mechanism: 'Additive lowering of seizure threshold (bupropion + tramadol/clomipramine).',
-    management: 'Avoid in seizure-prone patients; respect bupropion dose ceiling (≤450 mg/day, ≤150 mg single dose XL).',
+    mechanism: 'Additive lowering of seizure threshold (bupropion + tramadol/clomipramine/alcohol).',
+    management: 'Avoid in seizure-prone patients; bupropion is contraindicated with abrupt alcohol/benzodiazepine withdrawal. Respect dose ceiling (≤450 mg/day, ≤150 mg single XL dose).',
     source: 'FDA WELLBUTRIN labeling — dose-related seizures, ≤450 mg/day ceiling; contraindicated with MAOIs and abrupt sedative withdrawal.',
     tier: 'regulatory',
     lastReviewed: '2026-06-29',
@@ -299,6 +308,28 @@ export const RULES = [
     source: 'Omega-3 bleeding meta-analysis, J Am Heart Assoc 2024 (PMC11179820); REDUCE-IT; MESA 2021.',
     tier: 'primary',
     lastReviewed: '2026-06-29',
+    verified: true,
+  },
+  {
+    id: 'alcohol_ad',
+    when: ['id:alcohol', 'tag:serotonergic_ad'],
+    severity: 'MINOR',
+    mechanism: 'Alcohol adds CNS depression, worsens mood and sleep architecture, and impairs glycaemic control alongside SSRIs/SNRIs.',
+    management: 'Advise abstinence or strict limitation during antidepressant therapy.',
+    source: 'Standard prescribing guidance (patient counseling point).',
+    tier: 'tertiary',
+    lastReviewed: '2026-06-30',
+    verified: true,
+  },
+  {
+    id: 'caffeine_ad',
+    when: ['id:caffeine', 'tag:serotonergic_ad'],
+    severity: 'MINOR',
+    mechanism: 'High caffeine intake can exacerbate anxiety, insomnia and agitation — common early SSRI/SNRI effects.',
+    management: 'Limit to ≤200 mg/day (~2 cups) during initiation; reassess.',
+    source: 'Standard prescribing guidance (patient counseling point).',
+    tier: 'tertiary',
+    lastReviewed: '2026-06-30',
     verified: true,
   },
 ];
@@ -419,6 +450,7 @@ function pushMatch(out, seen, rule, agentIds, present) {
     source: rule.source,
     tier: rule.tier,
     verified: rule.verified,
+    foodOnly: rule.foodOnly || false,
   });
 }
 
@@ -471,4 +503,58 @@ export function renderInteractionGate({ formularyBlock, currentMeds, supplements
   const { firstLine, adjunct } = recommendedDrugNames(formularyBlock);
   const matches = computeInteractions({ firstLineNames: firstLine, adjunctNames: adjunct, currentMeds, supplements });
   return renderInteractions(matches, { lang });
+}
+
+/* ── 6. TABLE-ONLY report output ──────────────────────────────────────────
+ * interactionItems() returns the [INTERACTIONS] section as structured items
+ * { type, items, severity, note } — same shape the report expects — so the
+ * whole section is generated from the deterministic table, never the model. */
+function classifyType(ids, foodOnly) {
+  if (foodOnly || ids.some((id) => FOOD_IDS.has(id))) return 'drug-food';
+  if (ids.some((id) => SUPPLEMENT_IDS.has(id))) return 'supplement-drug';
+  return 'drug-drug';
+}
+
+export function interactionItems(input) {
+  const matches = computeInteractions(input);
+  // collapse repeated pairs of the same rule into one grouped item
+  const groups = new Map();
+  for (const m of matches) {
+    if (!groups.has(m.ruleId)) {
+      groups.set(m.ruleId, {
+        severity: m.severity, mechanism: m.mechanism, management: m.management,
+        source: m.source, tier: m.tier, verified: m.verified, foodOnly: m.foodOnly,
+        ids: new Set(),
+      });
+    }
+    m.agents.forEach((a) => groups.get(m.ruleId).ids.add(a.id));
+  }
+  return [...groups.values()]
+    .sort((x, y) => SEVERITY_ORDER.indexOf(x.severity) - SEVERITY_ORDER.indexOf(y.severity))
+    .map((g) => {
+      const ids = [...g.ids];
+      const labels = ids.map((id) => AGENTS[id]?.label || id).join(' + ');
+      const flag = g.verified ? '' : ' — unverified';
+      return {
+        type: classifyType(ids, g.foodOnly),
+        items: labels,
+        severity: g.severity.toLowerCase(),
+        note: `Mechanism: ${g.mechanism} Management: ${g.management} Source (${g.tier}${flag}): ${g.source}`,
+      };
+    });
+}
+
+/* Final [INTERACTIONS] section string, formatted like the rest of the report:
+ *   - [type] items: note (Severity: x)
+ * Used to OVERRIDE the model's interactions section (table-only). */
+export function renderInteractionsReport({ firstLineNames = [], adjunctNames = [], currentMeds = '', supplements = '', lang = 'en' } = {}) {
+  const ar = lang === 'ar';
+  const sevLabel = ar ? 'الشدة' : 'Severity';
+  const items = interactionItems({ firstLineNames, adjunctNames, currentMeds, supplements });
+  if (!items.length) {
+    return ar
+      ? `- لا توجد تعارضات في جدول PsychDecide (${INTERACTIONS_VERSION}) بين العوامل المُدخلة. الغياب هنا لا ينفي تعارضات خارج الجدول؛ راجع مصدراً متخصصاً عند الشك.`
+      : `- No interactions in the PsychDecide table (${INTERACTIONS_VERSION}) among the entered agents. Absence here does not rule out interactions outside the table; consult a specialist reference when in doubt.`;
+  }
+  return items.map((i) => `- [${i.type}] ${i.items}: ${i.note} (${sevLabel}: ${i.severity})`).join('\n');
 }
