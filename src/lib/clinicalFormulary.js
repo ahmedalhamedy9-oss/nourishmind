@@ -295,13 +295,16 @@ export function computeMetrics(form) {
     proteinBasis = 'body weight (1.2–1.6 g/kg, FFM unavailable)';
   }
 
-  const overweight = bmi >= 25;
-  const calLow = overweight ? tdee.sedentary - 500 : tdee.sedentary;
-  const calHigh = overweight ? tdee.light - 300 : tdee.light;
+  // Caloric target is MAINTENANCE (eucaloric) by design. NourishMind's nutritional-
+  // psychiatry goal is psychological support, treatment synergy, and drug–diet safety
+  // — NOT weight loss. No deficit is imposed regardless of BMI; stable energy intake
+  // also avoids hypoglycaemic anxiety exacerbation.
+  const calLow = tdee.sedentary;
+  const calHigh = tdee.light;
 
   return {
     bmi: +bmi.toFixed(1), bmr, tdee, fatPct, fatMass, ffm, smm, fmr,
-    proteinLow, proteinHigh, proteinBasis, calLow, calHigh, deficit: overweight,
+    proteinLow, proteinHigh, proteinBasis, calLow, calHigh,
   };
 }
 
@@ -312,7 +315,7 @@ export function renderMetrics(m) {
   L.push(`- BMI: ${m.bmi} kg/m²`);
   L.push(`- BMR (Mifflin–St Jeor): ${m.bmr} kcal/day`);
   L.push(`- TDEE: sedentary ${m.tdee.sedentary} / light ${m.tdee.light} / moderate ${m.tdee.moderate} kcal/day`);
-  L.push(`- Caloric target: ${m.calLow}–${m.calHigh} kcal/day${m.deficit ? ' (mild deficit for fat loss)' : ''}`);
+  L.push(`- Caloric target: ${m.calLow}–${m.calHigh} kcal/day (maintenance — weight change is not a treatment goal)`);
   L.push(`- Protein target: ${m.proteinLow}–${m.proteinHigh} g/day — basis: ${m.proteinBasis}`);
   if (m.fatMass != null) L.push(`- Fat mass: ${m.fatMass} kg | Fat-free mass: ${m.ffm} kg`);
   if (m.fmr != null) L.push(`- Fat-to-skeletal-muscle ratio: ${m.fmr}`);
