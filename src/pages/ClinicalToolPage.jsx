@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
 import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
+import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
@@ -328,6 +329,7 @@ const SECTIONS_EN = [
   { id:'interactions',  icon:'⚠️', title:'Interactions',               color:'#ef4444' },
   { id:'comorbidity',   icon:'🔗', title:'Comorbidity Plan',           color:'#0ea5e9' },
   { id:'therapy',       icon:'🧠', title:'Therapeutic Approaches',     color:'#8b5cf6' },
+  { id:'followup',      icon:'📋', title:'Follow-up & Safety',         color:'#10b981' },
   { id:'excluded',      icon:'🚫', title:'Excluded Options',           color:'#64748b' },
 ];
 
@@ -342,6 +344,7 @@ const SECTIONS_AR = [
   { id:'interactions',  icon:'⚠️', title:'التعارضات',             color:'#ef4444' },
   { id:'comorbidity',   icon:'🔗', title:'خطة الاعتلال المصاحب',  color:'#0ea5e9' },
   { id:'therapy',       icon:'🧠', title:'المدارس العلاجية',      color:'#8b5cf6' },
+  { id:'followup',      icon:'📋', title:'المتابعة والأمان',      color:'#10b981' },
   { id:'excluded',      icon:'🚫', title:'المستبعدات',            color:'#64748b' },
 ];
 
@@ -432,7 +435,8 @@ function generatePDF(form, results, type, lang) {
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
     .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
-    .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()));
+    .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()))
+    .filter(s => s.id !== 'followup' || (results.followup && String(results.followup).trim()));
   const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color)).join('');
 
   function buildPatientContent(form, results) {
@@ -743,6 +747,7 @@ const ClinicalTool = () => {
   const [activeTab, setActiveTab] = useState(null);
   const [hideGenetics, setHideGenetics] = useState(false);
   const [hideComorbidity, setHideComorbidity] = useState(true);
+  const [hideFollowup, setHideFollowup] = useState(true);
   const chatEndRef = useRef(null);
 
   const SECTIONS = lang === 'ar' ? SECTIONS_AR : SECTIONS_EN;
@@ -949,6 +954,26 @@ const ClinicalTool = () => {
         const cmReport = renderComorbidityReport({ primaryKey: key, comorbidities: form.comorbidities, lang });
         if (parsed) parsed.comorbidity = cmReport || '';
         setHideComorbidity(!cmReport);
+      }
+
+      // ── RX DETERMINISTIC SECTIONS: medications / labs / excluded / therapy /
+      //    follow-up are built VERBATIM from rxFormulary (source of truth),
+      //    overriding the model for these sections (same philosophy as the
+      //    interaction table). The model still writes diet/chrono/bodycomp/
+      //    supplements/nutrigenomics from the locked context.
+      if (parsed) {
+        const key = disorderKey(form.disorder);
+        const rxMed  = renderRxMedications({ key, lang });
+        const rxLab  = renderRxLabs({ key, lang });
+        const rxExc  = renderRxExcluded({ key, lang });
+        const rxThr  = renderRxTherapy({ key, lang });
+        const rxFup  = renderRxFollowup({ key, lang });
+        if (rxMed) parsed.medications = rxMed;
+        if (rxLab) parsed.labs = rxLab;
+        if (rxExc) parsed.excluded = rxExc;
+        if (rxThr) parsed.therapy = rxThr;
+        parsed.followup = rxFup || '';
+        setHideFollowup(!rxFup);
       }
 
       // ── GENETICS GATE: the nutrigenomics section is suppressed entirely when
@@ -1199,7 +1224,7 @@ const ClinicalTool = () => {
 
             {/* Tabs */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {SECTIONS.filter(sec => (sec.id !== 'nutrigenomics' || !hideGenetics) && (sec.id !== 'comorbidity' || !hideComorbidity)).map(sec=>(
+              {SECTIONS.filter(sec => (sec.id !== 'nutrigenomics' || !hideGenetics) && (sec.id !== 'comorbidity' || !hideComorbidity) && (sec.id !== 'followup' || !hideFollowup)).map(sec=>(
                 <button key={sec.id}
                   onClick={()=>setActiveTab(activeTab===sec.id?null:sec.id)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"

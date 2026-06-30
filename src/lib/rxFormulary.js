@@ -1041,6 +1041,62 @@ const PMDD = {
 
 export const RX = { GAD, MDD, OCD, BPD, PMDD };
 
+/* ════════════════════════════════════════════════════════════════════════
+   THERAPY TECHNIQUES (#7) — SPECIFIC techniques per school, source-based.
+   Not "use CBT" but WHICH techniques. verified:false until physician sign-off.
+   ════════════════════════════════════════════════════════════════════════ */
+export const THERAPY_TECHNIQUES = {
+  GAD: [
+    { school: 'CBT', priority: 1, grade: 'A',
+      techniques: 'Cognitive restructuring of worry/catastrophising; worry postponement ("worry time"); problem-solving training; behavioural experiments testing feared outcomes; interoceptive & in-vivo exposure to uncertainty; reduce reassurance-seeking/avoidance.',
+      course: '12–20 sessions; concurrent with pharmacotherapy in severe GAD.', src: [S('NICE_GAD'), S('BAP_ANX')], verified: false },
+    { school: 'Applied Relaxation', priority: 2, grade: 'B',
+      techniques: 'Progressive muscle relaxation → cue-controlled & rapid relaxation applied in anxiety-provoking situations; targets somatic/autonomic arousal.',
+      course: '12–15 sessions.', src: [S('KATZMAN2014')], verified: false },
+    { school: 'Mindfulness / MBCT', priority: 3, grade: 'B',
+      techniques: 'Present-moment attention, decentering from worry thoughts, body scan.',
+      course: 'group programme.', src: [S('KATZMAN2014')], verified: false },
+  ],
+  MDD: [
+    { school: 'CBT', priority: 1, grade: 'A',
+      techniques: 'Cognitive restructuring of negative automatic thoughts; behavioural activation (activity scheduling, mastery/pleasure); graded task assignment; relapse-prevention plan.',
+      course: '12–20 sessions.', src: [S('CANMAT_MDD')], verified: false },
+    { school: 'Behavioural Activation', priority: 1, grade: 'A',
+      techniques: 'Activity monitoring + scheduling, values-based activation, avoidance reduction.',
+      course: 'first-line, esp. lower complexity.', src: [S('CANMAT_MDD')], verified: false },
+    { school: 'IPT', priority: 1, grade: 'A',
+      techniques: 'Focus on grief, role transitions, role disputes, interpersonal deficits.',
+      course: '12–16 sessions.', src: [S('CANMAT_MDD')], verified: false },
+  ],
+  OCD: [
+    { school: 'ERP (Exposure & Response Prevention)', priority: 1, grade: 'A',
+      techniques: 'Build a fear/trigger hierarchy; graded in-vivo + imaginal exposure to obsessional triggers WITH response (ritual/compulsion) prevention; eliminate reassurance & covert neutralising; homework between sessions. ERP is the core, evidence-based OCD psychotherapy.',
+      course: 'CORNERSTONE; pair with high-dose SSRI.', src: [S('APA_OCD')], verified: false },
+    { school: 'Cognitive therapy (OCD-specific)', priority: 2, grade: 'B',
+      techniques: 'Address inflated responsibility, thought-action fusion, overestimation of threat; behavioural experiments.',
+      course: 'adjunct to ERP.', src: [S('APA_OCD')], verified: false },
+  ],
+  BPD: [
+    { school: 'DBT', priority: 1, grade: 'A',
+      techniques: 'Four skills modules — mindfulness, distress tolerance (TIPP, radical acceptance), emotion regulation (opposite action, check the facts), interpersonal effectiveness (DEAR MAN); individual therapy + skills group + phone coaching + diary cards; chain analysis of target behaviours.',
+      course: 'Cornerstone structured psychotherapy for BPD.', src: [S('NICE_BPD')], verified: false },
+    { school: 'MBT (Mentalization-Based)', priority: 1, grade: 'B',
+      techniques: 'Strengthen mentalizing (understanding mental states of self/other) under attachment stress; stance of curiosity/not-knowing.',
+      course: 'structured programme.', src: [S('NICE_BPD')], verified: false },
+    { school: 'Schema / TFP', priority: 2, grade: 'B',
+      techniques: 'Schema mode work / transference-focused techniques targeting identity & relational patterns.',
+      course: 'specialist.', src: [S('NICE_BPD')], verified: false },
+  ],
+  PMDD: [
+    { school: 'CBT (PMDD-adapted)', priority: 1, grade: 'B',
+      techniques: 'Psychoeducation + symptom charting; cognitive restructuring of premenstrual cognitions; coping-skills & relaxation timed to the luteal phase; behavioural scheduling around the cycle.',
+      course: 'adjunct/alternative to SSRI.', src: [S('ACOG_PMDD')], verified: false },
+    { school: 'Lifestyle / self-management', priority: 2, grade: 'C',
+      techniques: 'Aerobic exercise, sleep regularity, reduced caffeine/alcohol in luteal phase, stress management.',
+      course: 'supportive.', src: [S('ACOG_PMDD')], verified: false },
+  ],
+};
+
 /* Convenience: list unverified claims so the review pass is mechanical. */
 export function rxAuditUnverified(disorder = 'GAD') {
   const d = RX[disorder];
