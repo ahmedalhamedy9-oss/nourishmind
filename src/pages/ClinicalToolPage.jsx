@@ -5,6 +5,7 @@ import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
 import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
+import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
 
@@ -833,8 +834,11 @@ const ClinicalTool = () => {
     const mt = renderMetrics(computeMetrics(form));
     const sg = renderSafetyGate(computeSafetyFlags(form, key));
     const ig = renderInteractionGate({ formularyBlock: FORMULARY[key], currentMeds: form.currentMeds, supplements: '', lang });
+    // Locked drug-data layer (selection #4 + monographs). INERT until clinically
+    // signed off (DRUGDATA_ACTIVE=false → returns '' and is filtered out below).
+    const dd = renderDrugDataGate({ disorderKey: key, lang });
     const ver = `FORMULARY_VERSION: ${FORMULARY_VERSION}`;
-    return [sg, mt, fb, ig, ver].filter(Boolean).join('\n\n');
+    return [sg, mt, fb, ig, dd, ver].filter(Boolean).join('\n\n');
   };
 
   const buildContext = () => isAr
