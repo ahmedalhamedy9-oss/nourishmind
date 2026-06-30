@@ -84,25 +84,25 @@ export const AGENTS = {
 
   // — Common serotonergic / interacting co-meds —
   tramadol:     { label: 'Tramadol',     tags: ['serotonergic', 'seizure_lowering', 'cns_depressant', 'opioid'], aliases: ['tramadol', 'tramal', 'ultram'] },
-  triptan:      { label: 'Triptan',      tags: ['serotonergic'], aliases: ['sumatriptan', 'rizatriptan', 'triptan', 'imigran'] },
+  triptan:      { label: 'Triptan',      tags: ['serotonergic'], aliases: ['sumatriptan', 'rizatriptan', 'zolmitriptan', 'eletriptan', 'naratriptan', 'almotriptan', 'frovatriptan', 'triptan', 'imigran', 'zomig'] },
   dextromethorphan:{ label: 'Dextromethorphan', tags: ['serotonergic'], aliases: ['dextromethorphan'] },
   ondansetron:  { label: 'Ondansetron',  tags: ['serotonergic', 'qt_prolonging'], aliases: ['ondansetron', 'zofran'] },
   warfarin:     { label: 'Warfarin',     tags: ['anticoagulant', 'cyp2c9_substrate'], aliases: ['warfarin', 'coumadin', 'marevan'] },
-  doac:         { label: 'DOAC (apixaban/rivaroxaban)', tags: ['anticoagulant'], aliases: ['apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban', 'eliquis', 'xarelto'] },
-  aspirin:      { label: 'Aspirin / antiplatelet', tags: ['antiplatelet', 'nsaid'], aliases: ['aspirin', 'clopidogrel', 'plavix', 'acetylsalicylic'] },
+  doac:         { label: 'DOAC (apixaban/rivaroxaban)', tags: ['anticoagulant'], aliases: ['apixaban', 'rivaroxaban', 'dabigatran', 'edoxaban', 'eliquis', 'xarelto', 'doac', 'noac'] },
+  aspirin:      { label: 'Aspirin / antiplatelet', tags: ['antiplatelet', 'nsaid'], aliases: ['aspirin', 'asa', 'clopidogrel', 'plavix', 'acetylsalicylic'] },
   nsaid:        { label: 'NSAID', tags: ['nsaid', 'raises_lithium'], aliases: ['ibuprofen', 'naproxen', 'diclofenac', 'nsaid', 'celecoxib', 'ketorolac'] },
   benzodiazepine:{ label: 'Benzodiazepine', tags: ['cns_depressant'], aliases: ['clonazepam', 'alprazolam', 'lorazepam', 'diazepam', 'xanax', 'rivotril'] },
   opioid:       { label: 'Opioid', tags: ['cns_depressant', 'opioid'], aliases: ['morphine', 'oxycodone', 'codeine', 'fentanyl', 'tapentadol'] },
-  oral_contraceptive:{ label: 'Combined oral contraceptive', tags: ['oral_contraceptive', 'cyp3a4_substrate'], aliases: ['oral contraceptive', 'ethinyl', 'drospirenone', 'yasmin', 'combined pill', 'coc'] },
+  oral_contraceptive:{ label: 'Combined oral contraceptive', tags: ['oral_contraceptive', 'cyp3a4_substrate'], aliases: ['oral contraceptive', 'ethinyl', 'drospirenone', 'yasmin', 'yaz', 'combined pill', 'coc', 'ocp', 'birth control'] },
   thiazide:     { label: 'Thiazide / ACE-inhibitor', tags: ['raises_lithium'], aliases: ['hydrochlorothiazide', 'thiazide', 'lisinopril', 'enalapril', 'ramipril', 'ace inhibitor'] },
   clozapine:    { label: 'Clozapine', tags: ['cyp1a2_substrate', 'qt_prolonging', 'narrow_ti'], aliases: ['clozapine', 'clozaril', 'leponex'] },
 
   // — Supplements —
-  st_johns_wort:{ label: "St. John's Wort", tags: ['serotonergic', 'cyp3a4_inducer', 'pgp_inducer'], aliases: ["st john", "st. john", "hypericum", "عشبة سانت جون"] },
-  five_htp:     { label: '5-HTP', tags: ['serotonergic'], aliases: ['5-htp', '5 htp', 'hydroxytryptophan'] },
+  st_johns_wort:{ label: "St. John's Wort", tags: ['serotonergic', 'cyp3a4_inducer', 'pgp_inducer'], aliases: ["st john", "st johns", "st. john", "st. johns", "saint john", "saint johns", "hypericum", "عشبة سانت جون"] },
+  five_htp:     { label: '5-HTP', tags: ['serotonergic'], aliases: ['5-htp', '5 htp', '5htp', 'five htp', 'hydroxytryptophan'] },
   tryptophan:   { label: 'L-Tryptophan', tags: ['serotonergic'], aliases: ['tryptophan'] },
   sam_e:        { label: 'SAM-e', tags: ['serotonergic'], aliases: ['sam-e', 'same', 'ademetionine', 'adenosylmethionine'] },
-  omega3:       { label: 'Omega-3 (high dose)', tags: ['mild_antiplatelet'], aliases: ['omega-3', 'omega 3', 'fish oil', 'epa', 'dha'] },
+  omega3:       { label: 'Omega-3 (high dose)', tags: ['mild_antiplatelet'], aliases: ['omega-3', 'omega 3', 'omega3', 'fish oil', 'epa', 'dha'] },
   ginkgo:       { label: 'Ginkgo biloba', tags: ['mild_antiplatelet'], aliases: ['ginkgo'] },
   melatonin:    { label: 'Melatonin', tags: ['cns_depressant_mild'], aliases: ['melatonin'] },
 
