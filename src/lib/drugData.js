@@ -16,8 +16,10 @@
 
 export const DRUGDATA_VERSION = 'v0.1-draft (2026-06-30)';
 
-// Master switch. INERT until clinical sign-off. When false, renderDrugDataGate() -> ''.
-export const DRUGDATA_ACTIVE = false;
+// Master switch. ACTIVE since 2026-06-30 by owner request. Content remains
+// PROVISIONAL (every disorder verified=false) → renders WITH a "pending physician
+// verification" stamp until Dr. Ahmed reviews each disorder and flips its verified flag.
+export const DRUGDATA_ACTIVE = true;
 
 /* ── 1. Shared drug master (pharmacology constant across disorders) ───────── */
 export const DRUG_MASTER = {
