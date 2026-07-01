@@ -7,11 +7,11 @@ import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, compu
 import { renderInteractionGate, renderInteractionsReport, renderInteractionsReportSplit, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
 import { renderComorbidityReport, comorbidDrugNames, renderComorbidityHTML } from '@/lib/comorbidityEngine';
 import { renderMedicalComorbidityReport, MEDCOMORBID_ACTIVE } from '@/lib/medicalComorbidityEngine';
-import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
+import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup, renderTechniqueLibrary, renderVagalToning } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
-import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML } from '@/lib/reportRender';
+import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -457,6 +457,8 @@ function generatePDF(form, results, type, lang) {
     excluded:    renderExcludedHTML({ key: dk, lang, pdf: true }),
     diet:        renderDietHTML({ key: dk, lang, pdf: true, extra: (() => { const m = renderMacrosAndMeals({ key: dk, metrics: computeMetrics(form), form, lang }); return m ? formatReportHTML(m) : ''; })() }) || results.dietHTML || null,
     supplements: renderSupplementsHTML({ key: dk, lang, pdf: true, extra: (() => { const p = renderPsychobioticsFor({ key: dk, lang }); return p ? formatReportHTML(p) : ''; })() }) || results.supplementsHTML || null,
+    therapy:     renderTherapyHTML({ key: dk, lang, pdf: true, extra: (() => { const e = [renderTechniqueLibrary({ key: dk, lang }), renderVagalToning({ lang })].filter(Boolean).join('\n'); return e ? formatReportHTML(e) : ''; })() }) || results.therapyHTML || null,
+    followup:    renderFollowupHTML({ key: dk, lang, pdf: true }) || results.followupHTML || null,
   } : {};
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
@@ -1036,6 +1038,13 @@ const ClinicalTool = () => {
         if (rxThr) parsed.therapy = rxThr;
         parsed.followup = rxFup || '';
         setHideFollowup(!rxFup);
+        // Decision-first HTML for therapy (staged timeline + technique library as
+        // `extra`) and follow-up (phases/monitoring/taper timeline).
+        const techExtra = [renderTechniqueLibrary({ key, lang }), renderVagalToning({ lang })].filter(Boolean).join('\n');
+        const thrHTML = renderTherapyHTML({ key, lang, extra: techExtra ? formatReportHTML(techExtra) : '' });
+        const fupHTML = renderFollowupHTML({ key, lang });
+        if (thrHTML) parsed.therapyHTML = thrHTML;
+        if (fupHTML) parsed.followupHTML = fupHTML;
 
         // 🥗 Diet & 🧴 Supplements — deterministic from nutritionFormulary
         // (evidence-graded, with drug-supplement interaction & synergy safety).

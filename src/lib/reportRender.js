@@ -11,9 +11,11 @@
    (teal #5fbfb0, dark #070f0d→#0d1a17, evidence/priority colour language).
    pdf:true renders collapsibles OPEN (the doctor record must be complete).
    ════════════════════════════════════════════════════════════════════════ */
-import { RX, RX_ACTIVE } from './rxFormulary';
+import { RX, RX_ACTIVE, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE } from './rxFormulary';
 import { computeDynamicLabs } from './labEngine';
 import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
+
+const jsrc = (a) => (a && a.length ? a.join('; ') : '');
 
 const ok = (key) => RX_ACTIVE && RX[key] && !RX[key].__pending;
 export const RC_E = (s) => String(s == null ? '' : s)
@@ -200,4 +202,65 @@ export function renderDietHTML({ key, lang = 'en', pdf = false, extra = '', extr
     + advanced
     + (extra ? `<div class="rc-gd">${RC_E(extraTitle)}</div><div class="rc-exp-b">${extra}</div>` : '');
   return shell('#4a9b8e', inner);
+}
+
+/* ── 🧠 THERAPY — staged plan as a timeline + measures + non-response ────── */
+export function renderTherapyHTML({ key, lang = 'en', pdf = false, extra = '', extraTitle = 'Technique library & vagal toning' } = {}) {
+  if (!RX_ACTIVE || !PSYCHOTHERAPY_ACTIVE) return '';
+  const plan = PSYCHOTHERAPY_PLAN[key];
+  if (!plan) return '';
+  const open = pdf ? ' open' : '';
+
+  const measures = (plan.coreMeasures || []).map((m) =>
+    `<div class="rc-row"><span class="rc-tag rec">📏 ${RC_E(m.tool)}</span><div class="rc-b">`
+    + `<div class="rc-t">${RC_E(m.kind)} · <span style="color:#7fb8ad">${RC_E(m.cadence)}</span></div>`
+    + `<div class="rc-why">${RC_E(m.interpret)}</div>${rcSrc(m.src)}</div></div>`).join('');
+
+  const phases = (plan.phases || []).map((p) => {
+    const techs = (p.techniques || []).map((t) =>
+      `<div class="rc-why" style="margin:3px 0"><span class="rc-ev rc-ev-mod">${RC_E(t.school)}</span> <b style="color:#cbd5e1">${RC_E(t.name)}</b> — ${RC_E(t.how)}${t.src ? `<div class="rc-src">src: ${RC_E(jsrc(t.src))}</div>` : ''}</div>`).join('');
+    return `<div class="rc-tl-node"><div class="rc-tl-w">Phase ${RC_E(p.phase)} — ${RC_E(p.name)} <span style="color:#61707b;font-weight:400">(${RC_E(p.duration)})</span></div>`
+      + `<div class="rc-tl-a"><b style="color:#9fe3d8">Goals:</b> ${RC_E(p.goals)}</div>`
+      + techs
+      + `<div class="rc-tl-a" style="color:#97c459">✅ Phase target: ${RC_E(p.phaseTarget)}</div></div>`;
+  }).join('');
+
+  const nr = plan.nonResponse;
+  const nrBlock = nr ? `<div class="rc-gd">🔁 If no progress</div>`
+    + `<div class="rc-note">${RC_E(nr.reviewAt)}</div>`
+    + `<details class="rc-exp"${open}><summary>Review checklist &amp; alternatives</summary><div class="rc-exp-b">`
+    + `<b>Review:</b><br>${(nr.checklist || []).map((c) => `• ${RC_E(c)}`).join('<br>')}`
+    + `<br><br><b>Alternatives:</b><br>${(nr.alternatives || []).map((a) => `• if ${RC_E(a.ifX)} → ${RC_E(a.switchTo)}`).join('<br>')}`
+    + `</div></details>` : '';
+
+  const cross = (plan.crossSchool || []).length
+    ? `<div class="rc-gd">🔗 Cross-school techniques</div><div class="rc-note">${plan.crossSchool.map(RC_E).join(' · ')}</div>` : '';
+
+  const inner = `<div class="rc-hd">🧠 Therapeutic Approaches — ${RC_E(key)}</div>`
+    + `<div class="rc-sub">staged integrative plan · psychotherapy is first-line · sourced</div>`
+    + `<div class="rc-note"><b style="color:#8b5cf6">Model:</b> ${RC_E(plan.model)}</div>`
+    + (measures ? `<div class="rc-gd">📏 Outcome measures</div>${measures}` : '')
+    + (phases ? `<div class="rc-gd">🪜 Phases</div><div class="rc-tl">${phases}</div>` : '')
+    + nrBlock + cross
+    + (extra ? `<div class="rc-gd">${RC_E(extraTitle)}</div><div class="rc-exp-b">${extra}</div>` : '');
+  return shell('#8b5cf6', inner);
+}
+
+/* ── 📋 FOLLOW-UP & SAFETY — treatment phases / monitoring / taper timeline ─ */
+export function renderFollowupHTML({ key, lang = 'en', pdf = false } = {}) {
+  if (!ok(key)) return '';
+  const d = RX[key];
+  const nodes = [
+    ['🗓️ Treatment phases & duration', d.treatmentPhases],
+    ['📈 Monitoring timeline — what to expect & when', d.monitoringTimeline],
+    ['↩️ Withdrawal vs relapse (informed-consent basis)', d.withdrawalVsRelapse],
+    ['📉 Hyperbolic tapering', d.hyperbolicTaper],
+  ].filter(([, n]) => n && n.text);
+  if (!nodes.length) return '';
+  const tl = nodes.map(([title, n]) =>
+    `<div class="rc-tl-node"><div class="rc-tl-w">${RC_E(title)}</div><div class="rc-tl-a">${RC_E(n.text)}</div>${rcSrc(n.src)}</div>`).join('');
+  const inner = `<div class="rc-hd">📋 Follow-up &amp; Safety — ${RC_E(key)}</div>`
+    + `<div class="rc-sub">phases · monitoring · taper — as a timeline · sourced</div>`
+    + `<div class="rc-tl">${tl}</div>`;
+  return shell('#10b981', inner);
 }
