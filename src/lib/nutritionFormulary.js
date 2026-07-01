@@ -564,7 +564,7 @@ const BPD = {
   avoidWithProtocol: [
     { item: "St John's Wort", severity: 'CONTRAINDICATED if on any SSRI (for comorbidity)', why: 'Serotonin syndrome + CYP induction.', src: [N('SJW_SSRI')], verified: false },
     { item: '5-HTP / L-tryptophan', severity: 'MAJOR if on serotonergic agent', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: false },
-    { item: 'Sedating herbs (valerian/kava) + sedating meds', severity: 'CAUTION', why: 'Additive CNS depression (esp. with quetiapine/benzo); kava hepatotoxicity.', src: [N('KAVA_HEP')], verified: false },
+    { item: 'Sedating herbs (valerian/kava) + sedating meds', severity: 'CAUTION', why: 'Additive CNS depression (esp. with sedating antipsychotics/benzodiazepines); kava hepatotoxicity.', src: [N('KAVA_HEP')], verified: false },
   ],
   synergyWithProtocol: [
     { item: 'Omega-3 (EPA-predominant)', note: 'Evidence-based adjunct to psychotherapy for affective/impulsive symptoms.', src: [N('BPD_OMEGA3')], verified: false },

@@ -183,8 +183,21 @@ export function renderChrono({ key, form = {}, lang = 'en' } = {}) {
   L.push('- _' + H('Evidence: peripheral-clock/metabolic basis is well established (food entrains liver/pancreas/gut clocks); the mood-specific benefit is INDIRECT/emerging — treat meal timing as circadian + metabolic HYGIENE, not a stand-alone mood treatment.',
     'الأدلة: الأساس المحيطي/الأيضي مثبت جيداً (الأكل بيضبط ساعات الكبد/البنكرياس/الأمعاء)؛ لكن الفايدة المزاجية المباشرة غير مباشرة/ناشئة — اعتبر توقيت الأكل نظافة إيقاعية وأيضية، مش علاج مزاج مستقل.') + '_');
   if (isMetabolic(form)) {
-    L.push('- 🔴 ' + H('Metabolic comorbidity / high BMI: peripheral-clock alignment matters MOST here — irregular/late eating worsens insulin resistance and desynchronises liver/pancreas clocks. Ties directly to the metabolic labs & to weight-active agents (quetiapine/olanzapine/mirtazapine).',
-      'اعتلال أيضي / BMI مرتفع: مواءمة الساعات المحيطية هنا الأهم — الأكل غير المنتظم/المتأخر بيسوّئ مقاومة الأنسولين ويفكّ تزامن ساعات الكبد/البنكرياس. مرتبط مباشرة بتحاليل الأيض وبالأدوية المؤثرة على الوزن (quetiapine/olanzapine/mirtazapine).'));
+    // Name weight-active agents ONLY if they are in THIS patient's regimen
+    // (protocol first-line/adjunct + current meds). Prevents off-protocol drug
+    // names (e.g. quetiapine/olanzapine) leaking into an unrelated protocol's
+    // metabolic note. Falls back to the class term when none are present.
+    const WEIGHT_ACTIVE = ['olanzapine', 'clozapine', 'quetiapine', 'risperidone', 'paliperidone', 'mirtazapine', 'valproate', 'divalproex', 'gabapentin', 'pregabalin', 'lithium', 'amitriptyline', 'paroxetine'];
+    const CANON = { divalproex: 'valproate' };
+    const regimenText = norm([
+      ...(d.firstLine || []).map((x) => x.drug),
+      ...(d.adjunct || []).map((x) => x.drug),
+      form?.currentMeds || '',
+    ].join(' '));
+    const waHit = [...new Set(WEIGHT_ACTIVE.filter((w) => regimenText.includes(w)).map((w) => CANON[w] || w))];
+    const wa = waHit.length ? ` (${waHit.join('/')})` : '';
+    L.push('- 🔴 ' + H(`Metabolic comorbidity / high BMI: peripheral-clock alignment matters MOST here — irregular/late eating worsens insulin resistance and desynchronises liver/pancreas clocks. Ties directly to the metabolic labs & to weight-active agents${wa}.`,
+      `اعتلال أيضي / BMI مرتفع: مواءمة الساعات المحيطية هنا الأهم — الأكل غير المنتظم/المتأخر بيسوّئ مقاومة الأنسولين ويفكّ تزامن ساعات الكبد/البنكرياس. مرتبط مباشرة بتحاليل الأيض وبالأدوية المؤثرة على الوزن${wa}.`));
   }
 
   // DRUG CHRONOTIMING
