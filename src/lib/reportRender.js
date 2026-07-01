@@ -14,7 +14,7 @@
 import { RX, RX_ACTIVE, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE } from './rxFormulary';
 import { computeDynamicLabs } from './labEngine';
 import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
-import { computeMetrics } from './clinicalFormulary';
+import { computeMetrics, computeSafetyFlags } from './clinicalFormulary';
 import { interactionSplitStructured, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from './interactions';
 import { renderChrono } from './chronoEngine';
 
@@ -102,6 +102,65 @@ export const RC_STYLE = `<style>
 
 function shell(accent, inner) {
   return `${RC_STYLE}<div class="rc" style="--rc-accent:${accent}">${inner}</div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   🧭 EXECUTIVE SUMMARY — Phase D1 (page-1 snapshot) + D2 (red-flags banner)
+   + D3 (recommendation timeline). Deterministic: pulls the locked disorder /
+   first-line / labs data + the computed safety flags. Nothing invented.
+   ════════════════════════════════════════════════════════════════════════ */
+const FLAG_STYLE = {
+  ALLERGY:          { c: '#f09595', bg: 'rgba(163,45,45,.14)', icon: '🚫' },
+  CONTRAINDICATION: { c: '#f09595', bg: 'rgba(163,45,45,.14)', icon: '⛔' },
+  CAUTION:          { c: '#e0b872', bg: 'rgba(186,117,23,.13)', icon: '⚠️' },
+};
+export function renderSummaryHTML({ key, form = {}, lang = 'en', pdf = false } = {}) {
+  if (!ok(key)) return '';
+  const d = RX[key];
+  const flags = computeSafetyFlags(form, key) || [];
+  const labs = computeDynamicLabs({ key, form });
+  const firstDrug = (d.firstLine || [])[0];
+  const bestDrug = firstDrug ? firstDrug.drug : 'Psychotherapy (no approved first-line drug)';
+  const topLab = (labs.required || [])[0] || (labs.recommended || [])[0];
+  const topExcluded = (d.excluded || [])[0];
+
+  // D2 — red-flags banner (most severe first)
+  const order = { ALLERGY: 0, CONTRAINDICATION: 1, CAUTION: 2 };
+  const sorted = [...flags].sort((a, b) => (order[a.level] ?? 9) - (order[b.level] ?? 9));
+  const banner = sorted.length
+    ? `<div class="rc-gd">🚩 Red flags — resolve before prescribing</div>`
+      + sorted.map((fl) => { const s = FLAG_STYLE[fl.level] || FLAG_STYLE.CAUTION;
+        return `<div class="rc-row" style="border-left-color:${s.c};background:${s.bg}"><span class="rc-tag" style="color:${s.c};background:rgba(0,0,0,.2)">${s.icon} ${RC_E(fl.level)}</span>`
+          + `<div class="rc-b"><div class="rc-t">${RC_E(fl.drug)}</div><div class="rc-why">${RC_E(fl.msg)}</div></div></div>`; }).join('')
+    : `<div class="rc-row opt"><span class="rc-tag opt">✅ CLEAR</span><div class="rc-b"><div class="rc-why">No automatic red flags from the entered allergies, current meds, and comorbidities. Clinical judgement still applies.</div></div></div>`;
+
+  // D1 — decision snapshot tiles
+  const tile = (k, v) => `<div class="rc-stat"><span class="k">${RC_E(k)}</span><span class="v" style="font-size:13px">${RC_E(v)}</span></div>`;
+  const snapshot = `<div class="rc-stats">`
+    + tile('Disorder', d.label || key)
+    + tile('Severity', form.severity || 'not specified')
+    + tile('Best first-line', bestDrug)
+    + tile('Top required lab', topLab ? topLab.test : '—')
+    + tile('Key caution', topExcluded ? `avoid ${topExcluded.item}` : '—')
+    + tile('Red flags', String(sorted.length))
+    + `</div>`;
+
+  // D3 — recommendation timeline (grounded in onset/monitoring of the first-line agent)
+  const onset = firstDrug?.onset || 'weeks';
+  const tl = [
+    ['Today', `Baseline labs + safety screen; start ${firstDrug ? firstDrug.drug + ' at ' + (firstDrug.dosing?.start || 'starting dose') : 'psychotherapy (first-line)'}; agree the target symptom & review date.`],
+    ['Weeks 1–2', 'Check early adverse effects, adherence, and suicidality (esp. <25 y); do NOT judge efficacy yet.'],
+    ['Weeks 4–6', `Assess response (onset: ${onset}). Adequate trial reached — if no response, optimise dose / switch per protocol.`],
+    ['~3 months', 'Formal review: continue, switch, or augment; re-screen comorbidity; plan duration & (later) taper.'],
+  ].map(([w, a]) => `<div class="rc-tl-node"><div class="rc-tl-w">${RC_E(w)}</div><div class="rc-tl-a">${RC_E(a)}</div></div>`).join('');
+
+  const inner = `<div class="rc-hd">🧭 Executive Summary — ${RC_E(key)}</div>`
+    + `<div class="rc-sub">decision snapshot · red flags · recommendation timeline — deterministic</div>`
+    + `<div class="rc-note">${RC_E(d.dxNote || '')}</div>`
+    + snapshot + banner
+    + `<div class="rc-gd">🗓️ Recommendation timeline</div><div class="rc-tl">${tl}</div>`
+    + `<div class="rc-foot">Snapshot &amp; flags are computed from the locked formulary + entered allergies/meds/comorbidities — same input, same output. Full detail is in each tab below.</div>`;
+  return shell('#e0663d', inner);
 }
 
 /* ── 🧪 LABS — graded priority rows (Required / Recommended / Optional) ──── */

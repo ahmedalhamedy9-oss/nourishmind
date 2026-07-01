@@ -11,7 +11,7 @@ import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExc
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
-import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML, renderBodycompHTML, renderInteractionsHTML, renderChronoHTML, wrapReportHTML } from '@/lib/reportRender';
+import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML, renderBodycompHTML, renderInteractionsHTML, renderChronoHTML, renderSummaryHTML, wrapReportHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -325,6 +325,7 @@ const DISORDERS = [
 ];
 
 const SECTIONS_EN = [
+  { id:'summary',       icon:'🧭', title:'Executive Summary',          color:'#e0663d' },
   { id:'medications',   icon:'💊', title:'Medication Recommendations', color:'#4a9b8e' },
   { id:'labs',          icon:'🧪', title:'Required Lab Tests',         color:'#5bb8c4' },
   { id:'bodycomp',      icon:'📊', title:'DEXA / InBody',              color:'#8b5cf6' },
@@ -340,6 +341,7 @@ const SECTIONS_EN = [
 ];
 
 const SECTIONS_AR = [
+  { id:'summary',       icon:'🧭', title:'الملخص التنفيذي',        color:'#e0663d' },
   { id:'medications',   icon:'💊', title:'التوصيات الدوائية',     color:'#4a9b8e' },
   { id:'labs',          icon:'🧪', title:'التحاليل المطلوبة',     color:'#5bb8c4' },
   { id:'bodycomp',      icon:'📊', title:'DEXA / InBody',         color:'#8b5cf6' },
@@ -451,6 +453,7 @@ function generatePDF(form, results, type, lang) {
   // (the physician record must be complete). Extensible map keyed by section id.
   const dk = disorderKey(form.disorder);
   const htmlPdf = isDoc ? {
+    summary:     renderSummaryHTML({ key: dk, form, lang, pdf: true }),
     medications: renderRxMedicationsHTML({ key: dk, lang, pdf: true }),
     comorbidity: renderComorbidityHTML({ primaryKey: dk, comorbidities: form.comorbidities, history: form.history, lang, pdf: true }),
     labs:        renderLabsHTML({ key: dk, form, lang, pdf: true }),
@@ -1109,11 +1112,14 @@ const ClinicalTool = () => {
         // interactionsHTML already built (severity cards) in the interactions block above.
         const genShownNow = hasGeneticInput(form);
         if (genShownNow && parsed.nutrigenomics) wrap('nutrigenomics', isAr ? '🧬 التغذية الجينية' : '🧬 Nutrigenomics', '#ec4899', isAr ? 'مبني على المتغيرات المُدخَلة' : 'gated on entered variants');
+        // Phase D — Executive Summary (snapshot + red-flags banner + timeline).
+        const sumHTML = renderSummaryHTML({ key: disorderKey(form.disorder), form, lang });
+        if (sumHTML) parsed.summaryHTML = sumHTML;
       }
 
       setResults(parsed);
       setResultsStructured(structured);
-      setActiveTab('medications');
+      setActiveTab(parsed.summaryHTML ? 'summary' : 'medications');
       setChatMessages([{ role:'ai', text: T.chatSuccess }]);
 
       // ── #4 AUDIT LOG: record this generation (gated by AUDIT_ENABLED, never blocks) ──
