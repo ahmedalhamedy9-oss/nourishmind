@@ -7,7 +7,7 @@ import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, compu
 import { renderInteractionGate, renderInteractionsReport, renderInteractionsReportSplit, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
 import { renderMedicalComorbidityReport, MEDCOMORBID_ACTIVE } from '@/lib/medicalComorbidityEngine';
-import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
+import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
@@ -440,18 +440,19 @@ function generatePDF(form, results, type, lang) {
   const isAr = lang === 'ar';
   const date = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US');
 
-  function makeSec(icon, title, body, color) {
+  function makeSec(icon, title, body, color, rawHTML) {
     return '<div class="sec">'
       + `<div class="sec-title" style="border-right-color:${color};background:${color}18">${icon} ${title}</div>`
-      + `<div class="sec-body">${formatReportHTML(body)}</div>`
+      + (rawHTML ? rawHTML : `<div class="sec-body">${formatReportHTML(body)}</div>`)
       + '</div>';
   }
+  const medsHTMLpdf = isDoc ? renderRxMedicationsHTML({ key: disorderKey(form.disorder), lang, pdf: true }) : null;
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
     .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
     .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()))
     .filter(s => s.id !== 'followup' || (results.followup && String(results.followup).trim()));
-  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color)).join('');
+  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, (isDoc && s.id === 'medications') ? medsHTMLpdf : null)).join('');
 
   function buildPatientContent(form, results) {
     function simplify(text) {
@@ -1003,11 +1004,13 @@ const ClinicalTool = () => {
       if (parsed) {
         const key = disorderKey(form.disorder);
         const rxMed  = renderRxMedications({ key, lang });
+        const rxMedHTML = renderRxMedicationsHTML({ key, lang });
         const rxLab  = renderDynamicLabs({ key, form, lang });
         const rxExc  = renderRxExcluded({ key, lang });
         const rxThr  = renderRxTherapy({ key, lang });
         const rxFup  = renderRxFollowup({ key, lang });
         if (rxMed) parsed.medications = rxMed;
+        if (rxMedHTML) parsed.medicationsHTML = rxMedHTML;
         if (rxLab) parsed.labs = rxLab;
         if (rxExc) parsed.excluded = rxExc;
         if (rxThr) parsed.therapy = rxThr;
@@ -1327,8 +1330,13 @@ const ClinicalTool = () => {
                   <span className="text-2xl">{SECTIONS.find(s=>s.id===activeTab)?.icon}</span>
                   <span className="font-bold text-white">{SECTIONS.find(s=>s.id===activeTab)?.title}</span>
                 </div>
-                <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap"
-                  dangerouslySetInnerHTML={{ __html: formatReportHTML(results[activeTab]) }} />
+                {activeTab === 'medications' && results.medicationsHTML ? (
+                  <div className="text-sm"
+                    dangerouslySetInnerHTML={{ __html: results.medicationsHTML }} />
+                ) : (
+                  <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: formatReportHTML(results[activeTab]) }} />
+                )}
               </Card>
             )}
 

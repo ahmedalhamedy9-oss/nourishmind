@@ -884,6 +884,15 @@ const BPD = {
       switching: 'Single agent; avoid stacking antipsychotics.', counseling: 'Target symptom + agreed review; not a cure for BPD; time-limited.',
       comparativeEfficacy: { note: 'Best-supported SGA historically (Nickel 2006, single RCT); the 2022 Cochrane update finds only small, very-low-to-low-certainty pooled effects. Symptom-targeted adjunct only.', stat: NEEDS },
       strength: { level: 'Weak', certainty: 'very low–low (GRADE)', note: 'Guidelines advise against drug treatment for core BPD; adjunct, symptom-targeted, time-limited.', src: [S('NICE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24')], verified: true },
+      bestIf: [
+        { text: 'Anger / affective dysregulation / mood lability', src: [S('NICE_BPD'), S('NICKEL2006'), S('COCHRANE_BPD')], verified: true },
+        { text: 'Cognitive-perceptual / transient quasi-psychotic symptoms (low dose)', src: [S('NICE_BPD'), S('NICKEL2006')], verified: true },
+        { text: 'Weight a concern — metabolically favourable vs other SGAs', src: [S('COCHRANE_BPD'), S('SMPC')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Prior akathisia', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Elderly with dementia — class mortality warning', tier: 'boxed', src: [S('SMPC')], verified: true },
+      ],
       benefit: [
         { symptom: 'Depressive symptoms', smd: '−0.22', ci: null, p: '0.04', certainty: 'very low', basis: 'antipsychotic class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
         { symptom: 'Psychotic–dissociative symptoms', smd: '−0.28', ci: null, p: '0.007', certainty: 'low', basis: 'antipsychotic class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
@@ -903,6 +912,16 @@ const BPD = {
       switching: 'Single agent.', counseling: 'Slow titration for cognition; hydrate; contraception if childbearing potential.',
       comparativeEfficacy: { note: 'Anticonvulsant-class signal on anger/impulsivity from small single trials; 2022 Cochrane update finds low-to-very-low-certainty pooled effects. Symptom-targeted adjunct only.', stat: NEEDS },
       strength: { level: 'Weak', certainty: 'low–very low (GRADE)', note: 'Anticonvulsant class shows low-certainty benefit on depressive and very-low-certainty on anxious symptoms; guidelines advise against drug treatment for core BPD.', src: [S('NICE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24')], verified: true },
+      bestIf: [
+        { text: 'Impulsivity / self-harm', src: [S('NICE_BPD'), S('COCHRANE_BPD')], verified: true },
+        { text: 'Anger', src: [S('NICE_BPD'), S('COCHRANE_BPD')], verified: true },
+        { text: 'Overweight — weight-neutral-to-loss', src: [S('SMPC')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Pregnancy / childbearing potential without contraception — teratogen (cleft palate)', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Nephrolithiasis history — renal stones', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Cognitively demanding roles — cognitive slowing', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
       benefit: [
         { symptom: 'Depressive symptoms', smd: '−0.44', ci: null, p: '0.02', certainty: 'low', basis: 'anticonvulsant class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
         { symptom: 'Anxious symptoms', smd: '−1.11', ci: null, p: '<0.00001', certainty: 'very low', basis: 'anticonvulsant class, pooled — large point estimate but very-low certainty (imprecision/RoB)', src: [S('BJP_BPD24')], verified: true, derived: true },
@@ -922,6 +941,15 @@ const BPD = {
       switching: 'Single agent; avoid polypharmacy.', counseling: 'Strict contraception; hepatic/haematologic monitoring; not a BPD cure.',
       comparativeEfficacy: { note: 'Weak, single-trial BPD-specific evidence; anticonvulsant-class pooled effects low-to-very-low certainty. Teratogenicity is the dominant limit. Symptom-targeted adjunct only.', stat: NEEDS },
       strength: { level: 'Weak', certainty: 'low–very low (GRADE)', note: 'Grade C, weakest BPD-specific evidence; anticonvulsant-class benefit low-to-very-low certainty; major teratogen — avoid in childbearing potential.', src: [S('NICE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24'), S('FDA_VALP')], verified: true },
+      bestIf: [
+        { text: 'Affective dysregulation / impulsivity (weak BPD evidence — Grade C)', src: [S('COCHRANE_BPD22')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Pregnancy / any childbearing-potential woman without strict prevention — major teratogen + neurodevelopmental harm', tier: 'absolute', src: [S('FDA_VALP')], verified: true },
+        { text: 'Hepatic disease — hepatotoxicity', tier: 'absolute', src: [S('FDA_VALP'), S('SMPC')], verified: true },
+        { text: 'Obesity — weight gain', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Bleeding risk / thrombocytopenia', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
       benefit: [
         { symptom: 'Depressive symptoms', smd: '−0.44', ci: null, p: '0.02', certainty: 'low', basis: 'anticonvulsant class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
         { symptom: 'Anxious symptoms', smd: '−1.11', ci: null, p: '<0.00001', certainty: 'very low', basis: 'anticonvulsant class, pooled — very-low certainty', src: [S('BJP_BPD24')], verified: true, derived: true },
@@ -940,6 +968,13 @@ const BPD = {
       switching: 'Adjunct.', counseling: 'Adjunct with favourable safety; EPA-dominant.',
       comparativeEfficacy: { note: 'Meta-analysis (Karaszewska 2021, 4 RCTs) shows a significant overall-severity effect with favourable tolerability; small evidence base. Low-risk adjunct.', stat: NEEDS },
       strength: { level: 'Moderate', certainty: 'low (small evidence base)', note: 'Well-tolerated adjunct with a significant pooled effect on overall BPD severity; small number of trials/participants.', src: [S('KARASZEWSKA21'), S('COCHRANE_BPD')], verified: true },
+      bestIf: [
+        { text: 'Affective instability / impulsivity, low-risk adjunct wanted', src: [S('KARASZEWSKA21')], verified: true },
+        { text: 'Well-tolerated add-on preferred', src: [S('KARASZEWSKA21')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'High-dose with anticoagulation — bleeding risk', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
       benefit: [
         { symptom: 'Overall BPD symptom severity', smd: '0.54', ci: '0.17 to 0.91', p: '0.0041', certainty: 'low', basis: 'meta-analysis, 4 RCTs, ~137 pts (positive SMD = benefit)', src: [S('KARASZEWSKA21')], verified: true },
         { symptom: 'Impulsive dyscontrol / affective dysregulation', smd: null, ci: null, p: null, certainty: 'low', basis: 'domain signal strongest here (Karaszewska 2021); no separate pooled SMD reported', src: [S('KARASZEWSKA21')], verified: true },
