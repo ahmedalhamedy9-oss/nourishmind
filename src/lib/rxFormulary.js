@@ -45,7 +45,9 @@ export const RX_SOURCES = {
   CANMAT_MDD:  'Lam RW et al. CANMAT 2023 update — management of MDD in adults. Can J Psychiatry 2024;69(9):641-687. First-line antidepressants with evidence for SUPERIOR RESPONSE (8): agomelatine, bupropion, escitalopram, mirtazapine, paroxetine, sertraline, venlafaxine-XR, vortioxetine (differences ≈5–10 percentage points vs comparators). Adjunctive SGAs (aripiprazole, brexpiprazole, olanzapine, quetiapine, risperidone) = Level 1 for inadequate response; aripiprazole 2–10 mg positioned first-line adjunct.',
   CIPRIANI2018:'Cipriani A, Furukawa TA, Salanti G, et al. Comparative efficacy and acceptability of 21 antidepressants for acute MDD: systematic review & network meta-analysis. Lancet 2018;391(10128):1357-1366 (522 trials, 116,477 pts). All 21 > placebo (efficacy OR 1.37 reboxetine → 2.13 amitriptyline). In head-to-head trials the MORE-EFFECTIVE agents were agomelatine, amitriptyline, escitalopram, mirtazapine, paroxetine, venlafaxine, vortioxetine (OR 1.19–1.96 vs other ADs); least: fluoxetine, fluvoxamine, reboxetine, trazodone (0.51–0.84). MORE-TOLERABLE (fewer dropouts): agomelatine, citalopram, escitalopram, fluoxetine, sertraline, vortioxetine; highest dropout: amitriptyline, clomipramine, duloxetine, fluvoxamine, reboxetine, trazodone, venlafaxine. Certainty mostly moderate–low (GRADE).',
   APA_OCD:     'APA Practice Guideline for OCD (Koran et al.) + subsequent reviews; high-dose SSRI / ERP.',
+  SKAPINAKIS16:'Skapinakis P, Caldwell DM, Hollingworth W, et al. Pharmacological and psychotherapeutic interventions for management of OCD in adults: systematic review & network meta-analysis. Lancet Psychiatry 2016;3(8):730-739 (54 trials, 6652 pts). Supports SSRIs, clomipramine and CBT/ERP variants; all SSRIs superior to placebo (class effect, no single SSRI clearly superior → choose on tolerability/interactions); clomipramine numerically among the largest anti-obsessional effects but reserved for toxicity; psychotherapy (behavioural/cognitive) alone or combined showed GREATER effects than medication alone. Exact per-drug Y-BOCS SMDs are in the paper/appendix (not in open snippets).',
   ACOG_PMDD:   'ACOG Clinical Practice Guideline No.7 — premenstrual dysphoric disorder (2023).',
+  COCHRANE_PMDD13:'Marjoribanks J, Brown J, O’Brien PMS, Wyatt K. Selective serotonin reuptake inhibitors for premenstrual syndrome / PMDD. Cochrane Database Syst Rev 2013;(6):CD001396 (29 studies, 2964 women). SSRIs effective for premenstrual symptoms vs placebo (SMD calculated per outcome; effect moderate); intermittent (luteal-phase) dosing was LESS effective than continuous dosing; NO single SSRI demonstrably better than another. Exact pooled SMD values are in the review (not in open snippets).',
   DRSP:        'Endicott J, Nee J, Harrison W. Daily Record of Severity of Problems (DRSP): reliability & validity. Arch Womens Ment Health 2006;9:41-9 (prospective daily rating over ≥2 cycles; luteal vs follicular cyclicity confirms PMDD).',
   PMDD_SSRI:   'PMDD pharmacotherapy — SSRIs (continuous, luteal-phase-only, or symptom-onset dosing) are first-line/gold-standard with rapid low-dose response (scoping review Focus 2023; Cochrane; FDA-approved fluoxetine/sertraline/paroxetine-CR). CBT evidence is modest/inconsistent — adjunct or by preference.',
   NICE_BPD:    'NICE CG78 — borderline personality disorder (drug treatment not for core BPD; symptom-targeted only).',
@@ -1011,6 +1013,19 @@ const OCD = {
       overdose: 'Relatively safe.', specialPops: { elderly: 'Lower dose.', peds: 'Approved peds SSRI (also OCD).', pgx: 'CYP2D6 inhibitor + substrate; many interactions.' },
       switching: 'Long washout before MAOI; many drug interactions (2D6).', counseling: 'Slow anti-obsessional onset; activating; high doses expected.',
       comparativeEfficacy: { note: 'High-dose SSRI first-line for OCD.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (NICE/APA first-line; Skapinakis-2016 NMA)', note: 'First-line high-dose SSRI (class effect — no single SSRI clearly superior). ERP/CBT is co-first-line and psychotherapy alone or combined shows GREATER effects than medication alone (Skapinakis).', src: [S('NICE_OCD'), S('APA_OCD'), S('SKAPINAKIS16')], verified: true },
+      bestIf: [
+        { text: 'First-line OCD, activating agent / once-daily preferred', src: [S('APA_OCD')], verified: true },
+        { text: 'Adherence gaps — long half-life forgives missed doses', src: [S('SMPC')], verified: true, derived: true },
+        { text: 'Comorbid depression', src: [S('APA_OCD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI (long washout — ~5 wk for fluoxetine)', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Major CYP2D6-substrate interactions', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'OCD — Y-BOCS reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI (Skapinakis class effect)', certainty: 'moderate', basis: 'Skapinakis 2016 NMA — SSRIs superior to placebo as a class; no single SSRI clearly superior. Exact per-drug Y-BOCS SMD not in open snippets → NEEDS. Note: ERP alone/combined > medication alone.', src: [S('SKAPINAKIS16'), S('NICE_OCD')], verified: true },
+      ],
       src: [S('APA_OCD'), S('FDA_SSRI_BBW'), S('SMPC')], verified: true },
     { id: 'sertraline', drug: 'Sertraline', class: 'SSRI', trade: { generic: 'sertraline', egypt: NEEDS }, grade: 'A',
       mechanism: 'SERT inhibition.',
@@ -1023,6 +1038,19 @@ const OCD = {
       overdose: 'Relatively safe.', specialPops: { elderly: 'Na+.', peds: 'Used for OCD.', pgx: 'CYP2C19/2B6.' },
       switching: 'Direct/cross-taper; MAOI 14-d.', counseling: 'High dose + long trial; with food.',
       comparativeEfficacy: { note: 'First-line high-dose SSRI for OCD.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (NICE/APA first-line; Skapinakis-2016 NMA)', note: 'First-line high-dose SSRI; good tolerability and few interactions make it a common default. Co-first-line with ERP.', src: [S('NICE_OCD'), S('APA_OCD'), S('SKAPINAKIS16')], verified: true },
+      bestIf: [
+        { text: 'First-line OCD, tolerability / few interactions prioritised', src: [S('APA_OCD')], verified: true },
+        { text: 'Pregnancy / lactation (often preferred SSRI)', src: [S('SMPC')], verified: true },
+        { text: 'Comorbid depression / anxiety / PTSD', src: [S('APA_OCD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'High bleeding risk', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'OCD — Y-BOCS reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI (Skapinakis class effect)', certainty: 'moderate', basis: 'Skapinakis 2016 NMA — SSRI class superior to placebo; sertraline a common first choice on tolerability. Exact per-drug Y-BOCS SMD not in open snippets → NEEDS.', src: [S('SKAPINAKIS16'), S('NICE_OCD')], verified: true },
+      ],
       src: [S('APA_OCD'), S('FDA_SSRI_BBW'), S('SMPC')], verified: true },
     { id: 'fluvoxamine', drug: 'Fluvoxamine', class: 'SSRI', trade: { generic: 'fluvoxamine', egypt: NEEDS }, grade: 'A',
       mechanism: 'SERT inhibition; OCD-specific evidence base.',
@@ -1035,6 +1063,17 @@ const OCD = {
       overdose: 'Relatively safe.', specialPops: { elderly: 'Lower dose.', peds: 'Approved for paediatric OCD.', pgx: 'CYP1A2/2C19 inhibitor.' },
       switching: 'Watch interactions; MAOI 14-d.', counseling: 'Night dosing; many drug/caffeine interactions.',
       comparativeEfficacy: { note: 'First-line; classic OCD agent.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (NICE/APA first-line; Skapinakis-2016 NMA)', note: 'First-line SSRI with a long OCD track record; limited by significant CYP1A2/3A4 interactions.', src: [S('NICE_OCD'), S('APA_OCD'), S('SKAPINAKIS16')], verified: true },
+      bestIf: [
+        { text: 'First-line OCD, especially where night dosing suits', src: [S('APA_OCD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'On CYP1A2 substrates (theophylline, clozapine, tizanidine) or high caffeine — major interactions', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'OCD — Y-BOCS reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI (Skapinakis class effect)', certainty: 'moderate', basis: 'Skapinakis 2016 NMA — SSRI class superior to placebo. Exact per-drug Y-BOCS SMD not in open snippets → NEEDS. Interaction burden drives selection.', src: [S('SKAPINAKIS16'), S('NICE_OCD')], verified: true },
+      ],
       src: [S('APA_OCD'), S('SMPC')], verified: true },
     { id: 'escitalopram', drug: 'Escitalopram', class: 'SSRI', trade: { generic: 'escitalopram', egypt: NEEDS }, grade: 'A',
       mechanism: 'Selective SERT inhibition.',
@@ -1047,6 +1086,18 @@ const OCD = {
       overdose: 'Relatively safe.', specialPops: { elderly: 'Lower max.', peds: 'Used.', pgx: 'CYP2C19 (CPIC).' },
       switching: 'Direct/cross-taper; MAOI 14-d.', counseling: 'High OCD doses constrained by QT — ECG.',
       comparativeEfficacy: { note: 'First-line; high-dose limited by QT.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (NICE/APA first-line; Skapinakis-2016 NMA)', note: 'First-line SSRI; the high doses OCD often needs are constrained by dose-dependent QT prolongation — ECG guides the ceiling.', src: [S('NICE_OCD'), S('APA_OCD'), S('SKAPINAKIS16')], verified: true },
+      bestIf: [
+        { text: 'First-line OCD, clean interaction profile wanted', src: [S('APA_OCD')], verified: true },
+        { text: 'Comorbid depression / anxiety', src: [S('APA_OCD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'QTc prolongation / cardiac risk — limits the high OCD doses (ECG)', tier: 'relative', src: [S('FDA_CIT_QT')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'OCD — Y-BOCS reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI (Skapinakis class effect)', certainty: 'moderate', basis: 'Skapinakis 2016 NMA — SSRI class superior to placebo. Exact per-drug Y-BOCS SMD not in open snippets → NEEDS. QT ceiling limits high OCD dosing.', src: [S('SKAPINAKIS16'), S('NICE_OCD')], verified: true },
+      ],
       src: [S('APA_OCD'), S('FDA_CIT_QT'), S('CPIC_SSRI'), S('SMPC')], verified: true },
   ],
   adjunct: [
@@ -1064,6 +1115,19 @@ const OCD = {
       switching: 'After ≥2 SSRI failures; careful cross from SSRI (serotonergic load); MAOI 14-d.',
       counseling: 'ECG + levels; overdose-dangerous (assess suicide risk before prescribing).',
       comparativeEfficacy: { note: 'High efficacy; reserved due to toxicity.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (Skapinakis-2016: large effect, reserved)', note: 'Numerically among the LARGEST anti-obsessional effects, but cardiotoxicity + overdose lethality → reserve for OCD refractory to ≥1–2 adequate SSRI trials, not first-line.', src: [S('SKAPINAKIS16'), S('APA_OCD')], verified: true },
+      bestIf: [
+        { text: 'OCD refractory to adequate high-dose SSRI trials', src: [S('APA_OCD'), S('SKAPINAKIS16')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Cardiac / conduction disease — quinidine-like cardiotoxicity (ECG)', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'High suicide risk — lethal in overdose', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Elderly (anticholinergic, orthostasis, falls)', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'OCD — Y-BOCS reduction', metricLabel: 'evidence', metricValue: 'numerically among the largest effects; reserved for toxicity', certainty: 'moderate', basis: 'Skapinakis 2016 NMA — clomipramine numerically among the largest anti-obsessional effects but not clearly superior to SSRIs and less tolerable; reserved for SSRI failure. Exact Y-BOCS SMD not in open snippets → NEEDS.', src: [S('SKAPINAKIS16'), S('APA_OCD')], verified: true },
+      ],
       src: [S('APA_OCD'), S('SMPC')], verified: true },
     { id: 'antipsychotic_aug', drug: 'Aripiprazole / Risperidone (low-dose augmentation)', class: 'atypical antipsychotic', grade: 'B',
       trade: { generic: 'aripiprazole / risperidone', egypt: NEEDS },
@@ -1075,6 +1139,18 @@ const OCD = {
       contraindications: { absolute: '—', relative: 'Metabolic risk.', boxed: 'Elderly dementia mortality.' },
       pregnancyLactation: 'Case-by-case.', overdose: 'Relatively low (aripiprazole).', specialPops: { elderly: 'Boxed dementia.', pgx: 'CYP2D6/3A4.' },
       counseling: 'Augment stable SSRI; reassess; especially if tics.',
+      strength: { level: 'Moderate', certainty: 'moderate (guideline augmentation for refractory OCD)', note: 'Low-dose antipsychotic augmentation of a stable SSRI for refractory OCD — strongest signal with comorbid tics/Tourette. Weigh metabolic burden; reassess and stop if no benefit.', src: [S('APA_OCD'), S('KATZMAN2014')], verified: true },
+      bestIf: [
+        { text: 'OCD refractory to adequate SSRI, as augmentation', src: [S('APA_OCD')], verified: true },
+        { text: 'Comorbid tics / Tourette', src: [S('APA_OCD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Metabolic syndrome / obesity — SGA metabolic burden', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Elderly with dementia — class mortality warning', tier: 'boxed', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'OCD — augmentation response (refractory)', metricLabel: 'evidence', metricValue: 'augmentation for refractory / tic-related OCD', certainty: 'moderate', basis: 'Guideline augmentation for SSRI-refractory OCD; strongest with tics. Pooled effect size not extracted from open sources → NEEDS.', src: [S('APA_OCD'), S('KATZMAN2014')], verified: true },
+      ],
       src: [S('APA_OCD'), S('SMPC')], verified: true },
   ],
   excluded: [
@@ -1288,6 +1364,18 @@ const PMDD = {
       overdose: 'Relatively safe.', specialPops: { elderly: 'n/a (reproductive age).', peds: 'Adolescents specialist.', pgx: 'CYP2C19/2B6.' },
       switching: 'Continuous vs luteal per pattern/comorbidity.', counseling: 'Can dose only in luteal phase; rapid PMDD onset; diary.',
       comparativeEfficacy: { note: 'First-line SSRI for PMDD (ACOG).', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (ACOG first-line; Cochrane-2013 meta-analysis)', note: 'First-line SSRI for PMDD with rapid (days) response. Continuous dosing ≥ luteal-only (Cochrane); luteal-phase dosing is a convenient, accepted option (ACOG). No SSRI clearly superior.', src: [S('ACOG_PMDD'), S('COCHRANE_PMDD13'), S('PMDD_SSRI')], verified: true },
+      bestIf: [
+        { text: 'First-line PMDD — flexible continuous OR luteal-phase dosing', src: [S('ACOG_PMDD')], verified: true },
+        { text: 'Comorbid depression / anxiety (continuous covers both)', src: [S('ACOG_PMDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'High bleeding risk', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'PMDD — premenstrual symptom reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI; continuous ≥ luteal (Cochrane)', certainty: 'moderate', basis: 'Cochrane 2013 (29 trials, 2964 women) — SSRIs effective; intermittent less effective than continuous; no SSRI superior. Exact pooled SMD not in open snippets → NEEDS.', src: [S('COCHRANE_PMDD13'), S('ACOG_PMDD')], verified: true },
+      ],
       src: [S('ACOG_PMDD'), S('FDA_SSRI_BBW'), S('SMPC')], verified: true },
     { id: 'escitalopram', drug: 'Escitalopram', class: 'SSRI', trade: { generic: 'escitalopram', egypt: NEEDS }, grade: 'A',
       mechanism: 'Selective SERT inhibition.',
@@ -1300,6 +1388,18 @@ const PMDD = {
       overdose: 'Relatively safe.', specialPops: { peds: 'Specialist.', pgx: 'CYP2C19 (CPIC).' },
       switching: 'Continuous/luteal per pattern.', counseling: 'Luteal option; diary.',
       comparativeEfficacy: { note: 'First-line SSRI (ACOG).', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (ACOG first-line; Cochrane-2013)', note: 'First-line SSRI for PMDD; clean interaction profile. Continuous ≥ luteal dosing (Cochrane); rapid response.', src: [S('ACOG_PMDD'), S('COCHRANE_PMDD13')], verified: true },
+      bestIf: [
+        { text: 'First-line PMDD, minimal interactions wanted', src: [S('ACOG_PMDD')], verified: true },
+        { text: 'Comorbid depression / anxiety (continuous)', src: [S('ACOG_PMDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'QTc prolongation at higher doses', tier: 'relative', src: [S('FDA_CIT_QT')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'PMDD — premenstrual symptom reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI; continuous ≥ luteal (Cochrane)', certainty: 'moderate', basis: 'Cochrane 2013 — SSRI class effective; no single SSRI superior. Exact pooled SMD not in open snippets → NEEDS.', src: [S('COCHRANE_PMDD13'), S('ACOG_PMDD')], verified: true },
+      ],
       src: [S('ACOG_PMDD'), S('CPIC_SSRI'), S('SMPC')], verified: true },
     { id: 'fluoxetine', drug: 'Fluoxetine', class: 'SSRI', trade: { generic: 'fluoxetine', egypt: NEEDS }, grade: 'A',
       mechanism: 'SERT inhibition; long half-life smooths luteal use.',
@@ -1312,6 +1412,18 @@ const PMDD = {
       overdose: 'Relatively safe.', specialPops: { peds: 'Specialist.', pgx: 'CYP2D6 inhibitor + substrate.' },
       switching: 'Long washout before MAOI.', counseling: 'Luteal-friendly (long t½); activating.',
       comparativeEfficacy: { note: 'First-line SSRI (ACOG).', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (ACOG first-line; Cochrane-2013)', note: 'First-line SSRI for PMDD; long half-life makes luteal / symptom-onset dosing forgiving; activating.', src: [S('ACOG_PMDD'), S('COCHRANE_PMDD13')], verified: true },
+      bestIf: [
+        { text: 'First-line PMDD where intermittent dosing / missed-dose tolerance suits (long t½)', src: [S('ACOG_PMDD'), S('PMDD_SSRI')], verified: true },
+        { text: 'Low energy / fatigue predominant (activating)', src: [S('ACOG_PMDD')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI (long ~5-wk washout)', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Prominent insomnia / agitation (activating)', tier: 'relative', src: [S('SMPC')], verified: true, derived: true },
+      ],
+      benefit: [
+        { symptom: 'PMDD — premenstrual symptom reduction', metricLabel: 'evidence', metricValue: 'first-line SSRI; continuous ≥ luteal (Cochrane)', certainty: 'moderate', basis: 'Cochrane 2013 — SSRI class effective; no single SSRI superior. Exact pooled SMD not in open snippets → NEEDS.', src: [S('COCHRANE_PMDD13'), S('ACOG_PMDD')], verified: true },
+      ],
       src: [S('ACOG_PMDD'), S('SMPC')], verified: true },
     { id: 'paroxetine_cr', drug: 'Paroxetine CR', class: 'SSRI', trade: { generic: 'paroxetine CR', egypt: NEEDS }, grade: 'A',
       mechanism: 'Potent SERT inhibition; FDA PMDD indication (CR).',
@@ -1324,6 +1436,18 @@ const PMDD = {
       overdose: 'Relatively safe.', specialPops: { peds: 'Avoid.', pgx: 'Strong CYP2D6 inhibitor + substrate.' },
       switching: 'Careful taper (withdrawal); MAOI 14-d.', counseling: 'Avoid if planning pregnancy; withdrawal-prone.',
       comparativeEfficacy: { note: 'FDA-indicated (CR) for PMDD.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (FDA-indicated for PMDD; Cochrane-2013)', note: 'FDA-indicated (CR) for PMDD and effective, but withdrawal-prone and a pregnancy cardiac signal — behind sertraline/escitalopram/fluoxetine for most.', src: [S('ACOG_PMDD'), S('COCHRANE_PMDD13'), S('SMPC')], verified: true },
+      bestIf: [
+        { text: 'PMDD where an FDA-indicated CR SSRI is preferred and pregnancy is not planned', src: [S('ACOG_PMDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Pregnancy / planning pregnancy — cardiac malformation signal', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Poor adherence — marked discontinuation syndrome', tier: 'relative', src: [S('MAUDSLEY_DP')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'PMDD — premenstrual symptom reduction', metricLabel: 'evidence', metricValue: 'FDA-indicated (CR) first-line SSRI', certainty: 'moderate', basis: 'Cochrane 2013 SSRI class effect; paroxetine CR FDA-indicated for PMDD. Exact pooled SMD not in open snippets → NEEDS. Withdrawal/pregnancy limits.', src: [S('COCHRANE_PMDD13'), S('ACOG_PMDD')], verified: true },
+      ],
       src: [S('ACOG_PMDD'), S('SMPC')], verified: true },
   ],
   adjunct: [
@@ -1338,6 +1462,18 @@ const PMDD = {
       pregnancyLactation: 'Contraindicated in pregnancy; lactation caution.', overdose: 'n/a.', specialPops: { adolescents: 'After menarche; counsel.', pgx: '—' },
       switching: 'Hormonal alternative/adjunct to SSRI.', counseling: 'VTE/migraine-aura screening; not if smoker ≥35.',
       comparativeEfficacy: { note: 'FDA-approved hormonal option for PMDD.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (FDA-approved hormonal option for PMDD)', note: 'FDA-approved drospirenone/EE COC for PMDD — covers premenstrual (esp. somatic) symptoms + contraception; oestrogen contraindications gate use.', src: [S('ACOG_PMDD'), S('SMPC')], verified: true },
+      bestIf: [
+        { text: 'PMDD patient who also wants contraception', src: [S('ACOG_PMDD')], verified: true },
+        { text: 'Prominent somatic / physical premenstrual symptoms', src: [S('ACOG_PMDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Migraine with aura / VTE risk / smoker ≥35 — stroke & VTE risk', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Pregnancy / planning pregnancy', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'PMDD — premenstrual symptom reduction', metricLabel: 'evidence', metricValue: 'FDA-approved hormonal option', certainty: 'moderate', basis: 'ACOG/FDA drospirenone-EE COC option for PMDD; covers somatic symptoms + contraception. Pooled effect size not extracted from open sources → NEEDS.', src: [S('ACOG_PMDD')], verified: true },
+      ],
       src: [S('ACOG_PMDD'), S('SMPC')], verified: true },
     { id: 'gnrh_addback', drug: 'GnRH agonist + add-back', class: 'GnRH agonist', grade: 'B',
       trade: { generic: 'leuprolide + add-back HRT', egypt: NEEDS },
@@ -1350,6 +1486,17 @@ const PMDD = {
       pregnancyLactation: 'Contraindicated in pregnancy.', overdose: 'n/a.', specialPops: { pgx: '—' },
       switching: 'Specialist; reserved.', counseling: 'Severe/refractory only; bone protection with add-back.',
       comparativeEfficacy: { note: 'Reserved severe/refractory (ACOG).', stat: NEEDS },
+      strength: { level: 'Moderate', certainty: 'moderate (ACOG — reserved severe/refractory)', note: 'Highly effective by inducing medical ovarian suppression, but reserved for SEVERE/REFRACTORY PMDD (specialist) — requires add-back HRT + bone protection for long-term use.', src: [S('ACOG_PMDD'), S('SMPC')], verified: true },
+      bestIf: [
+        { text: 'Severe PMDD refractory to SSRIs and hormonal options (specialist)', src: [S('ACOG_PMDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Long-term use without add-back HRT — bone-density loss', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Pregnancy', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'PMDD — severe/refractory symptom control', metricLabel: 'evidence', metricValue: 'effective via ovarian suppression; reserved (specialist)', certainty: 'moderate', basis: 'ACOG reserves GnRH agonists + add-back for severe/refractory PMDD. Pooled effect size not extracted from open sources → NEEDS.', src: [S('ACOG_PMDD')], verified: true },
+      ],
       src: [S('ACOG_PMDD'), S('SMPC')], verified: true },
   ],
   excluded: [
