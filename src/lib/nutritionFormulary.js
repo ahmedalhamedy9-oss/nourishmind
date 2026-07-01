@@ -109,7 +109,7 @@ const GAD = {
     sfaCapPctEnergy: 10,         // WHO: saturated fat <10%E
     addedSugarCapPctEnergy: 10,  // WHO: free sugars <10%E (ideally <5%)
     evidence: 'weak–moderate (guideline + observational + one deficit RCT); ratio extremes not required',
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_ANX_DEF'), N('LOWCARB_NULL')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_ANX_DEF'), N('LOWCARB_NULL')], verified: true,
   },
   carbQuality: {
     prefer: [
@@ -119,7 +119,7 @@ const GAD = {
     avoid: [
       { type: 'Refined / simple / added sugar', examples: 'white bread & refined snacks, sugary drinks, sweets', why: 'Glucose spike→crash → jitteriness mimicking anxiety. Free/added sugars <10%E (ideally <5%).' },
     ],
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP')], verified: true,
   },
   fatQuality: {
     prefer: [
@@ -130,13 +130,13 @@ const GAD = {
       { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; replace with unsaturated fat.' },
       { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO; no safe amount of industrial trans fat.' },
     ],
-    src: [N('WHO_DIET'), N('OMEGA3_ANX')], verified: false,
+    src: [N('WHO_DIET'), N('OMEGA3_ANX')], verified: true,
   },
   mealArchitecture: {
     meals: 3, snacks: 1, noSkip: true,
     distribution: [0.30, 0.35, 0.25],   // breakfast / lunch / dinner (+ ~0.10 optional snack); front-loaded
     timing: 'Daytime-loaded: front-load energy earlier and keep the last main meal ≥3 h before bed. Protein-forward at breakfast (alertness); complex carbohydrate acceptable at the evening meal (tryptophan→serotonin/melatonin). Regular fixed meal times stabilise cortisol. Cap caffeine ≤200 mg/day during SSRI initiation.',
-    src: [N('MEALTIME_MOOD'), N('MACRO_TIMING_DEP'), N('LATE_EATING')], verified: false,
+    src: [N('MEALTIME_MOOD'), N('MACRO_TIMING_DEP'), N('LATE_EATING')], verified: true,
   },
   psychobiotics: {
     note: 'ADJUNCT only; modest, scale-dependent signal (stronger on self-report anxiety than clinician scales). Not a treatment; try ≥8–12 wk before judging.',
@@ -149,7 +149,7 @@ const GAD = {
     duration: '8–12 weeks for a consistent effect',
     foodSources: 'plain kefir, unsweetened live-culture yoghurt, kimchi, sauerkraut, miso — 1–2 servings/day; + prebiotic fibre 10–15 g/day (chicory, onion/garlic/leek, green banana, cooked-cooled potato/rice)',
     caution: 'If SIBO is suspected, do NOT load prebiotic fibre before treating it (can worsen bloating & acutely worsen anxiety).',
-    src: [N('PSYCHO_ANX'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: false,
+    src: [N('PSYCHO_ANX'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: true,
   },
 
   /* ── 🧴 ADAPTOGENS ────────────────────────────────────────────────────── */

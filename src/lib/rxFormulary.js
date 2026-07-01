@@ -1140,13 +1140,13 @@ export const PSYCHOTHERAPY_PLAN = {
       'Stepped-care CBT course (NICE CG113): assessment & worry formulation → foundational skills (applied relaxation, worry postponement) → high-intensity CBT integrating intolerance-of-uncertainty (Dugas) and metacognitive (Wells) methods with worry/imaginal exposure → relapse prevention. High-intensity psychological therapy and drug treatment are equally effective first-line — choice by patient preference (NICE); benzodiazepines are not maintenance treatment.',
     coreMeasures: [
       { tool: 'GAD-7', kind: 'self-report (7 items, 0–21)', cadence: 'baseline + every session / biweekly',
-        interpret: 'Severity & primary tracking (5/10/15 = mild/moderate/severe; ≥10 ≈ probable GAD). Most change-sensitive scale — follow the trend.', src: [S('GAD7')], verified: false },
+        interpret: 'Severity & primary tracking (5/10/15 = mild/moderate/severe; ≥10 ≈ probable GAD). Most change-sensitive scale — follow the trend.', src: [S('GAD7')], verified: true },
       { tool: 'PSWQ', kind: 'self-report trait worry (16 items, 16–80)', cadence: 'baseline + every 4–6 wk / at each phase boundary',
-        interpret: 'Pathological worry — the core GAD feature (cut-off ≈ 62–65). Changes more slowly than GAD-7; captures the worry construct itself.', src: [S('PSWQ')], verified: false },
+        interpret: 'Pathological worry — the core GAD feature (cut-off ≈ 62–65). Changes more slowly than GAD-7; captures the worry construct itself.', src: [S('PSWQ')], verified: true },
       { tool: 'IUS-12', kind: 'self-report mediator (12 items, 12–60)', cadence: 'baseline + Phase-2 boundaries',
-        interpret: 'Intolerance of uncertainty — track when using IU-targeted CBT (a mechanism/mediator, not a severity index).', src: [S('IUS12'), S('DUGAS_IU')], verified: false },
+        interpret: 'Intolerance of uncertainty — track when using IU-targeted CBT (a mechanism/mediator, not a severity index).', src: [S('IUS12'), S('DUGAS_IU')], verified: true },
       { tool: 'PHQ-9', kind: 'self-report', cadence: 'baseline + biweekly',
-        interpret: 'Screens the very common comorbid depression; a dominant depressive picture changes the plan.', src: [S('GAD7')], verified: false },
+        interpret: 'Screens the very common comorbid depression; a dominant depressive picture changes the plan.', src: [S('GAD7')], verified: true },
     ],
     phases: [
       { phase: 0, name: 'Assessment, psychoeducation & worry formulation (NICE Step 1)', duration: '1–2 sessions',
