@@ -154,11 +154,27 @@ export function renderSummaryHTML({ key, form = {}, lang = 'en', pdf = false } =
     ['~3 months', 'Formal review: continue, switch, or augment; re-screen comorbidity; plan duration & (later) taper.'],
   ].map(([w, a]) => `<div class="rc-tl-node"><div class="rc-tl-w">${RC_E(w)}</div><div class="rc-tl-a">${RC_E(a)}</div></div>`).join('');
 
+  // D4 — monitoring dashboard: what to track (therapy outcome measures + the
+  // first-line drug's monitoring), as a compact checklist.
+  const plan = PSYCHOTHERAPY_ACTIVE ? PSYCHOTHERAPY_PLAN[key] : null;
+  const measures = (plan?.coreMeasures || []).map((m) => `${m.tool} (${m.cadence})`);
+  const drugMon = firstDrug?.monitoring ? [firstDrug.monitoring.baseline, firstDrug.monitoring.ongoing].filter((x) => x && x !== '—') : [];
+  const dashItems = [...measures, ...drugMon];
+  const dashboard = dashItems.length
+    ? `<div class="rc-gd">📈 Monitoring dashboard — track these</div>`
+      + dashItems.map((t) => `<div class="rc-row rec"><span class="rc-tag rec">TRACK</span><div class="rc-b"><div class="rc-why">${RC_E(t)}</div></div></div>`).join('')
+    : '';
+
+  // D5 — shared-decision box (patient-education + collaborative framing).
+  const sharedDecision = `<div class="rc-gd">🤝 Shared decision &amp; patient education</div>`
+    + `<div class="rc-note">Discuss with the patient: (1) the target symptom &amp; realistic timeframe (benefit often takes ${RC_E(onset)}); (2) common early side-effects and that they usually settle; (3) that this is a supported decision, not a fixed prescription — options and preferences matter; (4) the agreed review date and what "better" will look like. Never stop abruptly; report early worsening.</div>`;
+
   const inner = `<div class="rc-hd">🧭 Executive Summary — ${RC_E(key)}</div>`
-    + `<div class="rc-sub">decision snapshot · red flags · recommendation timeline — deterministic</div>`
+    + `<div class="rc-sub">decision snapshot · red flags · timeline · monitoring · shared decision — deterministic</div>`
     + `<div class="rc-note">${RC_E(d.dxNote || '')}</div>`
     + snapshot + banner
     + `<div class="rc-gd">🗓️ Recommendation timeline</div><div class="rc-tl">${tl}</div>`
+    + dashboard + sharedDecision
     + `<div class="rc-foot">Snapshot &amp; flags are computed from the locked formulary + entered allergies/meds/comorbidities — same input, same output. Full detail is in each tab below.</div>`;
   return shell('#e0663d', inner);
 }
