@@ -55,6 +55,15 @@ export const MED_SRC = {
   DULOX_REN:   'Duloxetine — avoid when CrCl/eGFR <30 mL/min (≈2× AUC in ESRD); no adjustment for mild–moderate impairment (≥30) but monitor; if essential in CKD G4–G5 start low 30–40 mg (ERBP; AJKD Core Curriculum 2021).',
   VENLA_REN:   'Venlafaxine/desvenlafaxine — renally cleared parent+active metabolite with prolonged half-life in impairment; reduce dose ~50% in ESRD and ~25–50% in significant impairment (PCNOW; ERBP).',
   SSRI_HYPONA: 'SSRIs (all) — risk of hyponatraemia / SIADH, greater in elderly, on diuretics, or volume-depleted; monitor serum Na⁺ (+BUN/creatinine). Sertraline is a reasonable, well-tolerated SSRI choice in CKD (FDA/SmPC class labelling; ERBP).',
+
+  /* ── hepatic-unit sources ── */
+  DILI_AD:     'Antidepressant-induced liver injury (Voican et al. Am J Psychiatry 2014; LiverTox/NIH). Highest hepatotoxicity: nefazodone, MAOIs, TCAs (imipramine/amitriptyline), duloxetine, bupropion, trazodone, tianeptine, agomelatine. Lowest: citalopram, escitalopram, paroxetine, fluvoxamine. Aminotransferase surveillance essential.',
+  DULOX_HEP:   'Duloxetine FDA label — contraindicated in patients with substantial alcohol use or chronic liver disease / any hepatic insufficiency (≈3× AUC in cirrhosis; DILI incl. fulminant failure). Do NOT use.',
+  VALP_HEP:    'Valproate/divalproex — FDA boxed warning for hepatotoxicity; >100 fatal hepatic-failure cases (microvesicular steatosis); monitor AST/ALT, avoid in hepatic disease (LiverTox/NIH).',
+  AGOMEL_HEP:  'Agomelatine SmPC (EU) — hepatotoxicity risk; LFTs at baseline and periodically; contraindicated if transaminases >3× ULN or in hepatic impairment/cirrhosis.',
+  BZD_HEP:     'Benzodiazepines in liver disease (Peppers 1996; LiverTox; Psychotropics-in-liver-disease review 2017) — PREFER lorazepam/oxazepam/temazepam (glucuronidation/phase-II, preserved); AVOID diazepam/chlordiazepoxide (phase-I oxidation → accumulation, sedation, respiratory depression). Reduce dose ~50% in moderate impairment. In hepatic ENCEPHALOPATHY avoid ALL benzodiazepines (can precipitate/worsen it); buspirone is a non-benzo anxiolytic alternative.',
+  ESPEN_EASL_LIV:'EASL & ESPEN clinical-nutrition-in-liver-disease guidelines (2019) — cirrhosis is NOT protein-restricted: target 1.2–1.5 g/kg/day; late-evening snack (~50 g carbohydrate ± BCAA) to shorten nocturnal fasting, reduce catabolism, preserve muscle; sodium restriction only when ascites; BCAA supplementation improves nitrogen balance/survival.',
+  HDS_HEP:     'Herbal & dietary supplement hepatotoxicity (LiverTox/NIH; DILIN — Navarro; Chalasani Gastroenterology 2008) — HDS cause ~20% of US DILI. Culprits: anabolic/bodybuilding steroids, high-dose green tea extract (EGCG), multi-ingredient weight-loss products (Hydroxycut/Herbalife), kava (>100 reports), usnic acid, chaparral, germander, high-dose niacin.',
 };
 const MS = (k) => MED_SRC[k] || k;
 
@@ -84,6 +93,16 @@ const CONCEPT_TERMS = {
     // Arabic (substring absorbs ال-)
     'كلى', 'كلوي', 'قصور كلوي', 'قصور الكلى', 'فشل كلوي', 'فشل الكلى',
     'مرض كلوي', 'اعتلال كلوي', 'الكلية', 'غسيل كلوي', 'ديال', 'كرياتينين',
+  ],
+  hepatic: [
+    // English
+    'hepat', 'liver', 'cirrhos', 'cirrhotic', 'fibrosis of the liver',
+    'fatty liver', 'nafld', 'mafld', 'nash', 'steatohepat', 'encephalopath',
+    'ascites', 'jaundice', 'portal hypertension', 'varice', 'child-pugh',
+    // Arabic (substring absorbs ال-)
+    'كبد', 'كبدي', 'الكبد', 'تليف الكبد', 'تليّف', 'تشمع', 'تشمّع',
+    'التهاب الكبد', 'دهون الكبد', 'الكبد الدهني', 'اعتلال دماغي كبدي',
+    'استسقاء', 'يرقان', 'صفرا', 'دوالي المريء',
   ],
 };
 const hasTerm = (text, concept) =>
@@ -293,8 +312,106 @@ export const MED_COMORBIDITIES = {
     referralSrc: [MS('KDIGO_2024')],
   },
 
+  /* ── HEPATIC / LIVER DISEASE ──────────────────────────────── BUILT ──── */
+  hepatic: {
+    label: { en: 'Hepatic disease', ar: 'مرض كبدي' },
+    detect: (t) => hasTerm(t, 'hepatic'),
+
+    drugAdjust: [
+      { agent: 'duloxetine',
+        action: 'avoid',
+        rule: 'Contraindicated in any hepatic insufficiency / chronic liver disease / substantial alcohol use (≈3× AUC in cirrhosis; DILI incl. fulminant failure). Do NOT use.',
+        src: [MS('DULOX_HEP')], verified: true },
+      { agent: 'nefazodone',
+        action: 'avoid',
+        rule: 'Black-box liver failure (transplant/death); do not use in active liver disease.',
+        src: [MS('DILI_AD')], verified: true },
+      { agent: 'valproate / divalproex',
+        action: 'avoid',
+        rule: 'Hepatotoxicity boxed warning; >100 fatal hepatic-failure cases (microvesicular steatosis). Avoid in hepatic disease; if unavoidable elsewhere, monitor AST/ALT.',
+        src: [MS('VALP_HEP')], verified: true },
+      { agent: 'agomelatine',
+        action: 'avoid/caution',
+        rule: 'Hepatotoxicity risk — contraindicated if transaminases >3× ULN or hepatic impairment/cirrhosis; requires baseline + periodic LFTs.',
+        src: [MS('AGOMEL_HEP')], verified: true },
+      { agent: 'TCAs, bupropion, trazodone, tianeptine, MAOIs',
+        action: 'caution',
+        rule: 'Higher hepatotoxicity signal — avoid/limit in significant liver disease; if used, monitor aminotransferases and stop on abnormal LFTs.',
+        src: [MS('DILI_AD')], verified: true },
+      { agent: 'benzodiazepines',
+        action: 'prefer/avoid',
+        rule: 'PREFER lorazepam / oxazepam / temazepam (glucuronidation, preserved in liver disease). AVOID diazepam / chlordiazepoxide (phase-I oxidation → accumulation → sedation/respiratory depression). Reduce dose ~50% in moderate impairment. In hepatic ENCEPHALOPATHY avoid ALL benzodiazepines (precipitant); buspirone is a non-benzo alternative.',
+        src: [MS('BZD_HEP')], verified: true },
+      { agent: 'SSRIs',
+        action: 'prefer/caution',
+        rule: 'Citalopram / escitalopram / paroxetine / fluvoxamine carry the LOWEST hepatotoxicity signal — but note the cross-comorbidity tension: citalopram/escitalopram are the QT-risk agents in the cardiac unit, so if BOTH cardiac and hepatic coexist, weigh carefully. Start low and reduce dose (hepatic metabolism); monitor LFTs.',
+        src: [MS('DILI_AD')], verified: true },
+      { agent: 'lithium',
+        action: 'note',
+        rule: 'Not hepatically metabolised (relatively liver-safe) BUT levels are hard to keep stable with the fluid shifts of liver disease (ascites, diuretics) → monitor levels closely.',
+        src: [MS('DILI_AD')], verified: true },
+    ],
+
+    doseCeilings: [
+      { agent: 'benzodiazepines (lorazepam/oxazepam/temazepam)', ceiling: 'reduce ~50%',
+        condition: 'moderate hepatic impairment',
+        src: [MS('BZD_HEP')], verified: true },
+      { agent: 'citalopram', ceiling: '≤20 mg/day',
+        condition: 'hepatic impairment (also the cardiac-unit ceiling — same limit)',
+        src: [MS('FDA_CIT_QT')], verified: true },
+      { agent: 'most hepatically-cleared psychotropics', ceiling: 'start low / reduce dose',
+        condition: 'reduced first-pass & clearance in significant liver disease',
+        src: [MS('DILI_AD')], verified: true },
+    ],
+
+    contraindic: [
+      { rule: 'Duloxetine: contraindicated in hepatic insufficiency / chronic liver disease / substantial alcohol use.',
+        src: [MS('DULOX_HEP')], verified: true },
+      { rule: 'Nefazodone: do not use in active liver disease.',
+        src: [MS('DILI_AD')], verified: true },
+      { rule: 'Agomelatine: contraindicated if transaminases >3× ULN or hepatic impairment.',
+        src: [MS('AGOMEL_HEP')], verified: true },
+      { rule: 'Hepatic encephalopathy: avoid ALL benzodiazepines and minimise other sedating agents — they can precipitate/deepen encephalopathy.',
+        src: [MS('BZD_HEP')], verified: true },
+    ],
+
+    labsRef: 'LFTs (AST/ALT/bilirubin) — already surfaced by the dynamic-labs engine for hepatic cases. Add INR + albumin (synthetic function), aminotransferase surveillance on agomelatine/valproate/duloxetine, and ammonia if encephalopathy is suspected.',
+
+    /* Nutrition — the BIG conceptual correction: liver disease is NOT a protein
+       cap. This is the mirror of the renal unit. */
+    nutrition: [
+      { item: 'Protein — NOT restricted', action: 'ensure',
+        rule: 'Cirrhosis is NOT protein-restricted (the old HE protein-restriction is abandoned): target 1.2–1.5 g/kg/day. The meal-plan engine\'s renal 0.8 g/kg cap must NOT be applied to a liver-only patient — confirm the renal gate does not misfire here.',
+        src: [MS('ESPEN_EASL_LIV')], verified: true },
+      { item: 'Late-evening snack (LES)', action: 'ensure',
+        rule: '~50 g carbohydrate (± BCAA) before bed shortens the long overnight fast, reduces catabolism, and preserves muscle in cirrhosis (also stated in chrono).',
+        src: [MS('ESPEN_EASL_LIV')], verified: true },
+      { item: 'Sodium (if ascites) & alcohol', action: 'caution',
+        rule: 'Sodium restriction ONLY when ascites is present (hepatology-directed). Alcohol: absolute avoidance in any liver disease.',
+        src: [MS('ESPEN_EASL_LIV')], verified: true },
+    ],
+
+    supplements: [
+      { item: 'Hepatotoxic herbal/dietary supplements', action: 'avoid',
+        rule: 'Screen for and STOP: anabolic/bodybuilding supplements, high-dose green-tea extract (EGCG), multi-ingredient weight-loss products (Hydroxycut/Herbalife), kava, usnic acid, chaparral, germander, high-dose niacin — HDS cause ~20% of DILI. "Natural" ≠ liver-safe.',
+        src: [MS('HDS_HEP')], verified: true },
+      { item: 'BCAA (branched-chain amino acids)', action: 'consider',
+        rule: 'Positive direction: BCAA supplementation improves nitrogen balance and may improve survival in cirrhosis (esp. as/with the late-evening snack).',
+        src: [MS('ESPEN_EASL_LIV')], verified: true },
+      { item: 'St John\'s Wort (self-taken)', action: 'avoid',
+        rule: 'CYP3A4/P-gp inducer — alters co-med levels and serotonin-syndrome risk with the SSRI; screen for it.',
+        src: [MS('SJW_CYP')], verified: true },
+    ],
+
+    nutritionRef: null,
+    chrono: 'Late-evening snack (~50 g carbohydrate ± BCAA) to shorten the overnight fast and curb nocturnal catabolism in cirrhosis — a source-based TIMING rule (unlike cardiac/renal, hepatic has a real chrono touchpoint).',
+    referral: 'Refer to HEPATOLOGY and co-manage as a joint team (psychiatry + hepatology + dietitian): choose glucuronidated/low-hepatotoxicity agents, dose by hepatic function, monitor LFTs, and let hepatology own encephalopathy/ascites management + protein/LES targets. Psychiatry leads the mood/anxiety protocol; hepatology governs liver-safety sign-off.',
+
+    labsSrc: [MS('DILI_AD')],
+    referralSrc: [MS('DILI_AD'), MS('ESPEN_EASL_LIV')],
+  },
+
   /* ── the following are SHAPE-ONLY placeholders (NOT fabricated). ───────── */
-  hepatic:      { __pending: true, label: { en: 'Hepatic disease', ar: 'مرض كبدي' } },
   diabetes:     { __pending: true, label: { en: 'Diabetes mellitus', ar: 'داء السكري' } },
   hypertension: { __pending: true, label: { en: 'Hypertension', ar: 'ارتفاع ضغط الدم' } },
   endocrine:    { __pending: true, label: { en: 'Endocrine (thyroid)', ar: 'غدد (درقية)' } },
