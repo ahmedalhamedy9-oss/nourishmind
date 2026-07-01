@@ -11,7 +11,7 @@
    (teal #5fbfb0, dark #070f0d→#0d1a17, evidence/priority colour language).
    pdf:true renders collapsibles OPEN (the doctor record must be complete).
    ════════════════════════════════════════════════════════════════════════ */
-import { RX, RX_ACTIVE, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE } from './rxFormulary';
+import { RX, RX_ACTIVE, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE, GUIDELINE_CONFLICTS } from './rxFormulary';
 import { computeDynamicLabs } from './labEngine';
 import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
 import { computeMetrics, computeSafetyFlags } from './clinicalFormulary';
@@ -165,6 +165,40 @@ export function renderSummaryHTML({ key, form = {}, lang = 'en', pdf = false } =
       + dashItems.map((t) => `<div class="rc-row rec"><span class="rc-tag rec">TRACK</span><div class="rc-b"><div class="rc-why">${RC_E(t)}</div></div></div>`).join('')
     : '';
 
+  // D7 — cross-tab de-dup: overlap-prone actives that appear in more than one
+  // tab (Medications / Supplements / Diet) → coordinate total intake, don't
+  // double-dose. Cross-references rather than deleting content (nothing lost).
+  const dedupBlock = (() => {
+    const VOCAB = ['omega-3', 'epa', 'dha', 'fish oil', 'magnesium', 'vitamin d', 'vitamin b', 'b12', 'folate', 'methylfolate', 'probiotic', 'psychobiotic', 'zinc', 'iron', 'l-theanine', 'theanine', 'saffron', 'ashwagandha', 'st john', 'melatonin', 'calcium'];
+    const n = (NUTRITION_ACTIVE && NUTRITION[key] && !NUTRITION[key].__pending) ? NUTRITION[key] : null;
+    const src = {
+      Medications: [...(d.firstLine || []), ...(d.adjunct || [])].map((x) => x.drug || ''),
+      Supplements: n ? [...(n.supplements || []), ...(n.herbs || []), ...(n.adaptogens || []), ...(n.mushrooms || [])].map((x) => x.name || '') : [],
+      Diet: n && n.diet ? [...(n.diet.beneficialFoods || []), ...(n.diet.oils || [])].map((x) => x.item || '') : [],
+    };
+    const hitTabs = {};
+    VOCAB.forEach((term) => {
+      const tabs = Object.entries(src).filter(([, arr]) => arr.some((s) => String(s).toLowerCase().includes(term))).map(([t]) => t);
+      if (tabs.length >= 2) hitTabs[term] = tabs;
+    });
+    const rows = Object.entries(hitTabs);
+    if (!rows.length) return '';
+    return `<div class="rc-gd">🔁 Cross-tab coordination — avoid double-dosing</div>`
+      + `<div class="rc-note">These actives appear in more than one tab. Count TOTAL intake across food + supplement (+ drug) — coordinate, don't stack.</div>`
+      + rows.map(([term, tabs]) => `<div class="rc-row rec"><span class="rc-tag rec">${RC_E(term.toUpperCase())}</span><div class="rc-b"><div class="rc-why">appears in: ${RC_E(tabs.join(' + '))}</div></div></div>`).join('');
+  })();
+
+  // D6 — conflict resolution: where guidelines differ, show BOTH + the decider.
+  const conflicts = (GUIDELINE_CONFLICTS && GUIDELINE_CONFLICTS[key]) || [];
+  const conflictBlock = conflicts.length
+    ? `<div class="rc-gd">⚖️ Where guidelines differ — both shown (never picked silently)</div>`
+      + conflicts.map((c) => `<div class="rc-card">`
+        + `<div class="rc-name" style="color:#e0663d">${RC_E(c.topic)}</div>`
+        + (c.positions || []).map((p) => `<div class="rc-co-row" style="display:flex;gap:8px;margin:5px 0;align-items:flex-start"><span class="rc-tag rec" style="flex:none">${RC_E(p.guideline)}</span><div class="rc-why">${RC_E(p.stance)}${rcSrc(p.src)}</div></div>`).join('')
+        + (c.decider ? `<div class="rc-why" style="margin-top:5px;color:#97c459">→ Decider: ${RC_E(c.decider)}</div>` : '')
+        + `</div>`).join('')
+    : '';
+
   // D5 — shared-decision box (patient-education + collaborative framing).
   const sharedDecision = `<div class="rc-gd">🤝 Shared decision &amp; patient education</div>`
     + `<div class="rc-note">Discuss with the patient: (1) the target symptom &amp; realistic timeframe (benefit often takes ${RC_E(onset)}); (2) common early side-effects and that they usually settle; (3) that this is a supported decision, not a fixed prescription — options and preferences matter; (4) the agreed review date and what "better" will look like. Never stop abruptly; report early worsening.</div>`;
@@ -174,7 +208,7 @@ export function renderSummaryHTML({ key, form = {}, lang = 'en', pdf = false } =
     + `<div class="rc-note">${RC_E(d.dxNote || '')}</div>`
     + snapshot + banner
     + `<div class="rc-gd">🗓️ Recommendation timeline</div><div class="rc-tl">${tl}</div>`
-    + dashboard + sharedDecision
+    + dashboard + dedupBlock + conflictBlock + sharedDecision
     + `<div class="rc-foot">Snapshot &amp; flags are computed from the locked formulary + entered allergies/meds/comorbidities — same input, same output. Full detail is in each tab below.</div>`;
   return shell('#e0663d', inner);
 }

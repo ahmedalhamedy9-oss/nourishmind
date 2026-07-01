@@ -1537,6 +1537,55 @@ const PMDD = {
 export const RX = { GAD, MDD, OCD, BPD, PMDD };
 
 /* ════════════════════════════════════════════════════════════════════════
+   GUIDELINE_CONFLICTS — Phase D6. Where major guidelines genuinely DIFFER,
+   show BOTH positions and the deciding factor — never pick silently. Each
+   position cites its own guideline; the conflict itself is sourced, not
+   invented. Rendered in the Executive Summary.
+   ════════════════════════════════════════════════════════════════════════ */
+export const GUIDELINE_CONFLICTS = {
+  MDD: [
+    { topic: 'Augmentation after inadequate antidepressant response',
+      positions: [
+        { guideline: 'CANMAT 2023', stance: 'Atypical antipsychotic adjuncts (aripiprazole 2–10 mg, others) are Level-1 / first-line augmentation.', src: [S('CANMAT_MDD')] },
+        { guideline: 'NICE', stance: 'More cautious on routine SGA augmentation; emphasises switching or combining antidepressants and lithium augmentation, usually with specialist input.', src: [S('MAUDSLEY_DP')] },
+      ],
+      decider: 'Decide by metabolic risk, monitoring feasibility, and comorbidity: SGA (aripiprazole) if metabolically low-risk and rapid adjunct wanted; lithium if suicidality/monitoring feasible; switch/combine if adjunct undesirable.' },
+  ],
+  OCD: [
+    { topic: 'First-line treatment',
+      positions: [
+        { guideline: 'NICE CG31', stance: 'Stepped care — low-intensity psychological (ERP/CBT) FIRST; add/where inadequate response or severe, an SSRI.', src: [S('NICE_OCD')] },
+        { guideline: 'APA', stance: 'SSRI, CBT (ERP), or SSRI + CBT are ALL valid first-line options from the start.', src: [S('APA_OCD')] },
+      ],
+      decider: 'ERP access and patient preference drive it: if good ERP access and mild–moderate OCD, psychological-first (NICE); if severe, poor ERP access, or patient prefers medication, SSRI or combined (APA). Skapinakis: psychotherapy alone/combined > medication alone.' },
+  ],
+  GAD: [
+    { topic: 'Which drug first',
+      positions: [
+        { guideline: 'NICE CG113', stance: 'Sertraline first-choice on COST-EFFECTIVENESS.', src: [S('NICE_GAD')] },
+        { guideline: 'Slee 2019 NMA', stance: 'By EFFICACY, duloxetine / pregabalin / venlafaxine / escitalopram show the largest well-tolerated effects; sertraline’s per-drug effect is less clearly ranked.', src: [S('SLEE2019')] },
+      ],
+      decider: 'Cost/availability vs efficacy/comorbidity: sertraline as the economical default (NICE); duloxetine if comorbid pain; escitalopram for tolerability; pregabalin if antidepressants not tolerated.' },
+  ],
+  PMDD: [
+    { topic: 'SSRI dosing schedule',
+      positions: [
+        { guideline: 'Cochrane 2013', stance: 'Continuous dosing was MORE effective than intermittent (luteal-phase) dosing.', src: [S('COCHRANE_PMDD13')] },
+        { guideline: 'ACOG', stance: 'Luteal-phase (intermittent) dosing is an accepted, convenient first-line option.', src: [S('ACOG_PMDD')] },
+      ],
+      decider: 'Continuous if comorbid depression/anxiety or if maximal efficacy is prioritised; luteal-phase dosing if pure PMDD and the patient prefers fewer drug-days.' },
+  ],
+  BPD: [
+    { topic: 'Role of medication',
+      positions: [
+        { guideline: 'NICE CG78', stance: 'Do NOT use drug treatment for core BPD; psychotherapy is the treatment.', src: [S('NICE_BPD')] },
+        { guideline: 'Practice / Cochrane 2022', stance: 'Symptom-targeted, time-limited adjuncts may be trialled for specific domains, with weak, low-certainty evidence.', src: [S('COCHRANE_BPD22')] },
+      ],
+      decider: 'Psychotherapy (DBT etc.) is the core for everyone; any drug is a short, time-limited, symptom-targeted adjunct with an explicit review/stop plan — never a primary treatment.' },
+  ],
+};
+
+/* ════════════════════════════════════════════════════════════════════════
    THERAPY TECHNIQUES (#7) — SPECIFIC techniques per school, source-based.
    Not "use CBT" but WHICH techniques. verified:false until physician sign-off.
    ════════════════════════════════════════════════════════════════════════ */
