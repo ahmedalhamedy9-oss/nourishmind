@@ -22,7 +22,7 @@
    MDD / OCD / BPD / PMDD replicate this exact shape (pending review sign-off).
    ════════════════════════════════════════════════════════════════════════ */
 
-export const RX_VERSION = 'v0.3-DRAFT (2026-07-01) — all 5 disorders built (GAD/MDD/OCD/BPD/PMDD), pending physician sign-off';
+export const RX_VERSION = 'v0.4-DRAFT (2026-07-02) — BPD benefit/strength layer sourced (Cochrane 2022 CD012956 + BJP 2024 secondary analysis + Karaszewska 2021, GRADE-rated); other disorders pending physician sign-off';
 export const RX_ACTIVE  = true; // live: comorbidity engine + rx data drive the report
 
 export const NEEDS = '⟦NEEDS_CONFIRMATION⟧'; // sentinel for physician-supplied data
@@ -88,6 +88,9 @@ export const RX_SOURCES = {
   MARTELL_BA:  'Martell CR, Dimidjian S, Herman-Dunn R. Behavioral Activation for Depression: A Clinician\u2019s Guide, 2nd ed. Guilford 2022.',
   PHQ9:        'Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure. J Gen Intern Med 2001;16(9):606-13 (0–27; 5/10/15/20 = mild/moderate/mod-severe/severe; <5 remission; ≥50% drop = response).',
   SMPC:        'Manufacturer SmPC / FDA label (drug-specific; verify current label).',
+  COCHRANE_BPD22:'Stoffers-Winterling JM, Storeb\\u00f8 OJ, Pereira Ribeiro J, et al. Pharmacological interventions for people with borderline personality disorder. Cochrane Database Syst Rev 2022;11:CD012956.pub2 (46 RCTs, 2769 pts; supersedes Stoffers 2010). Pooled effects on core BPD outcomes small/near-null with very-low-to-low certainty; e.g. antipsychotics vs placebo — suicide-related SMD 0.05 (95% CI \\u22120.18 to 0.29; 7 trials, 854 pts); psychosocial functioning SMD \\u22120.16 (95% CI \\u22120.33 to 0.00; 7 trials, 904 pts). Conclusion: probably no reliable benefit for core BPD; evidence unclear.',
+  BJP_BPD24:   'Pereira Ribeiro J, Juul S, Kongerslev MT, \\u2026 Stoffers-Winterling JM, Storeb\\u00f8 OJ. Pharmacological interventions for co-occurring psychopathology in people with BPD: secondary analysis of the Cochrane systematic review with meta-analyses. Br J Psychiatry 2024;226(4):226-237. GRADE-rated pooled SMDs: antipsychotics \\u2014 depressive SMD \\u22120.22 (P=0.04, very-low certainty), psychotic\\u2013dissociative SMD \\u22120.28 (P=0.007, low certainty); anticonvulsants \\u2014 depressive SMD \\u22120.44 (P=0.02, low certainty), anxious SMD \\u22121.11 (P<0.00001, very-low certainty); antidepressants \\u2014 no significant findings (very-low certainty). Conclusion: evidence does not support pharmacotherapy to target co-occurring psychopathology; use cautiously.',
+  KARASZEWSKA21:'Karaszewska DM, Ingenhoven T, Mocking RJT. Marine omega-3 fatty acid supplementation for borderline personality disorder: a meta-analysis. J Clin Psychiatry 2021;82(3):20r13613 (4 RCTs, ~137 pts). Overall BPD symptom severity SMD 0.54 (95% CI 0.17\\u20130.91; Z=2.87; P=.0041); signal strongest for impulsive behavioural dyscontrol and affective dysregulation; small evidence base.',
 };
 
 /* helper to keep entries terse */
@@ -879,8 +882,15 @@ const BPD = {
       contraindications: { absolute: '—', relative: 'Akathisia history.', boxed: 'Elderly dementia mortality (class).' },
       pregnancyLactation: 'Case-by-case.', overdose: 'Relatively low.', specialPops: { elderly: 'Boxed dementia.', pgx: 'CYP2D6/3A4.' },
       switching: 'Single agent; avoid stacking antipsychotics.', counseling: 'Target symptom + agreed review; not a cure for BPD; time-limited.',
-      comparativeEfficacy: { note: 'Best-supported SGA (Nickel 2006); modest, symptom-targeted.', stat: NEEDS },
-      src: [S('NICE_BPD'), S('NICKEL2006'), S('COCHRANE_BPD'), S('SMPC')], verified: true },
+      comparativeEfficacy: { note: 'Best-supported SGA historically (Nickel 2006, single RCT); the 2022 Cochrane update finds only small, very-low-to-low-certainty pooled effects. Symptom-targeted adjunct only.', stat: NEEDS },
+      strength: { level: 'Weak', certainty: 'very low–low (GRADE)', note: 'Guidelines advise against drug treatment for core BPD; adjunct, symptom-targeted, time-limited.', src: [S('NICE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24')], verified: true },
+      benefit: [
+        { symptom: 'Depressive symptoms', smd: '−0.22', ci: null, p: '0.04', certainty: 'very low', basis: 'antipsychotic class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
+        { symptom: 'Psychotic–dissociative symptoms', smd: '−0.28', ci: null, p: '0.007', certainty: 'low', basis: 'antipsychotic class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
+        { symptom: 'Suicide-related outcomes', smd: '0.05', ci: '−0.18 to 0.29', p: null, certainty: 'very low', basis: 'antipsychotic class, pooled (7 trials, 854 pts) — little/no effect', src: [S('COCHRANE_BPD22')], verified: true, derived: true },
+        { symptom: 'Anger / affective / cognitive-perceptual', smd: null, ci: null, p: null, certainty: 'very low', basis: 'single RCT (Nickel 2006), high risk of bias — not robust in 2022 pooled update; positive signal only', src: [S('NICKEL2006')], verified: true },
+      ],
+      src: [S('NICE_BPD'), S('NICKEL2006'), S('COCHRANE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24'), S('SMPC')], verified: true },
     { id: 'topiramate', drug: 'Topiramate', class: 'anticonvulsant', grade: 'B',
       trade: { generic: 'topiramate', egypt: NEEDS },
       mechanism: 'Multiple (Na channel / GABA / glutamate). Targets impulsivity / anger; also weight-neutral-to-loss.',
@@ -891,8 +901,14 @@ const BPD = {
       contraindications: { absolute: 'Pregnancy (relative—teratogen).', relative: 'Nephrolithiasis history, cognitively demanding roles.', boxed: '—' },
       pregnancyLactation: 'Avoid in pregnancy (teratogen).', overdose: 'Variable.', specialPops: { elderly: 'Cognition/renal.', pgx: '—' },
       switching: 'Single agent.', counseling: 'Slow titration for cognition; hydrate; contraception if childbearing potential.',
-      comparativeEfficacy: { note: 'Impulsivity/anger signal; symptom-targeted.', stat: NEEDS },
-      src: [S('NICE_BPD'), S('COCHRANE_BPD'), S('SMPC')], verified: true },
+      comparativeEfficacy: { note: 'Anticonvulsant-class signal on anger/impulsivity from small single trials; 2022 Cochrane update finds low-to-very-low-certainty pooled effects. Symptom-targeted adjunct only.', stat: NEEDS },
+      strength: { level: 'Weak', certainty: 'low–very low (GRADE)', note: 'Anticonvulsant class shows low-certainty benefit on depressive and very-low-certainty on anxious symptoms; guidelines advise against drug treatment for core BPD.', src: [S('NICE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24')], verified: true },
+      benefit: [
+        { symptom: 'Depressive symptoms', smd: '−0.44', ci: null, p: '0.02', certainty: 'low', basis: 'anticonvulsant class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
+        { symptom: 'Anxious symptoms', smd: '−1.11', ci: null, p: '<0.00001', certainty: 'very low', basis: 'anticonvulsant class, pooled — large point estimate but very-low certainty (imprecision/RoB)', src: [S('BJP_BPD24')], verified: true, derived: true },
+        { symptom: 'Anger / impulsivity / interpersonal', smd: null, ci: null, p: null, certainty: 'very low', basis: 'small single trials (Nickel/Loew); not robust in 2022 pooled update; positive signal only', src: [S('COCHRANE_BPD22')], verified: true },
+      ],
+      src: [S('NICE_BPD'), S('COCHRANE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24'), S('SMPC')], verified: true },
     { id: 'valproate', drug: 'Valproate / Divalproex', class: 'mood stabiliser / anticonvulsant', grade: 'C',
       trade: { generic: 'valproate/divalproex', egypt: NEEDS },
       mechanism: 'GABAergic; targets affective dysregulation / impulsivity. Weak BPD-specific evidence (Grade C).',
@@ -904,8 +920,14 @@ const BPD = {
       pregnancyLactation: 'AVOID — major teratogen + neurodevelopmental harm; do not use in childbearing-potential women unless unavoidable with prevention programme.',
       overdose: 'CNS depression; hepatotoxicity.', specialPops: { elderly: 'Lower dose.', pgx: '—' },
       switching: 'Single agent; avoid polypharmacy.', counseling: 'Strict contraception; hepatic/haematologic monitoring; not a BPD cure.',
-      comparativeEfficacy: { note: 'Weak BPD-specific evidence; teratogenicity major limit.', stat: NEEDS },
-      src: [S('NICE_BPD'), S('COCHRANE_BPD'), S('FDA_VALP'), S('SMPC')], verified: true },
+      comparativeEfficacy: { note: 'Weak, single-trial BPD-specific evidence; anticonvulsant-class pooled effects low-to-very-low certainty. Teratogenicity is the dominant limit. Symptom-targeted adjunct only.', stat: NEEDS },
+      strength: { level: 'Weak', certainty: 'low–very low (GRADE)', note: 'Grade C, weakest BPD-specific evidence; anticonvulsant-class benefit low-to-very-low certainty; major teratogen — avoid in childbearing potential.', src: [S('NICE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24'), S('FDA_VALP')], verified: true },
+      benefit: [
+        { symptom: 'Depressive symptoms', smd: '−0.44', ci: null, p: '0.02', certainty: 'low', basis: 'anticonvulsant class, pooled', src: [S('BJP_BPD24')], verified: true, derived: true },
+        { symptom: 'Anxious symptoms', smd: '−1.11', ci: null, p: '<0.00001', certainty: 'very low', basis: 'anticonvulsant class, pooled — very-low certainty', src: [S('BJP_BPD24')], verified: true, derived: true },
+        { symptom: 'Affective dysregulation / interpersonal', smd: null, ci: null, p: null, certainty: 'very low', basis: 'single trial (Frankenburg & Zanarini 2002, BPD + bipolar II women); not robust in 2022 pooled update', src: [S('COCHRANE_BPD22')], verified: true },
+      ],
+      src: [S('NICE_BPD'), S('COCHRANE_BPD'), S('COCHRANE_BPD22'), S('BJP_BPD24'), S('FDA_VALP'), S('SMPC')], verified: true },
     { id: 'omega3', drug: 'Omega-3 (EPA-dominant)', class: 'nutraceutical', grade: 'B',
       trade: { generic: 'EPA-dominant fish oil', egypt: NEEDS },
       mechanism: 'Anti-inflammatory/membrane effects; modest signal for affective instability / impulsivity; favourable safety.',
@@ -916,8 +938,13 @@ const BPD = {
       contraindications: { absolute: '—', relative: 'Anticoagulation (high dose).', boxed: '—' },
       pregnancyLactation: 'Generally acceptable.', overdose: 'Low risk.', specialPops: { elderly: 'Ok.', pgx: '—' },
       switching: 'Adjunct.', counseling: 'Adjunct with favourable safety; EPA-dominant.',
-      comparativeEfficacy: { note: 'Modest signal, good tolerability.', stat: NEEDS },
-      src: [S('NICE_BPD'), S('COCHRANE_BPD')], verified: true },
+      comparativeEfficacy: { note: 'Meta-analysis (Karaszewska 2021, 4 RCTs) shows a significant overall-severity effect with favourable tolerability; small evidence base. Low-risk adjunct.', stat: NEEDS },
+      strength: { level: 'Moderate', certainty: 'low (small evidence base)', note: 'Well-tolerated adjunct with a significant pooled effect on overall BPD severity; small number of trials/participants.', src: [S('KARASZEWSKA21'), S('COCHRANE_BPD')], verified: true },
+      benefit: [
+        { symptom: 'Overall BPD symptom severity', smd: '0.54', ci: '0.17 to 0.91', p: '0.0041', certainty: 'low', basis: 'meta-analysis, 4 RCTs, ~137 pts (positive SMD = benefit)', src: [S('KARASZEWSKA21')], verified: true },
+        { symptom: 'Impulsive dyscontrol / affective dysregulation', smd: null, ci: null, p: null, certainty: 'low', basis: 'domain signal strongest here (Karaszewska 2021); no separate pooled SMD reported', src: [S('KARASZEWSKA21')], verified: true },
+      ],
+      src: [S('NICE_BPD'), S('COCHRANE_BPD'), S('KARASZEWSKA21')], verified: true },
   ],
   excluded: [
     { item: 'Lamotrigine for core BPD', why: 'LABILE RCT (Crawford 2018, n=276) found NO benefit; NICE does not recommend.', src: [S('LABILE2018'), S('NICE_BPD')], verified: true },
