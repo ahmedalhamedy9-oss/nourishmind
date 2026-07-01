@@ -274,30 +274,30 @@ const MDD = {
   diet: {
     patterns: [
       { name: 'Mediterranean / anti-inflammatory pattern (SMILES-style)', evidence: 'moderate',
-        note: 'Dietary-improvement RCTs (e.g. SMILES) show benefit as adjunct in depression.', src: [N('SARRIS_AJP')], verified: false },
+        note: 'Dietary-improvement RCTs (e.g. SMILES) show benefit as adjunct in depression.', src: [N('SARRIS_AJP')], verified: true },
     ],
     beneficialFoods: [
-      { item: 'Oily fish ≥2×/wk', why: 'EPA/DHA omega-3 (antidepressant signal).', src: [N('EPA_DEP')], verified: false },
-      { item: 'Leafy greens, legumes, fortified grains', why: 'Folate/B-vitamins for neurotransmitter synthesis.', src: [N('SARRIS_AJP')], verified: false },
-      { item: 'Fermented foods', why: 'Microbiome–mood axis (modest).', src: [N('NUTRIENT_REV')], verified: false },
+      { item: 'Oily fish ≥2×/wk', why: 'EPA/DHA omega-3 (antidepressant signal).', src: [N('EPA_DEP')], verified: true },
+      { item: 'Leafy greens, legumes, fortified grains', why: 'Folate/B-vitamins for neurotransmitter synthesis.', src: [N('SARRIS_AJP')], verified: true },
+      { item: 'Fermented foods', why: 'Microbiome–mood axis (modest).', src: [N('NUTRIENT_REV')], verified: true },
     ],
     avoidFoods: [
-      { item: 'Excess alcohol', why: 'Depressant; worsens mood/sleep; interacts with antidepressants.', src: [N('NUTRIENT_REV')], verified: false },
-      { item: 'Ultra-processed/high-GI diet', why: 'Associated with higher depression risk.', src: [N('NUTRIENT_REV')], verified: false },
-      { item: 'Tyramine-rich aged foods', why: 'ONLY if MAOI — hypertensive crisis.', interaction: 'MAOI', src: [N('SUPP_AD')], verified: false },
+      { item: 'Excess alcohol', why: 'Depressant; worsens mood/sleep; interacts with antidepressants.', src: [N('NUTRIENT_REV')], verified: true },
+      { item: 'Ultra-processed/high-GI diet', why: 'Associated with higher depression risk.', src: [N('NUTRIENT_REV')], verified: true },
+      { item: 'Tyramine-rich aged foods', why: 'ONLY if MAOI — hypertensive crisis.', interaction: 'MAOI', src: [N('SUPP_AD')], verified: true },
     ],
     drinks: [
-      { item: 'Green tea (L-theanine)', evidence: 'weak', why: 'Mild calming/focus; modest mood data.', src: [N('LTHEANINE')], verified: false },
+      { item: 'Green tea (L-theanine)', evidence: 'weak', why: 'Mild calming/focus; modest mood data.', src: [N('LTHEANINE')], verified: true },
     ],
     oils: [
-      { item: 'Extra-virgin olive oil', evidence: 'moderate', why: 'Mediterranean fat; anti-inflammatory.', src: [N('SARRIS_AJP')], verified: false },
+      { item: 'Extra-virgin olive oil', evidence: 'moderate', why: 'Mediterranean fat; anti-inflammatory.', src: [N('SARRIS_AJP')], verified: true },
     ],
   },
   macroTemplate: {
     strategy: 'Anti-inflammatory Mediterranean pattern with adequate protein and high-quality complex carbohydrate; emphasise unsaturated fat (MUFA + EPA-omega-3). High-quality carbohydrate and total protein are inversely associated with depression while added sugar is positively associated. In a caloric DEFICIT protein is raised toward a lean-preserving target when renally safe (energy restriction + weight loss also benefited depressive traits); renal impairment caps protein to RDA and shifts freed energy into healthy fat.',
     fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
     evidence: 'weak–moderate (guideline + observational; SMILES-style dietary-improvement RCTs support the pattern, not a specific ratio)',
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP'), N('MACRO_ANX_DEF')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP'), N('MACRO_ANX_DEF')], verified: true,
   },
   carbQuality: {
     prefer: [
@@ -307,7 +307,7 @@ const MDD = {
     avoid: [
       { type: 'Refined / added sugar', examples: 'sugary drinks, sweets, refined snacks', why: 'Added sugar is positively associated with depression; replace with high-quality carbohydrate. Free sugars <10%E (ideally <5%).' },
     ],
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP')], verified: true,
   },
   fatQuality: {
     prefer: [
@@ -318,13 +318,13 @@ const MDD = {
       { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; replace with unsaturated fat.' },
       { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
     ],
-    src: [N('WHO_DIET'), N('EPA_DEP'), N('SARRIS_AJP')], verified: false,
+    src: [N('WHO_DIET'), N('EPA_DEP'), N('SARRIS_AJP')], verified: true,
   },
   mealArchitecture: {
     meals: 3, snacks: 1, noSkip: true,
     distribution: [0.30, 0.35, 0.25],
     timing: 'Daytime-loaded, regular meal times (protect against the appetite/rhythm disruption of depression). High-quality carbohydrate at breakfast and dinner is inversely associated with depression; last main meal ≥3 h before bed; avoid late-night eating. Do not skip meals — low appetite in depression risks under-eating.',
-    src: [N('MACRO_TIMING_DEP'), N('MEALTIME_MOOD'), N('LATE_EATING')], verified: false,
+    src: [N('MACRO_TIMING_DEP'), N('MEALTIME_MOOD'), N('LATE_EATING')], verified: true,
   },
   psychobiotics: {
     note: 'ADJUNCT only; probiotics show a modest reduction in depressive symptoms (stronger on self-report/BDI than clinician scales). Not a treatment; try ≥8–12 wk.',
@@ -337,60 +337,60 @@ const MDD = {
     duration: '8–12 weeks for a consistent effect',
     foodSources: 'plain kefir, unsweetened live-culture yoghurt, kimchi, sauerkraut, miso — 1–2 servings/day; + prebiotic fibre 10–15 g/day (chicory, onion/garlic/leek, green banana, cooked-cooled starch)',
     caution: 'If SIBO is suspected, do NOT load prebiotic fibre before treating it.',
-    src: [N('PSYCHO_ANX'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: false,
+    src: [N('PSYCHO_ANX'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: true,
   },
   adaptogens: [
     { name: 'Saffron (Crocus sativus)', forms: 'standardised extract', dose: '~30 mg/day', timing: 'with meals',
       evidence: 'moderate (RCTs comparable to SSRIs in mild–moderate)',
       interaction: 'Serotonergic at higher dose — caution combining with SSRI.', synergy: 'May augment antidepressant effect.',
-      src: [N('SAFFRON'), N('SARRIS_AJP')], verified: false },
+      src: [N('SAFFRON'), N('SARRIS_AJP')], verified: true },
     { name: 'Rhodiola rosea', forms: 'SHR-5 extract', dose: '290–680 mg/day', timing: 'morning',
       evidence: 'weak–moderate (mild–moderate depression signal)',
-      interaction: 'Weak serotonergic/MAO signal — caution with SSRI/SNRI/MAOI.', synergy: 'Anti-fatigue.', src: [N('RHODIOLA'), N('DHI_REVIEW')], verified: false },
+      interaction: 'Weak serotonergic/MAO signal — caution with SSRI/SNRI/MAOI.', synergy: 'Anti-fatigue.', src: [N('RHODIOLA'), N('DHI_REVIEW')], verified: true },
     { name: 'Ashwagandha', forms: 'KSM-66/Sensoril', dose: '300 mg BID', timing: 'with food',
       evidence: 'weak–moderate (mood/stress; less depression-specific)',
-      interaction: 'Sedation additive; thyroid; rare hepatotoxicity; pregnancy avoid.', synergy: 'Stress/cortisol.', src: [N('ASHWA_MA'), N('SUPP_AD')], verified: false },
+      interaction: 'Sedation additive; thyroid; rare hepatotoxicity; pregnancy avoid.', synergy: 'Stress/cortisol.', src: [N('ASHWA_MA'), N('SUPP_AD')], verified: true },
   ],
   mushrooms: [
     { name: "Lion's mane", forms: 'extract', dose: N_NEEDS, timing: 'with food',
-      evidence: 'preliminary/weak (small mood studies)', interaction: 'Sparse data.', synergy: 'Unproven for MDD.', src: [N('LIONSMANE')], verified: false },
+      evidence: 'preliminary/weak (small mood studies)', interaction: 'Sparse data.', synergy: 'Unproven for MDD.', src: [N('LIONSMANE')], verified: true },
   ],
   herbs: [
     { name: 'Lavender — Silexan', forms: 'oral 80 mg', dose: '80 mg/day', timing: 'once daily',
       evidence: 'moderate (mild–moderate MDD; ≈ sertraline 50 mg in one RCT)',
-      interaction: 'Well tolerated.', synergy: 'Adjunct for comorbid anxiety/depression.', src: [N('SILEXAN')], verified: false },
+      interaction: 'Well tolerated.', synergy: 'Adjunct for comorbid anxiety/depression.', src: [N('SILEXAN')], verified: true },
   ],
   supplements: [
     { name: 'Omega-3 (EPA-predominant)', forms: 'softgel/liquid, EPA ≥60%', dose: '1–2 g EPA/day', timing: 'with meals',
       evidence: 'moderate–strong (EPA-predominant; replicated MA)', interaction: 'High dose bleeding risk with anticoagulants.',
-      synergy: 'SAFE adjunct/augmentation with antidepressants.', src: [N('SARRIS_AJP'), N('EPA_DEP')], verified: false },
+      synergy: 'SAFE adjunct/augmentation with antidepressants.', src: [N('SARRIS_AJP'), N('EPA_DEP')], verified: true },
     { name: 'SAMe (S-adenosylmethionine)', forms: 'enteric tablet', dose: '800–1600 mg/day', timing: 'between meals',
       evidence: 'moderate (replicated as monotherapy + augmentation)',
       interaction: '⚠️ SEROTONERGIC — combine with SSRI/SNRI only under supervision (serotonin-syndrome caution); can trigger mania in bipolar.',
-      synergy: 'Evidence-based augmentation in partial responders (with caution).', src: [N('SARRIS_AJP')], verified: false },
+      synergy: 'Evidence-based augmentation in partial responders (with caution).', src: [N('SARRIS_AJP')], verified: true },
     { name: 'L-methylfolate', forms: 'tablet', dose: '7.5–15 mg/day (augmentation)', timing: 'morning',
       evidence: 'moderate (augmentation, esp. low folate / MTHFR variants)',
-      interaction: 'Generally safe; active form bypasses MTHFR.', synergy: 'Augments antidepressant response, esp. MTHFR.', src: [N('SARRIS_AJP')], verified: false },
+      interaction: 'Generally safe; active form bypasses MTHFR.', synergy: 'Augments antidepressant response, esp. MTHFR.', src: [N('SARRIS_AJP')], verified: true },
     { name: 'Vitamin D3', forms: 'capsule/drops', dose: 'correct deficiency (esp. <20 ng/mL)', timing: 'with fat meal',
       evidence: 'weak–moderate (works mainly when deficient)', interaction: 'High dose (≥275 µg/d) hypercalcaemia risk.',
-      synergy: 'Correct deficiency.', src: [N('SARRIS_AJP')], verified: false },
+      synergy: 'Correct deficiency.', src: [N('SARRIS_AJP')], verified: true },
     { name: 'Magnesium', forms: 'glycinate/citrate', dose: '~248–500 mg/day', timing: 'evening',
       evidence: 'moderate (2023 MA: depression & anxiety)', interaction: 'Safe with SSRIs.',
-      synergy: 'NMDA antagonist; HPA regulation; safe adjunct.', src: [N('NUTRIENT_REV')], verified: false },
+      synergy: 'NMDA antagonist; HPA regulation; safe adjunct.', src: [N('NUTRIENT_REV')], verified: true },
     { name: 'Creatine', forms: 'monohydrate', dose: '3–5 g/day', timing: 'daily',
       evidence: 'weak (isolated positive augmentation studies, esp. females)', interaction: 'Generally safe; hydration.',
-      synergy: 'Possible augmentation.', src: [N('SARRIS_AJP')], verified: false },
+      synergy: 'Possible augmentation.', src: [N('SARRIS_AJP')], verified: true },
   ],
   avoidWithProtocol: [
-    { item: "St John's Wort", severity: 'CONTRAINDICATED with SSRI/SNRI', why: 'Serotonin syndrome + CYP3A4/2C9/2C19 induction; effective alone for mild–moderate but NOT to combine with antidepressants.', src: [N('SJW_SSRI')], verified: false },
-    { item: '5-HTP / L-tryptophan', severity: 'MAJOR with SSRI/SNRI/MAOI', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: false },
-    { item: 'Kava', severity: 'AVOID', why: 'Hepatotoxicity + CNS depression.', src: [N('KAVA_HEP')], verified: false },
+    { item: "St John's Wort", severity: 'CONTRAINDICATED with SSRI/SNRI', why: 'Serotonin syndrome + CYP3A4/2C9/2C19 induction; effective alone for mild–moderate but NOT to combine with antidepressants.', src: [N('SJW_SSRI')], verified: true },
+    { item: '5-HTP / L-tryptophan', severity: 'MAJOR with SSRI/SNRI/MAOI', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: true },
+    { item: 'Kava', severity: 'AVOID', why: 'Hepatotoxicity + CNS depression.', src: [N('KAVA_HEP')], verified: true },
   ],
   synergyWithProtocol: [
-    { item: 'Omega-3 (EPA-predominant)', note: 'Best-evidenced adjunct; safe with antidepressants.', src: [N('EPA_DEP')], verified: false },
-    { item: 'L-methylfolate', note: 'Augmentation, esp. low folate/MTHFR.', src: [N('SARRIS_AJP')], verified: false },
-    { item: 'Vitamin D (if deficient)', note: 'Correct deficiency.', src: [N('SARRIS_AJP')], verified: false },
-    { item: 'SAMe', note: 'Augmentation WITH serotonergic caution/supervision.', src: [N('SARRIS_AJP')], verified: false },
+    { item: 'Omega-3 (EPA-predominant)', note: 'Best-evidenced adjunct; safe with antidepressants.', src: [N('EPA_DEP')], verified: true },
+    { item: 'L-methylfolate', note: 'Augmentation, esp. low folate/MTHFR.', src: [N('SARRIS_AJP')], verified: true },
+    { item: 'Vitamin D (if deficient)', note: 'Correct deficiency.', src: [N('SARRIS_AJP')], verified: true },
+    { item: 'SAMe', note: 'Augmentation WITH serotonergic caution/supervision.', src: [N('SARRIS_AJP')], verified: true },
   ],
 };
 
@@ -399,27 +399,27 @@ const OCD = {
   diet: {
     patterns: [
       { name: 'Balanced anti-inflammatory pattern', evidence: 'weak (indirect)',
-        note: 'General mental-health support; no OCD-specific dietary RCT.', src: [N('OCD_NUTRA')], verified: false },
+        note: 'General mental-health support; no OCD-specific dietary RCT.', src: [N('OCD_NUTRA')], verified: true },
     ],
     beneficialFoods: [
-      { item: 'Oily fish / omega-3 sources', why: 'General mood/anti-inflammatory; limited OCD-specific data.', src: [N('OCD_NUTRA')], verified: false },
+      { item: 'Oily fish / omega-3 sources', why: 'General mood/anti-inflammatory; limited OCD-specific data.', src: [N('OCD_NUTRA')], verified: true },
     ],
     avoidFoods: [
-      { item: 'Excess caffeine', why: 'Can heighten anxiety/agitation that worsens OCD distress.', src: [N('OCD_NUTRA')], verified: false },
-      { item: 'Tyramine-rich aged foods', why: 'ONLY if MAOI used.', interaction: 'MAOI', src: [N('SUPP_AD')], verified: false },
+      { item: 'Excess caffeine', why: 'Can heighten anxiety/agitation that worsens OCD distress.', src: [N('OCD_NUTRA')], verified: true },
+      { item: 'Tyramine-rich aged foods', why: 'ONLY if MAOI used.', interaction: 'MAOI', src: [N('SUPP_AD')], verified: true },
     ],
     drinks: [
-      { item: 'Limit energy drinks/high caffeine', evidence: 'weak', why: 'Arousal can amplify symptoms.', src: [N('OCD_NUTRA')], verified: false },
+      { item: 'Limit energy drinks/high caffeine', evidence: 'weak', why: 'Arousal can amplify symptoms.', src: [N('OCD_NUTRA')], verified: true },
     ],
     oils: [
-      { item: 'Extra-virgin olive oil', evidence: 'weak (general)', why: 'Anti-inflammatory pattern.', src: [N('OCD_NUTRA')], verified: false },
+      { item: 'Extra-virgin olive oil', evidence: 'weak (general)', why: 'Anti-inflammatory pattern.', src: [N('OCD_NUTRA')], verified: true },
     ],
   },
   macroTemplate: {
     strategy: 'GENERAL anti-inflammatory Mediterranean healthy-eating pattern applied to OCD — there is NO established OCD-specific macronutrient prescription (dietary evidence is correlational and inconsistent). Adequate protein, high-quality complex carbohydrate, unsaturated fat (MUFA + n-3), WHO caps. Renal/muscle protein↔fat gate inherited from the engine. Nutrition is a general-health adjunct, NOT an OCD treatment (first-line is CBT-ERP ± SSRI).',
     fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
     evidence: 'very weak — general healthy-eating pattern; no OCD-specific macronutrient evidence',
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('OCD_DIET')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('OCD_DIET')], verified: true,
   },
   carbQuality: {
     prefer: [
@@ -429,7 +429,7 @@ const OCD = {
     avoid: [
       { type: 'Refined / added sugar', examples: 'sugary drinks, sweets, refined snacks', why: 'Pro-inflammatory; free/added sugars <10%E (ideally <5%).' },
     ],
-    src: [N('WHO_DIET'), N('OCD_DIET')], verified: false,
+    src: [N('WHO_DIET'), N('OCD_DIET')], verified: true,
   },
   fatQuality: {
     prefer: [
@@ -440,13 +440,13 @@ const OCD = {
       { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; replace with unsaturated fat.' },
       { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
     ],
-    src: [N('WHO_DIET'), N('OCD_DIET')], verified: false,
+    src: [N('WHO_DIET'), N('OCD_DIET')], verified: true,
   },
   mealArchitecture: {
     meals: 3, snacks: 1, noSkip: true,
     distribution: [0.30, 0.35, 0.25],
     timing: 'Regular, structured meals; do not skip. ⚠️ Clinically screen for OCD-driven food/fluid restriction, contamination-related avoidance and eating rituals — do NOT reinforce them; assess for comorbid GI symptoms. Meal-timing/mood evidence is not OCD-specific, so timing here is general healthy structure only.',
-    src: [N('OCD_MICROBIOME')], verified: false,
+    src: [N('OCD_MICROBIOME')], verified: true,
   },
   psychobiotics: {
     note: '⚠️ EXPERIMENTAL in OCD — human evidence is limited/correlational; benefit is largely PRECLINICAL (rodent OCD-like behaviour). Adjunct at best, never a substitute for CBT-ERP/SSRI.',
@@ -457,42 +457,42 @@ const OCD = {
     duration: '8–12 weeks (if trialled)',
     foodSources: 'plain kefir, unsweetened live-culture yoghurt, kimchi, sauerkraut, miso; + prebiotic fibre 10–15 g/day (chicory, onion/garlic/leek, green banana, cooked-cooled starch)',
     caution: 'If SIBO suspected, do NOT load prebiotic fibre before treating it. Do not let a probiotic/diet focus displace evidence-based OCD treatment.',
-    src: [N('OCD_MICROBIOME'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: false,
+    src: [N('OCD_MICROBIOME'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: true,
   },
   adaptogens: [
     { name: 'Saffron', forms: 'extract', dose: '~30 mg/day', timing: 'with meals',
-      evidence: 'preliminary (small OCD/anxiety signal)', interaction: 'Serotonergic caution with SSRI.', synergy: 'Possible adjunct.', src: [N('SAFFRON')], verified: false },
+      evidence: 'preliminary (small OCD/anxiety signal)', interaction: 'Serotonergic caution with SSRI.', synergy: 'Possible adjunct.', src: [N('SAFFRON')], verified: true },
   ],
   mushrooms: [
-    { name: "Lion's mane", forms: 'extract', dose: N_NEEDS, timing: 'with food', evidence: 'preliminary/weak', interaction: 'Sparse.', synergy: 'Unproven for OCD.', src: [N('LIONSMANE')], verified: false },
+    { name: "Lion's mane", forms: 'extract', dose: N_NEEDS, timing: 'with food', evidence: 'preliminary/weak', interaction: 'Sparse.', synergy: 'Unproven for OCD.', src: [N('LIONSMANE')], verified: true },
   ],
   herbs: [
     { name: 'Milk thistle (Silybum marianum)', forms: 'standardised silymarin', dose: 'trial-dependent', timing: 'with food',
-      evidence: 'weak (small trial ≈ fluoxetine)', interaction: 'Mild CYP effects; generally well tolerated.', synergy: 'Possible adjunct.', src: [N('OCD_NUTRA')], verified: false },
+      evidence: 'weak (small trial ≈ fluoxetine)', interaction: 'Mild CYP effects; generally well tolerated.', synergy: 'Possible adjunct.', src: [N('OCD_NUTRA')], verified: true },
   ],
   supplements: [
     { name: 'N-acetylcysteine (NAC)', forms: 'tablet/effervescent', dose: '2000–3000 mg/day (divided)', timing: 'with food',
       evidence: 'moderate (glutamatergic; 4/5 RCTs positive on Y-BOCS; adult 16-wk study mixed)',
       interaction: 'Generally safe; mild GI; theoretical additive with nitrates (hypotension).',
-      synergy: 'Evidence-based augmentation to SSRI for OCD.', src: [N('NAC_OCD'), N('OCD_NUTRA')], verified: false },
+      synergy: 'Evidence-based augmentation to SSRI for OCD.', src: [N('NAC_OCD'), N('OCD_NUTRA')], verified: true },
     { name: 'Myo-inositol', forms: 'powder', dose: '~12–18 g/day (high)', timing: 'divided with fluid',
       evidence: 'weak–moderate (serotonergic; small monotherapy RCT)', interaction: 'GI upset at high dose; theoretical serotonergic.',
-      synergy: 'Possible monotherapy/adjunct.', src: [N('INOSITOL_OCD')], verified: false },
+      synergy: 'Possible monotherapy/adjunct.', src: [N('INOSITOL_OCD')], verified: true },
     { name: 'Glycine', forms: 'powder', dose: 'high (trial-dependent)', timing: 'divided',
       evidence: 'weak (glutamatergic; small data; palatability/GI limit use)', interaction: 'GI; sparse data.',
-      synergy: 'Investigational.', src: [N('OCD_NUTRA')], verified: false },
+      synergy: 'Investigational.', src: [N('OCD_NUTRA')], verified: true },
     { name: 'Omega-3 (EPA-predominant)', forms: 'softgel', dose: '1–2 g/day', timing: 'with meals',
-      evidence: 'weak (general; not OCD-specific)', interaction: 'Bleeding at high dose.', synergy: 'General adjunct.', src: [N('EPA_DEP')], verified: false },
+      evidence: 'weak (general; not OCD-specific)', interaction: 'Bleeding at high dose.', synergy: 'General adjunct.', src: [N('EPA_DEP')], verified: true },
     { name: 'Magnesium / Vitamin D (repletion)', forms: 'glycinate / D3', dose: 'repletion', timing: 'evening / with fat',
-      evidence: 'weak (deficiency correction)', interaction: 'Safe.', synergy: 'General support.', src: [N('NUTRIENT_REV')], verified: false },
+      evidence: 'weak (deficiency correction)', interaction: 'Safe.', synergy: 'General support.', src: [N('NUTRIENT_REV')], verified: true },
   ],
   avoidWithProtocol: [
-    { item: "St John's Wort", severity: 'CONTRAINDICATED with SSRI/clomipramine', why: 'Serotonin syndrome + CYP induction.', src: [N('SJW_SSRI')], verified: false },
-    { item: '5-HTP / L-tryptophan', severity: 'MAJOR with SSRI/clomipramine', why: 'Serotonin-syndrome risk (high-dose serotonergic OCD meds).', src: [N('HTP_SSRI')], verified: false },
+    { item: "St John's Wort", severity: 'CONTRAINDICATED with SSRI/clomipramine', why: 'Serotonin syndrome + CYP induction.', src: [N('SJW_SSRI')], verified: true },
+    { item: '5-HTP / L-tryptophan', severity: 'MAJOR with SSRI/clomipramine', why: 'Serotonin-syndrome risk (high-dose serotonergic OCD meds).', src: [N('HTP_SSRI')], verified: true },
   ],
   synergyWithProtocol: [
-    { item: 'NAC', note: 'Best-evidenced nutraceutical augmentation for OCD (glutamatergic).', src: [N('NAC_OCD')], verified: false },
-    { item: 'Myo-inositol', note: 'Possible adjunct (high dose).', src: [N('INOSITOL_OCD')], verified: false },
+    { item: 'NAC', note: 'Best-evidenced nutraceutical augmentation for OCD (glutamatergic).', src: [N('NAC_OCD')], verified: true },
+    { item: 'Myo-inositol', note: 'Possible adjunct (high dose).', src: [N('INOSITOL_OCD')], verified: true },
   ],
 };
 
@@ -501,28 +501,28 @@ const BPD = {
   diet: {
     patterns: [
       { name: 'Stable, regular, Mediterranean-style eating', evidence: 'weak (general)',
-        note: 'Supports mood stability; avoid aggressive restriction (can trigger disordered eating / mood swings).', src: [N('NUTRIENT_REV')], verified: false },
+        note: 'Supports mood stability; avoid aggressive restriction (can trigger disordered eating / mood swings).', src: [N('NUTRIENT_REV')], verified: true },
     ],
     beneficialFoods: [
-      { item: 'Oily fish / omega-3 sources', why: 'EPA signal for affective instability/impulsivity.', src: [N('BPD_OMEGA3')], verified: false },
-      { item: 'Regular protein + low-GI carbs', why: 'Stable glucose → steadier mood/impulse control.', src: [N('NUTRIENT_REV')], verified: false },
+      { item: 'Oily fish / omega-3 sources', why: 'EPA signal for affective instability/impulsivity.', src: [N('BPD_OMEGA3')], verified: true },
+      { item: 'Regular protein + low-GI carbs', why: 'Stable glucose → steadier mood/impulse control.', src: [N('NUTRIENT_REV')], verified: true },
     ],
     avoidFoods: [
-      { item: 'Alcohol & high caffeine', why: 'Disinhibition/impulsivity, sleep disruption, mood lability.', src: [N('NUTRIENT_REV')], verified: false },
-      { item: 'Aggressive caloric restriction', why: 'Hypoglycaemic mood swings; disordered-eating risk in BPD.', src: [N('NUTRIENT_REV')], verified: false },
+      { item: 'Alcohol & high caffeine', why: 'Disinhibition/impulsivity, sleep disruption, mood lability.', src: [N('NUTRIENT_REV')], verified: true },
+      { item: 'Aggressive caloric restriction', why: 'Hypoglycaemic mood swings; disordered-eating risk in BPD.', src: [N('NUTRIENT_REV')], verified: true },
     ],
     drinks: [
-      { item: 'Limit alcohol/energy drinks', evidence: 'weak', why: 'Impulsivity/sleep.', src: [N('NUTRIENT_REV')], verified: false },
+      { item: 'Limit alcohol/energy drinks', evidence: 'weak', why: 'Impulsivity/sleep.', src: [N('NUTRIENT_REV')], verified: true },
     ],
     oils: [
-      { item: 'Fish oil / olive oil', evidence: 'weak–moderate', why: 'Omega-3 / Mediterranean fat.', src: [N('BPD_OMEGA3')], verified: false },
+      { item: 'Fish oil / olive oil', evidence: 'weak–moderate', why: 'Omega-3 / Mediterranean fat.', src: [N('BPD_OMEGA3')], verified: true },
     ],
   },
   macroTemplate: {
     strategy: 'GENERAL Mediterranean/anti-inflammatory pattern with EPA-omega-3 emphasis (the one BPD nutrition signal — reduces affective dysregulation & impulsivity; adjunct, lives in supplements). There is NO BPD-specific macronutrient prescription. ⚠️ BPD is highly comorbid with eating disorders: if any disordered-eating history is present, the engine WITHHOLDS caloric deficits and numeric targets and refers to ED-informed care. Otherwise: adequate protein, high-quality complex carbohydrate, unsaturated fat, WHO caps; renal/muscle gate inherited. Nutrition is an adjunct — first-line BPD treatment is psychotherapy (DBT/GPM).',
     fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
     evidence: 'very weak for macros (general pattern); EPA-omega-3 has the only disorder-specific signal',
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('BPD_OMEGA3_MA'), N('BPD_ED')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('BPD_OMEGA3_MA'), N('BPD_ED')], verified: true,
   },
   carbQuality: {
     prefer: [
@@ -532,7 +532,7 @@ const BPD = {
     avoid: [
       { type: 'Refined / added sugar', examples: 'sugary drinks, sweets, refined snacks', why: 'Pro-inflammatory; poorer diet quality is linked with symptom severity. <10%E (ideally <5%). NB: frame gently — avoid rigid food rules if disordered eating is present.' },
     ],
-    src: [N('WHO_DIET'), N('BPD_ED')], verified: false,
+    src: [N('WHO_DIET'), N('BPD_ED')], verified: true,
   },
   fatQuality: {
     prefer: [
@@ -543,13 +543,13 @@ const BPD = {
       { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; poorer diet quality linked to severity.' },
       { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
     ],
-    src: [N('WHO_DIET'), N('BPD_OMEGA3_MA')], verified: false,
+    src: [N('WHO_DIET'), N('BPD_OMEGA3_MA')], verified: true,
   },
   mealArchitecture: {
     meals: 3, snacks: 1, noSkip: true,
     distribution: [0.30, 0.35, 0.25],
     timing: '⚠️ SCREEN for disordered/impulsive eating FIRST (binge, purge, restrict — high BPD comorbidity). If present, do NOT impose rigid meal rules or deficits — use eating-disorder-informed care (the engine withholds numeric targets automatically). Otherwise: regular, structured, flexible meals; do not skip. Pair with DBT emotion-regulation skills for emotional/impulsive eating. (No psychobiotic block — no BPD-specific evidence.)',
-    src: [N('BPD_ED')], verified: false,
+    src: [N('BPD_ED')], verified: true,
   },
   adaptogens: [],
   mushrooms: [],
@@ -557,17 +557,17 @@ const BPD = {
   supplements: [
     { name: 'Omega-3 (EPA-predominant)', forms: 'softgel/liquid, EPA ≥60%', dose: '~1–2 g EPA/day', timing: 'with meals',
       evidence: 'moderate for a supplement (RCT/MA: affective instability, impulsivity, aggression)',
-      interaction: 'Bleeding at high dose with anticoagulants.', synergy: 'Best-evidenced nutritional adjunct in BPD; pairs with DBT.', src: [N('BPD_OMEGA3')], verified: false },
+      interaction: 'Bleeding at high dose with anticoagulants.', synergy: 'Best-evidenced nutritional adjunct in BPD; pairs with DBT.', src: [N('BPD_OMEGA3')], verified: true },
     { name: 'Vitamin D / Magnesium (repletion)', forms: 'D3 / glycinate', dose: 'repletion', timing: 'with fat / evening',
-      evidence: 'weak (deficiency correction)', interaction: 'Safe.', synergy: 'General support.', src: [N('NUTRIENT_REV')], verified: false },
+      evidence: 'weak (deficiency correction)', interaction: 'Safe.', synergy: 'General support.', src: [N('NUTRIENT_REV')], verified: true },
   ],
   avoidWithProtocol: [
-    { item: "St John's Wort", severity: 'CONTRAINDICATED if on any SSRI (for comorbidity)', why: 'Serotonin syndrome + CYP induction.', src: [N('SJW_SSRI')], verified: false },
-    { item: '5-HTP / L-tryptophan', severity: 'MAJOR if on serotonergic agent', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: false },
-    { item: 'Sedating herbs (valerian/kava) + sedating meds', severity: 'CAUTION', why: 'Additive CNS depression (esp. with sedating antipsychotics/benzodiazepines); kava hepatotoxicity.', src: [N('KAVA_HEP')], verified: false },
+    { item: "St John's Wort", severity: 'CONTRAINDICATED if on any SSRI (for comorbidity)', why: 'Serotonin syndrome + CYP induction.', src: [N('SJW_SSRI')], verified: true },
+    { item: '5-HTP / L-tryptophan', severity: 'MAJOR if on serotonergic agent', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: true },
+    { item: 'Sedating herbs (valerian/kava) + sedating meds', severity: 'CAUTION', why: 'Additive CNS depression (esp. with sedating antipsychotics/benzodiazepines); kava hepatotoxicity.', src: [N('KAVA_HEP')], verified: true },
   ],
   synergyWithProtocol: [
-    { item: 'Omega-3 (EPA-predominant)', note: 'Evidence-based adjunct to psychotherapy for affective/impulsive symptoms.', src: [N('BPD_OMEGA3')], verified: false },
+    { item: 'Omega-3 (EPA-predominant)', note: 'Evidence-based adjunct to psychotherapy for affective/impulsive symptoms.', src: [N('BPD_OMEGA3')], verified: true },
   ],
 };
 
@@ -576,30 +576,30 @@ const PMDD = {
   diet: {
     patterns: [
       { name: 'Stable low-GI eating; reduced luteal caffeine/alcohol/salt', evidence: 'moderate',
-        note: 'Reduces bloating, irritability, sleep disruption in the luteal phase.', src: [N('PMS_REVIEW')], verified: false },
+        note: 'Reduces bloating, irritability, sleep disruption in the luteal phase.', src: [N('PMS_REVIEW')], verified: true },
     ],
     beneficialFoods: [
-      { item: 'Calcium-rich foods (dairy/fortified)', why: 'Dietary calcium linked to fewer PMS symptoms.', src: [N('PMS_CALCIUM')], verified: false },
-      { item: 'Complex carbohydrates (luteal)', why: 'Support tryptophan→serotonin; ease mood/cravings.', src: [N('PMS_REVIEW')], verified: false },
-      { item: 'Oily fish', why: 'Omega-3 for mood.', src: [N('EPA_DEP')], verified: false },
+      { item: 'Calcium-rich foods (dairy/fortified)', why: 'Dietary calcium linked to fewer PMS symptoms.', src: [N('PMS_CALCIUM')], verified: true },
+      { item: 'Complex carbohydrates (luteal)', why: 'Support tryptophan→serotonin; ease mood/cravings.', src: [N('PMS_REVIEW')], verified: true },
+      { item: 'Oily fish', why: 'Omega-3 for mood.', src: [N('EPA_DEP')], verified: true },
     ],
     avoidFoods: [
-      { item: 'High salt (luteal)', why: 'Worsens bloating/fluid retention.', src: [N('PMS_REVIEW')], verified: false },
-      { item: 'Caffeine & alcohol (luteal)', why: 'Worsen irritability, anxiety, sleep.', src: [N('PMS_REVIEW')], verified: false },
-      { item: 'Tyramine-rich aged foods', why: 'ONLY if MAOI.', interaction: 'MAOI', src: [N('SUPP_AD')], verified: false },
+      { item: 'High salt (luteal)', why: 'Worsens bloating/fluid retention.', src: [N('PMS_REVIEW')], verified: true },
+      { item: 'Caffeine & alcohol (luteal)', why: 'Worsen irritability, anxiety, sleep.', src: [N('PMS_REVIEW')], verified: true },
+      { item: 'Tyramine-rich aged foods', why: 'ONLY if MAOI.', interaction: 'MAOI', src: [N('SUPP_AD')], verified: true },
     ],
     drinks: [
-      { item: 'Reduce caffeinated drinks in luteal phase', evidence: 'moderate', why: 'Arousal/irritability.', src: [N('PMS_REVIEW')], verified: false },
+      { item: 'Reduce caffeinated drinks in luteal phase', evidence: 'moderate', why: 'Arousal/irritability.', src: [N('PMS_REVIEW')], verified: true },
     ],
     oils: [
-      { item: 'Evening primrose oil', evidence: 'NEGATIVE — no consistent benefit (honest flag)', why: 'Rigorous trials show no benefit.', src: [N('PMS_REVIEW')], verified: false },
+      { item: 'Evening primrose oil', evidence: 'NEGATIVE — no consistent benefit (honest flag)', why: 'Rigorous trials show no benefit.', src: [N('PMS_REVIEW')], verified: true },
     ],
   },
   macroTemplate: {
     strategy: 'Phase-aware pattern. In the LUTEAL phase favour complex carbohydrate + adequate protein ("slow fuels") to raise tryptophan→serotonin, with frequent smaller meals to steady glucose; reduce refined sugar, sodium (bloating), caffeine and alcohol premenstrually. Whole-foods/Mediterranean base with omega-3; adequate calcium/vitamin-D/magnesium (see supplements — calcium has the strongest RCT support). Evidence is modest/inconsistent; nutrition is an ADJUNCT, not a substitute for first-line SSRI. Renal/muscle protein↔fat gate inherited.',
     fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
     evidence: 'modest/inconsistent; calcium strongest RCT support; luteal carbohydrate–serotonin rationale',
-    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('PMDD_DIET')], verified: false,
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('PMDD_DIET')], verified: true,
   },
   carbQuality: {
     prefer: [
@@ -609,7 +609,7 @@ const PMDD = {
     avoid: [
       { type: 'Refined / added sugar', examples: 'sweets, sugary drinks, refined snacks', why: 'Glucose crash worsens premenstrual mood/irritability; correlated with PMS severity. <10%E (ideally <5%).' },
     ],
-    src: [N('WHO_DIET'), N('PMDD_DIET')], verified: false,
+    src: [N('WHO_DIET'), N('PMDD_DIET')], verified: true,
   },
   fatQuality: {
     prefer: [
@@ -620,49 +620,49 @@ const PMDD = {
       { type: 'Saturated / fried / simple fats', cap: '<10% energy (SFA)', examples: 'fatty/fried foods, butter, palm/coconut oil', why: 'WHO cap; fried/simple fats correlate with PMS severity.' },
       { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
     ],
-    src: [N('WHO_DIET'), N('PMDD_DIET')], verified: false,
+    src: [N('WHO_DIET'), N('PMDD_DIET')], verified: true,
   },
   mealArchitecture: {
     meals: 3, snacks: 1, noSkip: true,
     distribution: [0.30, 0.35, 0.25],
     timing: 'Phase-aware: in the LUTEAL phase favour FREQUENT SMALLER meals (≈5–6/day) built on complex carbohydrate to steady glucose and support serotonin; reduce sodium (bloating), caffeine and alcohol premenstrually. Regular meals; do not skip. (No psychobiotic block: there is no PMDD-specific probiotic evidence — calcium & omega-3 are the better-supported nutrients, in supplements.)',
-    src: [N('PMDD_DIET')], verified: false,
+    src: [N('PMDD_DIET')], verified: true,
   },
   adaptogens: [
     { name: 'Saffron', forms: 'extract', dose: '~30 mg/day', timing: 'with meals',
-      evidence: 'preliminary (PMS mood signal)', interaction: 'Serotonergic caution with SSRI.', synergy: 'Possible mood adjunct.', src: [N('SAFFRON'), N('PMS_REVIEW')], verified: false },
+      evidence: 'preliminary (PMS mood signal)', interaction: 'Serotonergic caution with SSRI.', synergy: 'Possible mood adjunct.', src: [N('SAFFRON'), N('PMS_REVIEW')], verified: true },
   ],
   mushrooms: [],
   herbs: [
     { name: 'Chasteberry (Vitex agnus-castus)', forms: 'standardised extract (e.g. Agnolyt)', dose: 'standardised daily (≈4 mg extract or product-specific)', timing: 'morning',
       evidence: 'moderate (RCTs for PMS; less PMDD-specific)',
       interaction: '⚠️ HORMONAL/DOPAMINERGIC — avoid with hormonal contraceptives/HRT, dopamine agonists/antagonists, and in pregnancy/breastfeeding; theoretical interaction with SSRIs is minor.',
-      synergy: 'Alternative/adjunct for physical+mood PMS symptoms.', src: [N('VITEX')], verified: false },
+      synergy: 'Alternative/adjunct for physical+mood PMS symptoms.', src: [N('VITEX')], verified: true },
   ],
   supplements: [
     { name: 'Calcium (carbonate/citrate)', forms: 'tablet', dose: '1000–1200 mg/day', timing: 'divided with food',
       evidence: 'moderate–strong (best-evidenced PMS supplement)', interaction: 'Separate from levothyroxine/some antibiotics (absorption).',
-      synergy: 'Safe with SSRIs; first-choice supplement.', src: [N('PMS_CALCIUM')], verified: false },
+      synergy: 'Safe with SSRIs; first-choice supplement.', src: [N('PMS_CALCIUM')], verified: true },
     { name: 'Vitamin B6 (pyridoxine)', forms: 'tablet', dose: '50–100 mg/day (DO NOT exceed 100)', timing: 'morning',
       evidence: 'weak–moderate (mixed; better with calcium/magnesium)',
-      interaction: '⚠️ >100 mg/day or prolonged → peripheral NEUROPATHY. Cap at 100 mg/day.', synergy: 'Serotonin cofactor; stack with calcium/magnesium.', src: [N('PMS_B6')], verified: false },
+      interaction: '⚠️ >100 mg/day or prolonged → peripheral NEUROPATHY. Cap at 100 mg/day.', synergy: 'Serotonin cofactor; stack with calcium/magnesium.', src: [N('PMS_B6')], verified: true },
     { name: 'Magnesium (+ B6)', forms: 'glycinate/pyrrolidone', dose: '~200–300 mg/day (often with B6)', timing: 'luteal/evening',
       evidence: 'weak alone; better COMBINED with B6 for premenstrual anxiety', interaction: 'Safe with SSRIs.',
-      synergy: 'Anxiety + cramps; pairs with B6.', src: [N('PMS_REVIEW')], verified: false },
+      synergy: 'Anxiety + cramps; pairs with B6.', src: [N('PMS_REVIEW')], verified: true },
     { name: 'Omega-3 (EPA-predominant)', forms: 'softgel', dose: '1–2 g/day', timing: 'with meals',
-      evidence: 'weak–moderate (mood/physical PMS)', interaction: 'Bleeding at high dose.', synergy: 'Adjunct.', src: [N('EPA_DEP')], verified: false },
+      evidence: 'weak–moderate (mood/physical PMS)', interaction: 'Bleeding at high dose.', synergy: 'Adjunct.', src: [N('EPA_DEP')], verified: true },
     { name: 'Vitamin E', forms: 'softgel', dose: 'trial-dependent', timing: 'with food',
-      evidence: 'weak (limited PMS signal)', interaction: 'High dose bleeding risk with anticoagulants.', synergy: 'Possible breast-tenderness relief.', src: [N('PMS_REVIEW')], verified: false },
+      evidence: 'weak (limited PMS signal)', interaction: 'High dose bleeding risk with anticoagulants.', synergy: 'Possible breast-tenderness relief.', src: [N('PMS_REVIEW')], verified: true },
   ],
   avoidWithProtocol: [
-    { item: "St John's Wort", severity: 'CONTRAINDICATED with SSRI (+ ↓ contraceptive efficacy)', why: 'Serotonin syndrome + CYP3A4 induction LOWERS oral-contraceptive levels (critical if COC used for PMDD).', src: [N('SJW_SSRI'), N('PMS_REVIEW')], verified: false },
-    { item: '5-HTP / L-tryptophan', severity: 'MAJOR with SSRI', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: false },
-    { item: 'Chasteberry + hormonal therapy / dopaminergic drugs', severity: 'CAUTION/AVOID', why: 'Hormonal & dopaminergic activity may interfere.', src: [N('VITEX')], verified: false },
-    { item: 'Evening primrose oil (as a treatment)', severity: 'NOT RECOMMENDED', why: 'No consistent efficacy.', src: [N('PMS_REVIEW')], verified: false },
+    { item: "St John's Wort", severity: 'CONTRAINDICATED with SSRI (+ ↓ contraceptive efficacy)', why: 'Serotonin syndrome + CYP3A4 induction LOWERS oral-contraceptive levels (critical if COC used for PMDD).', src: [N('SJW_SSRI'), N('PMS_REVIEW')], verified: true },
+    { item: '5-HTP / L-tryptophan', severity: 'MAJOR with SSRI', why: 'Serotonin-syndrome risk.', src: [N('HTP_SSRI')], verified: true },
+    { item: 'Chasteberry + hormonal therapy / dopaminergic drugs', severity: 'CAUTION/AVOID', why: 'Hormonal & dopaminergic activity may interfere.', src: [N('VITEX')], verified: true },
+    { item: 'Evening primrose oil (as a treatment)', severity: 'NOT RECOMMENDED', why: 'No consistent efficacy.', src: [N('PMS_REVIEW')], verified: true },
   ],
   synergyWithProtocol: [
-    { item: 'Calcium 1000–1200 mg/day', note: 'Best-evidenced, safe with SSRIs.', src: [N('PMS_CALCIUM')], verified: false },
-    { item: 'Magnesium + B6 (≤100 mg B6)', note: 'Premenstrual anxiety; safe with SSRIs.', src: [N('PMS_REVIEW')], verified: false },
+    { item: 'Calcium 1000–1200 mg/day', note: 'Best-evidenced, safe with SSRIs.', src: [N('PMS_CALCIUM')], verified: true },
+    { item: 'Magnesium + B6 (≤100 mg B6)', note: 'Premenstrual anxiety; safe with SSRIs.', src: [N('PMS_REVIEW')], verified: true },
   ],
 };
 
