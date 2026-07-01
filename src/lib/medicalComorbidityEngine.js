@@ -70,6 +70,21 @@ export const MED_SRC = {
   ADA_APA_DM:  'ADA/APA/AACE/NAASO 2004 Consensus on Antipsychotic Drugs & Obesity/Diabetes (Diabetes Care 2004;27:596) + FDA SGA class warning for hyperglycaemia/DKA; HbA1c added 2010. Baseline: personal/family history, weight/BMI, waist, BP, fasting glucose, fasting lipids; weight at 4 & 8 wk; full re-check at 12 wk; then glucose+BP yearly (more if higher risk), lipids yearly; switch to a lower-risk SGA if glycaemia/lipids worsen.',
   AD_WEIGHT:   'Antidepressant weight/metabolic effects (Maudsley Prescribing Guidelines; Serretti & Mandelli 2010) — weight GAIN: mirtazapine, paroxetine, TCAs, (long-term most ADs to a degree); weight-NEUTRAL/LOSS: bupropion; broadly neutral short-term: most SSRIs (sertraline/escitalopram/fluoxetine). Mood stabilisers valproate/lithium and gabapentinoids also cause weight gain.',
   DM_SUPP:     'Glucose-lowering dietary supplements (NCCIH; meta-analyses) — berberine, cinnamon, chromium, alpha-lipoic acid, fenugreek, magnesium can lower glucose; stacked on antidiabetics (esp. sulfonylureas) → HYPOGLYCAEMIA. Berberine additionally inhibits CYP enzymes (drug interactions); cassia cinnamon contains coumarin (hepatotoxic at high chronic dose); high-dose chromium carries renal risk.',
+
+  /* ── hypertension-unit sources ── */
+  AD_BP:       'Calvi A et al. Antidepressant drugs effects on blood pressure. Front Cardiovasc Med 2021;8:704281. SSRIs = smallest BP effect (safest class in HTN); SNRIs (esp. venlafaxine) = dose-dependent hypertension via noradrenergic drive; bupropion = BP rise at high dose (also 2D6-inhibits metoprolol/carvedilol).',
+  VENLA_BP:    'Venlafaxine dose-dependent hypertension — >225 mg/day acts mainly as an NE-reuptake inhibitor; immediate-release causes sustained diastolic hypertension in ~10–15% (XR ~6%); accelerated HTN reported even at ~150 mg. Monitor BP at baseline and on-treatment; prefer an SSRI / control BP first in pre-existing HTN.',
+  MAOI_TYRAMINE:'MAOIs (esp. non-selective/irreversible: tranylcypromine, phenelzine, isocarboxazid) + dietary tyramine or sympathomimetics → hypertensive crisis ("cheese reaction"): inhibited gut/hepatic MAO raises tyramine bioavailability → NE surge. Requires a tyramine-restricted diet and avoidance of decongestants/stimulants; moclobemide (reversible MAO-A) is lower-risk.',
+  LI_HTN_RX:   'Lithium × antihypertensive interactions — thiazides ↑ lithium 25–40% (halve dose, monitor first week); ACE inhibitors & ARBs ↑ lithium levels → toxicity (monitor, reduce dose, esp. CKD/elderly/volume-depleted); NSAIDs ↓ renal lithium clearance → toxicity AND blunt antihypertensives; calcium-channel blockers → neurotoxicity signal (tremor/ataxia/tinnitus) even without level change. (Handler 2009; PMC lithium-interactions reviews.)',
+  ANTIHTN_MOOD:'CANDIDATE — pending source sign-off: centrally-acting antihypertensives (reserpine, methyldopa, clonidine) historically linked to depression; beta-blocker–depression link now considered weak. Flag to ask the HTN team; not yet verified:true.',
+
+  /* ── endocrine-unit sources ── */
+  LI_THYROID:  'Lithium & thyroid (Kibirige 2013 review; Psychiatric Times; PMC real-world cohorts) — lithium inhibits thyroid-hormone synthesis/release → hypothyroidism & goitre (goitre 3–60%; ~38% develop TSH/FT4 abnormalities); higher risk in women, age >50, thyroid autoantibodies, family history. Baseline TSH (± T3/T4/antibodies & thyroid size) then annually (every 3–4 mo if high-risk). If hypothyroid develops, add levothyroxine rather than stop lithium if it is working (FDA label); ~50% of early subclinical cases normalise within 3 months.',
+  ENZ_THYROID: 'Enzyme-inducers & thyroid (Pharmaceutical Journal; Isojärvi) — carbamazepine, phenytoin, phenobarbital (and rifampicin) induce hepatic metabolism of thyroid hormones → lower serum T4; usually adaptive in euthyroid patients but can precipitate subclinical/overt hypothyroidism in levothyroxine-treated patients → increase levothyroxine dose & monitor TFTs (and watch for hyperthyroidism if the inducer is later stopped).',
+  LEVO_INTERACT:'Levothyroxine interactions (FDA label; JAMA calcium studies; NEJM 1997 sertraline) — SSRIs (sertraline explicitly) may INCREASE levothyroxine requirements → recheck TSH ~6–8 wk after starting; absorption is reduced by calcium, iron, PPIs/antacids, soy and coffee → take on an empty stomach and separate these by ≥4 h; TCAs + levothyroxine mutually potentiate (arrhythmia/CNS-stimulation caution).',
+  AP_PROLACTIN:'Antipsychotic hyperprolactinaemia (BJPsych Advances 2018; narrative reviews) — HIGHEST: risperidone, paliperidone, amisulpride (+ FGAs haloperidol/sulpiride); PROLACTIN-SPARING: quetiapine, olanzapine, clozapine, asenapine, ziprasidone; ARIPIPRAZOLE lowers prolactin (partial D2 agonist) and is used to treat antipsychotic-induced hyperprolactinaemia. Young women highest risk; sequelae: galactorrhoea, amenorrhoea, sexual dysfunction, bone loss.',
+  VALP_PCOS:   'Valproate & PCOS (Psychiatric Times; Joffe/Isojärvi) — valproate is linked to new-onset polycystic ovary syndrome / hyperandrogenism (~10% in bipolar cohorts, often within 6–12 months) — avoid/limit in women of reproductive age; screen for menstrual/androgenic symptoms and weight gain.',
+  BIOTIN_LAB:  'CANDIDATE — pending source sign-off: high-dose biotin (in hair/nail/"beauty" supplements) interferes with biotin-based thyroid immunoassays → spurious TSH/T4 results (FDA safety communication 2019). Flag to source before verified:true.',
 };
 const MS = (k) => MED_SRC[k] || k;
 
@@ -117,6 +132,24 @@ const CONCEPT_TERMS = {
     // Arabic (substring absorbs ال-)
     'سكري', 'السكري', 'سكر', 'مرض السكر', 'مقاومة الانسولين', 'مقاومة الإنسولين',
     'ارتفاع السكر', 'متلازمة أيضية', 'متلازمة استقلابية',
+  ],
+  hypertension: [
+    // English
+    'hypertens', 'high blood pressure', 'elevated blood pressure',
+    'raised blood pressure', 'high bp', 'raised bp', 'htn',
+    // Arabic (substring absorbs ال-)
+    'ارتفاع ضغط', 'ارتفاع الضغط', 'ضغط الدم', 'فرط ضغط', 'فرط الضغط',
+    'الضغط العالي', 'ضغط عالي', 'مرتفع الضغط',
+  ],
+  endocrine: [
+    // English
+    'thyroid', 'hypothyroid', 'hyperthyroid', 'goit', 'graves', 'hashimoto',
+    'tsh', 'prolactin', 'hyperprolactin', 'prolactinoma', 'pcos',
+    'polycystic ovar', 'adrenal', 'cushing', 'addison', 'endocrin',
+    // Arabic (substring absorbs ال-)
+    'درقية', 'الدرقية', 'الغدة الدرقية', 'قصور الغدة', 'نشاط الغدة', 'غدة درقية',
+    'غدد', 'برولاكتين', 'فرط برولاكتين', 'تكيس المبايض', 'تكيّس المبايض',
+    'المبايض المتعددة', 'كظرية', 'كوشينغ', 'غدد صماء',
   ],
 };
 const hasTerm = (text, concept) =>
@@ -494,9 +527,169 @@ export const MED_COMORBIDITIES = {
     referralSrc: [MS('ADA_APA_DM')],
   },
 
-  /* ── the following are SHAPE-ONLY placeholders (NOT fabricated). ───────── */
-  hypertension: { __pending: true, label: { en: 'Hypertension', ar: 'ارتفاع ضغط الدم' } },
-  endocrine:    { __pending: true, label: { en: 'Endocrine (thyroid)', ar: 'غدد (درقية)' } },
+  /* ── HYPERTENSION ─────────────────────────────────────────── BUILT ──── */
+  hypertension: {
+    label: { en: 'Hypertension', ar: 'ارتفاع ضغط الدم' },
+    detect: (t) => hasTerm(t, 'hypertension'),
+
+    drugAdjust: [
+      { agent: 'venlafaxine / desvenlafaxine / SNRIs',
+        action: 'avoid/caution',
+        rule: 'Dose-dependent BP rise via noradrenergic drive — venlafaxine >225 mg acts mainly as an NE reuptake inhibitor; immediate-release causes sustained diastolic hypertension in ~10–15%. Control BP first / prefer an SSRI in pre-existing HTN; if used, monitor BP at baseline and on-treatment.',
+        src: [MS('AD_BP'), MS('VENLA_BP')], verified: true },
+      { agent: 'SSRIs (sertraline, escitalopram, etc.)',
+        action: 'prefer',
+        rule: 'Smallest BP effect — the safest antidepressant class in hypertension; prefer when an antidepressant is needed.',
+        src: [MS('AD_BP')], verified: true },
+      { agent: 'bupropion',
+        action: 'caution',
+        rule: 'Can raise BP (esp. high dose, or with a nicotine patch) — obtain baseline + ongoing BP. Also 2D6-inhibits metoprolol/carvedilol (raises beta-blocker levels).',
+        src: [MS('AD_BP')], verified: true },
+      { agent: 'MAOIs (tranylcypromine, phenelzine, isocarboxazid)',
+        action: 'avoid/caution',
+        rule: 'Tyramine "cheese reaction" → hypertensive CRISIS; also interact with sympathomimetics/decongestants. Need a tyramine-restricted diet (see nutrition). Moclobemide (reversible MAO-A) is lower-risk.',
+        src: [MS('MAOI_TYRAMINE')], verified: true },
+      { agent: 'stimulants (methylphenidate, amphetamines, atomoxetine)',
+        action: 'caution',
+        rule: 'If ADHD is comorbid — these raise BP/HR; avoid/careful in uncontrolled HTN, monitor BP.',
+        src: [MS('AD_BP')], verified: true },
+      { agent: 'lithium',
+        action: 'caution',
+        rule: 'HTN treatment drugs interact: thiazides ↑ lithium 25–40% (halve dose + monitor), ACEi/ARB ↑ lithium → toxicity, NSAIDs ↑ lithium AND blunt antihypertensives, CCBs → neurotoxicity signal. Monitor lithium level whenever antihypertensive therapy changes.',
+        src: [MS('LI_HTN_RX')], verified: true },
+      { agent: 'TCAs / antipsychotics',
+        action: 'note',
+        rule: 'Direction reversed: these tend to cause orthostatic HYPOtension (α1-blockade), notably on titration — a BP-management caution rather than a hypertension driver.',
+        src: [MS('AD_BP')], verified: true },
+      { agent: 'centrally-acting antihypertensives (reserpine, methyldopa, clonidine)',
+        action: 'note',
+        rule: 'Reverse direction (the HTN drug affecting mood): historically linked to depression — worth asking the HTN team if mood worsened after one was started. (Beta-blocker–depression link now considered weak.)',
+        src: [MS('ANTIHTN_MOOD')], verified: false },
+    ],
+
+    doseCeilings: [
+      { agent: 'venlafaxine', ceiling: 'keep dose as low as effective; BP risk climbs >150–225 mg',
+        condition: 'dose-dependent hypertension (NE effect dominates at higher doses)',
+        src: [MS('VENLA_BP')], verified: true },
+      { agent: 'lithium', ceiling: 'reduce ~25–40% (≈halve) when a thiazide is added; re-titrate to level',
+        condition: 'thiazide/ACEi/ARB/NSAID co-therapy raises lithium',
+        src: [MS('LI_HTN_RX')], verified: true },
+    ],
+
+    contraindic: [
+      { rule: 'MAOI + tyramine-rich food OR sympathomimetics/decongestants → hypertensive crisis. Enforce tyramine diet + drug avoidance.',
+        src: [MS('MAOI_TYRAMINE')], verified: true },
+      { rule: 'Venlafaxine/SNRIs in UNCONTROLLED hypertension — control BP before starting; monitor thereafter.',
+        src: [MS('VENLA_BP')], verified: true },
+      { rule: 'Stimulants in severe/uncontrolled hypertension — avoid.',
+        src: [MS('AD_BP')], verified: true },
+    ],
+
+    labsRef: 'Blood-pressure monitoring (baseline + on-treatment) — surfaced by the dynamic-labs engine; intensify on venlafaxine/SNRI, bupropion, or a stimulant. Add lithium level + renal function whenever lithium coexists with a thiazide/ACEi/ARB/NSAID.',
+
+    nutrition: [
+      { item: 'Tyramine-restricted diet — ONLY if on an MAOI', action: 'ensure',
+        rule: 'Avoid aged/mature cheeses, cured/fermented/aged meats, fermented soy (soy sauce, miso, tofu that is fermented), tap/unpasteurised beer, over-ripe/spoiled foods, and Marmite/yeast extract. This is the psych-nutrition intersection the engine owns; hand the full list to a dietitian.',
+        src: [MS('MAOI_TYRAMINE')], verified: true },
+      { item: 'Licorice / glycyrrhizin ("erk sous")', action: 'avoid',
+        rule: 'Same mechanism as in the cardiac unit — glycyrrhizin → pseudohyperaldosteronism → sodium retention & HYPERTENSION (plus hypokalaemia). Explicitly ask about licorice and advise avoidance (DGL is glycyrrhizin-free and safe).',
+        src: [MS('LICORICE_QT')], verified: true },
+      { item: 'Sodium / caffeine / alcohol', action: 'caution',
+        rule: 'Keep the psychiatric plan from pushing high-sodium foods; energy drinks/high caffeine and alcohol acutely raise BP. The full DASH/sodium target is set by the HTN team/dietitian, not invented here.',
+        src: [MS('AD_BP')], verified: true },
+    ],
+
+    supplements: [
+      { item: 'Stimulant "fat-burner" / pre-workout supplements', action: 'avoid',
+        rule: 'Ephedra, bitter orange/synephrine, yohimbine, high-dose caffeine — raise BP; avoid in hypertension (consistent with the cardiac unit).',
+        src: [MS('STIM_SUPP')], verified: false },
+      { item: 'St John\'s Wort (self-taken)', action: 'avoid',
+        rule: 'CYP3A4/P-gp inducer — can LOWER levels of CYP3A4-metabolised antihypertensives (e.g. some calcium-channel blockers) → loss of BP control; plus serotonin-syndrome risk with the SSRI. Screen for it.',
+        src: [MS('SJW_CYP')], verified: true },
+      { item: 'Omega-3 (dietary dose)', action: 'consider',
+        rule: 'Positive direction: modestly lowers BP at dietary doses. (High pharmacologic EPA still carries the AF caution from the cardiac unit — keep to ~1 g if cardiac risk.)',
+        src: [MS('O3_AF')], verified: true },
+    ],
+
+    nutritionRef: null,
+    chrono: null, // antihypertensive chronotherapy is contested & non-psychiatric — no source-based psych timing rule
+    referral: 'Refer to the HYPERTENSION team (primary care / cardiology) and co-manage jointly (psychiatry + HTN team ± dietitian): prefer BP-neutral psychotropics (SSRI), monitor BP on any noradrenergic agent, watch the lithium × antihypertensive interaction, and use a dietitian for the tyramine diet if an MAOI is chosen. Psychiatry leads the mood/anxiety protocol; the HTN team governs BP-control sign-off.',
+
+    labsSrc: [MS('AD_BP')],
+    referralSrc: [MS('AD_BP'), MS('MAOI_TYRAMINE')],
+  },
+
+  /* ── ENDOCRINE (thyroid · prolactin · gonadal) ────────────── BUILT ──── */
+  endocrine: {
+    label: { en: 'Endocrine (thyroid / prolactin / gonadal)', ar: 'غدد (درقية / برولاكتين / تناسلية)' },
+    detect: (t) => hasTerm(t, 'endocrine'),
+
+    drugAdjust: [
+      { agent: 'lithium',
+        action: 'caution',
+        rule: 'Inhibits thyroid-hormone synthesis/release → hypothyroidism & goitre (higher risk: women, >50 y, thyroid autoantibodies, family history). Baseline TSH then annually. If hypothyroidism develops and lithium is working, ADD levothyroxine rather than stop lithium; ~50% of early subclinical cases normalise within 3 months.',
+        src: [MS('LI_THYROID')], verified: true },
+      { agent: 'carbamazepine (and other enzyme-inducers)',
+        action: 'caution',
+        rule: 'Induce hepatic metabolism of thyroid hormones → lower T4; can unmask hypothyroidism in a levothyroxine-treated patient → raise levothyroxine dose and monitor TFTs (watch for hyperthyroidism if the inducer is later stopped).',
+        src: [MS('ENZ_THYROID')], verified: true },
+      { agent: 'risperidone, paliperidone, amisulpride (+ typical antipsychotics)',
+        action: 'avoid',
+        rule: 'Strongly raise prolactin — AVOID in prolactinoma / hyperprolactinaemia (galactorrhoea, amenorrhoea, sexual dysfunction, bone loss); young women highest risk.',
+        src: [MS('AP_PROLACTIN')], verified: true },
+      { agent: 'aripiprazole (also quetiapine, olanzapine, clozapine)',
+        action: 'prefer',
+        rule: 'Prolactin-sparing; aripiprazole actually LOWERS prolactin (partial D2 agonist) and is used to treat antipsychotic-induced hyperprolactinaemia. Prefer when prolactin is a concern. (Aripiprazole is also the metabolically-benign, prolactin-sparing pick — friendly across diabetes + endocrine.)',
+        src: [MS('AP_PROLACTIN')], verified: true },
+      { agent: 'valproate',
+        action: 'avoid/caution',
+        rule: 'Linked to new-onset PCOS / hyperandrogenism (~10%, often within 6–12 months) in women of reproductive age — avoid/limit and screen for menstrual/androgenic symptoms.',
+        src: [MS('VALP_PCOS')], verified: true },
+      { agent: 'SSRIs (sertraline) — if on levothyroxine',
+        action: 'caution',
+        rule: 'May INCREASE levothyroxine requirements (FDA label, sertraline) → recheck TSH ~6–8 weeks after starting an SSRI in a thyroxine-treated patient and adjust the levothyroxine dose.',
+        src: [MS('LEVO_INTERACT')], verified: true },
+    ],
+
+    contraindic: [
+      { rule: 'Prolactin-raising antipsychotics (risperidone/paliperidone/amisulpride/FGAs) in known prolactinoma or symptomatic hyperprolactinaemia — avoid; switch to / add aripiprazole.',
+        src: [MS('AP_PROLACTIN')], verified: true },
+      { rule: 'Valproate in women of reproductive age with (or at risk of) PCOS — avoid where possible.',
+        src: [MS('VALP_PCOS')], verified: true },
+    ],
+
+    labsRef: 'Thyroid function (TSH ± free T4, and antibodies/thyroid size on lithium) — surfaced by the dynamic-labs engine for thyroid cases. Add baseline + annual TSH on lithium; prolactin if a prolactin-raising antipsychotic is used and the patient is symptomatic; recheck TSH ~6–8 wk after starting an SSRI in a thyroxine-treated patient.',
+
+    nutrition: [
+      { item: 'Levothyroxine timing vs food/minerals — if on thyroxine', action: 'ensure',
+        rule: 'Levothyroxine on an empty stomach, and separated by ≥4 h from calcium, iron, soy, and coffee (all reduce its absorption). This is the psych-nutrition/timing intersection the engine owns; also stated in chrono.',
+        src: [MS('LEVO_INTERACT')], verified: true },
+    ],
+
+    supplements: [
+      { item: 'Calcium / iron / multivitamins — if on levothyroxine', action: 'caution',
+        rule: 'Bind levothyroxine and cut its absorption (up to ~50% with calcium) — separate by ≥4 h and monitor TSH.',
+        src: [MS('LEVO_INTERACT')], verified: true },
+      { item: 'Iodine / kelp supplements', action: 'caution',
+        rule: 'Excess iodine can worsen thyroid dysfunction (both hypo- and hyper-) — avoid unsupervised high-iodine supplements in thyroid disease.',
+        src: [MS('LI_THYROID')], verified: true },
+      { item: 'High-dose biotin ("beauty"/hair-nail supplements)', action: 'caution',
+        rule: 'Interferes with biotin-based thyroid immunoassays → spurious TSH/T4 results that can mislead dosing; hold before thyroid labs. (FDA safety communication.)',
+        src: [MS('BIOTIN_LAB')], verified: false },
+      { item: 'St John\'s Wort (self-taken)', action: 'avoid',
+        rule: 'CYP3A4/P-gp inducer — alters co-med levels and serotonin-syndrome risk with the SSRI; screen for it.',
+        src: [MS('SJW_CYP')], verified: true },
+    ],
+
+    nutritionRef: null,
+    chrono: 'If on levothyroxine: take it in the morning on an empty stomach, ≥30–60 min before food/coffee and ≥4 h apart from calcium/iron — a source-based administration-timing rule (like hepatic, endocrine has a real chrono touchpoint).',
+    referral: 'Refer to ENDOCRINOLOGY and co-manage jointly (psychiatry + endocrinology ± gynaecology): monitor lithium-related thyroid function, choose prolactin-sparing antipsychotics where prolactin matters, avoid valproate-related PCOS risk, and coordinate levothyroxine dosing/timing. Psychiatry leads the mood/psychosis protocol; endocrinology governs endocrine sign-off.',
+
+    labsSrc: [MS('LI_THYROID')],
+    referralSrc: [MS('LI_THYROID'), MS('AP_PROLACTIN')],
+  },
+
+  /* ── all six medical-comorbidity units are now BUILT. ──────────────────── */
 };
 
 /* ── Detection API ──────────────────────────────────────────────────────── */
