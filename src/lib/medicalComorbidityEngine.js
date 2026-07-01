@@ -64,6 +64,12 @@ export const MED_SRC = {
   BZD_HEP:     'Benzodiazepines in liver disease (Peppers 1996; LiverTox; Psychotropics-in-liver-disease review 2017) — PREFER lorazepam/oxazepam/temazepam (glucuronidation/phase-II, preserved); AVOID diazepam/chlordiazepoxide (phase-I oxidation → accumulation, sedation, respiratory depression). Reduce dose ~50% in moderate impairment. In hepatic ENCEPHALOPATHY avoid ALL benzodiazepines (can precipitate/worsen it); buspirone is a non-benzo anxiolytic alternative.',
   ESPEN_EASL_LIV:'EASL & ESPEN clinical-nutrition-in-liver-disease guidelines (2019) — cirrhosis is NOT protein-restricted: target 1.2–1.5 g/kg/day; late-evening snack (~50 g carbohydrate ± BCAA) to shorten nocturnal fasting, reduce catabolism, preserve muscle; sodium restriction only when ascites; BCAA supplementation improves nitrogen balance/survival.',
   HDS_HEP:     'Herbal & dietary supplement hepatotoxicity (LiverTox/NIH; DILIN — Navarro; Chalasani Gastroenterology 2008) — HDS cause ~20% of US DILI. Culprits: anabolic/bodybuilding steroids, high-dose green tea extract (EGCG), multi-ingredient weight-loss products (Hydroxycut/Herbalife), kava (>100 reports), usnic acid, chaparral, germander, high-dose niacin.',
+
+  /* ── diabetes-unit sources ── */
+  AP_METAB:    'Pillinger T et al. Comparative effects of 18 antipsychotics on metabolic function — systematic review & network meta-analysis. Lancet Psychiatry 2020;7:64-77. Worst: olanzapine, clozapine; medium: quetiapine, risperidone, paliperidone; most benign: aripiprazole, brexpiprazole, cariprazine, lurasidone, ziprasidone.',
+  ADA_APA_DM:  'ADA/APA/AACE/NAASO 2004 Consensus on Antipsychotic Drugs & Obesity/Diabetes (Diabetes Care 2004;27:596) + FDA SGA class warning for hyperglycaemia/DKA; HbA1c added 2010. Baseline: personal/family history, weight/BMI, waist, BP, fasting glucose, fasting lipids; weight at 4 & 8 wk; full re-check at 12 wk; then glucose+BP yearly (more if higher risk), lipids yearly; switch to a lower-risk SGA if glycaemia/lipids worsen.',
+  AD_WEIGHT:   'Antidepressant weight/metabolic effects (Maudsley Prescribing Guidelines; Serretti & Mandelli 2010) — weight GAIN: mirtazapine, paroxetine, TCAs, (long-term most ADs to a degree); weight-NEUTRAL/LOSS: bupropion; broadly neutral short-term: most SSRIs (sertraline/escitalopram/fluoxetine). Mood stabilisers valproate/lithium and gabapentinoids also cause weight gain.',
+  DM_SUPP:     'Glucose-lowering dietary supplements (NCCIH; meta-analyses) — berberine, cinnamon, chromium, alpha-lipoic acid, fenugreek, magnesium can lower glucose; stacked on antidiabetics (esp. sulfonylureas) → HYPOGLYCAEMIA. Berberine additionally inhibits CYP enzymes (drug interactions); cassia cinnamon contains coumarin (hepatotoxic at high chronic dose); high-dose chromium carries renal risk.',
 };
 const MS = (k) => MED_SRC[k] || k;
 
@@ -103,6 +109,14 @@ const CONCEPT_TERMS = {
     'كبد', 'كبدي', 'الكبد', 'تليف الكبد', 'تليّف', 'تشمع', 'تشمّع',
     'التهاب الكبد', 'دهون الكبد', 'الكبد الدهني', 'اعتلال دماغي كبدي',
     'استسقاء', 'يرقان', 'صفرا', 'دوالي المريء',
+  ],
+  diabetes: [
+    // English
+    'diabet', 't2dm', 't1dm', 'dm2', 'dm1', 'hba1c', 'hyperglyc',
+    'insulin resist', 'prediabet', 'pre-diabet', 'metabolic syndrome',
+    // Arabic (substring absorbs ال-)
+    'سكري', 'السكري', 'سكر', 'مرض السكر', 'مقاومة الانسولين', 'مقاومة الإنسولين',
+    'ارتفاع السكر', 'متلازمة أيضية', 'متلازمة استقلابية',
   ],
 };
 const hasTerm = (text, concept) =>
@@ -411,8 +425,76 @@ export const MED_COMORBIDITIES = {
     referralSrc: [MS('DILI_AD'), MS('ESPEN_EASL_LIV')],
   },
 
+  /* ── DIABETES MELLITUS ────────────────────────────────────── BUILT ──── */
+  diabetes: {
+    label: { en: 'Diabetes mellitus', ar: 'داء السكري' },
+    detect: (t) => hasTerm(t, 'diabetes'),
+
+    drugAdjust: [
+      { agent: 'olanzapine, clozapine',
+        action: 'avoid',
+        rule: 'HIGHEST metabolic risk — weight gain, hyperglycaemia, new-onset diabetes and DKA, dyslipidaemia (FDA SGA class warning). Avoid in diabetes where possible; if unavoidable (e.g. clozapine for resistant illness) monitor intensively and co-manage.',
+        src: [MS('AP_METAB'), MS('ADA_APA_DM')], verified: true },
+      { agent: 'quetiapine, risperidone, paliperidone',
+        action: 'caution',
+        rule: 'MEDIUM metabolic risk — usable with monitoring; watch weight/glucose/lipids.',
+        src: [MS('AP_METAB')], verified: true },
+      { agent: 'aripiprazole, brexpiprazole, cariprazine, lurasidone, ziprasidone',
+        action: 'prefer',
+        rule: 'Most metabolically benign antipsychotics — prefer when an antipsychotic is needed in diabetes. CROSS-TENSION: ziprasidone is metabolically friendly but a QT-risk agent in the cardiac unit — if cardiac+diabetes coexist, lurasidone/aripiprazole balance both better.',
+        src: [MS('AP_METAB')], verified: true },
+      { agent: 'mirtazapine, paroxetine, TCAs',
+        action: 'caution',
+        rule: 'Weight-gain antidepressants — worsen glycaemic control; avoid/limit in diabetes.',
+        src: [MS('AD_WEIGHT')], verified: true },
+      { agent: 'bupropion / SSRIs (sertraline, escitalopram, fluoxetine)',
+        action: 'prefer',
+        rule: 'Bupropion is weight-neutral/favourable; the listed SSRIs are broadly weight-neutral — reasonable antidepressant choices in diabetes.',
+        src: [MS('AD_WEIGHT')], verified: true },
+      { agent: 'valproate, lithium, gabapentin/pregabalin',
+        action: 'caution',
+        rule: 'All cause weight gain (caution in diabetes). Dual-edge: gabapentinoids also treat diabetic neuropathic pain — a potential single-agent benefit if that comorbidity is present.',
+        src: [MS('AD_WEIGHT')], verified: true },
+      { agent: 'any SGA — worsening glycaemia',
+        action: 'adjust',
+        rule: 'If glucose/lipids worsen on an antipsychotic, switch to a lower-metabolic-risk SGA rather than pushing dose (ADA/APA).',
+        src: [MS('ADA_APA_DM')], verified: true },
+    ],
+
+    contraindic: [
+      { rule: 'No absolute contraindication, but olanzapine/clozapine carry an FDA class warning for hyperglycaemia/DKA — relative avoidance in poorly-controlled diabetes; monitor intensively if used.',
+        src: [MS('ADA_APA_DM')], verified: true },
+    ],
+
+    labsRef: 'Metabolic panel — fasting glucose / HbA1c + lipids (+ weight/BMI/waist/BP) already surfaced by the dynamic-labs engine for diabetes/obesity. Follow the ADA/APA schedule: baseline; weight at 4 & 8 wk; full re-check at 12 wk; then glucose+BP yearly (more if higher risk) and lipids yearly.',
+
+    nutrition: [
+      { item: 'Carbohydrate quality / added sugar / fibre', action: 'ensure',
+        rule: 'The psychiatric nutrition layer\'s carb-quality targets (low added sugar, higher fibre, lower-GI) reinforce glycaemic goals — keep them aligned. Specific carb-counting / individualised targets are set by the diabetes dietitian, not invented here.',
+        src: [MS('ADA_APA_DM')], verified: true },
+      { item: 'Weight-aware planning', action: 'ensure',
+        rule: 'Account for the metabolic effect of any weight-gain psychotropic in the plan; coordinate calorie/weight targets with the diabetes team.',
+        src: [MS('ADA_APA_DM')], verified: true },
+    ],
+
+    supplements: [
+      { item: 'Glucose-lowering supplements (berberine, cinnamon, chromium, ALA, fenugreek, magnesium)', action: 'caution',
+        rule: 'Stacked on antidiabetic drugs (especially sulfonylureas) → HYPOGLYCAEMIA risk. Berberine also inhibits CYP enzymes (drug interactions); cassia cinnamon carries coumarin hepatotoxicity at high chronic dose. Screen for these and coordinate with the diabetes team — do not add blindly.',
+        src: [MS('DM_SUPP')], verified: true },
+      { item: 'St John\'s Wort (self-taken)', action: 'avoid',
+        rule: 'CYP3A4/P-gp inducer — alters co-med levels and serotonin-syndrome risk with the SSRI; screen for it.',
+        src: [MS('SJW_CYP')], verified: true },
+    ],
+
+    nutritionRef: null,
+    chrono: null, // glucose meal-timing is diabetes-team-managed; no psych-specific source-based rule
+    referral: 'Refer to ENDOCRINOLOGY / diabetes team and co-manage jointly (psychiatry + endocrinology + dietitian): prefer metabolically-benign psychotropics, run the ADA/APA metabolic monitoring, and let the diabetes team own glycaemic targets & antidiabetic therapy. Psychiatry leads the mood/psychosis protocol; endocrinology governs metabolic sign-off.',
+
+    labsSrc: [MS('ADA_APA_DM')],
+    referralSrc: [MS('ADA_APA_DM')],
+  },
+
   /* ── the following are SHAPE-ONLY placeholders (NOT fabricated). ───────── */
-  diabetes:     { __pending: true, label: { en: 'Diabetes mellitus', ar: 'داء السكري' } },
   hypertension: { __pending: true, label: { en: 'Hypertension', ar: 'ارتفاع ضغط الدم' } },
   endocrine:    { __pending: true, label: { en: 'Endocrine (thyroid)', ar: 'غدد (درقية)' } },
 };
