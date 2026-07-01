@@ -79,6 +79,8 @@ export const RX_SOURCES = {
   PSWQ:        'Meyer TJ, Miller ML, Metzger RL, Borkovec TD. Development & validation of the Penn State Worry Questionnaire. Behav Res Ther 1990;28(6):487-95.',
   IUS12:       'Carleton RN, Norton MAPJ, Asmundson GJG. Fearing the unknown: a short version of the Intolerance of Uncertainty Scale (IUS-12). J Anxiety Disord 2007;21(1):105-17.',
   SEGAL_MBCT:  'Segal ZV, Williams JMG, Teasdale JD. Mindfulness-Based Cognitive Therapy for Depression, 2nd ed. Guilford 2013.',
+  MARTELL_BA:  'Martell CR, Dimidjian S, Herman-Dunn R. Behavioral Activation for Depression: A Clinician\u2019s Guide, 2nd ed. Guilford 2022.',
+  PHQ9:        'Kroenke K, Spitzer RL, Williams JBW. The PHQ-9: validity of a brief depression severity measure. J Gen Intern Med 2001;16(9):606-13 (0–27; 5/10/15/20 = mild/moderate/mod-severe/severe; <5 remission; ≥50% drop = response).',
   SMPC:        'Manufacturer SmPC / FDA label (drug-specific; verify current label).',
 };
 
@@ -1135,6 +1137,74 @@ export const THERAPY_TECHNIQUES = {
 export const PSYCHOTHERAPY_ACTIVE = true;
 
 export const PSYCHOTHERAPY_PLAN = {
+  MDD: {
+    model:
+      'Measurement-based CANMAT 2023 course. First-line psychotherapies for MDD are CBT, Behavioural Activation (BA) and Interpersonal Psychotherapy (IPT); for moderate–severe depression combined pharmacotherapy + psychotherapy is preferred, and MBCT is a first-line relapse-prevention option (especially recurrent depression). Acute → continuation → maintenance phases, guided by PHQ-9.',
+    coreMeasures: [
+      { tool: 'PHQ-9', kind: 'self-report (9 items, 0–27)', cadence: 'baseline + every 2–4 wk (measurement-based care)',
+        interpret: '5/10/15/20 = mild/moderate/mod-severe/severe; response = ≥50% drop; remission = <5. Item 9 flags suicidal ideation — assess directly.', src: [S('PHQ9')], verified: false },
+      { tool: 'GAD-7', kind: 'self-report', cadence: 'baseline + periodic',
+        interpret: 'Track comorbid anxiety, which is common and worsens prognosis.', src: [S('GAD7')], verified: false },
+      { tool: 'Mood-disorder / bipolarity screen', kind: 'clinician-rated', cadence: 'at intake + if activation/worsening on antidepressant',
+        interpret: 'Do NOT miss bipolar depression before/while treating — changes both drug and psychotherapy plan.', src: [S('CANMAT_MDD')], verified: false },
+    ],
+    phases: [
+      { phase: 0, name: 'Assessment, psychoeducation & measurement-based-care setup', duration: '1–2 sessions',
+        goals: 'Diagnosis & severity; risk/suicidality assessment; bipolarity screen; psychoeducation; shared formulation; agree first-line modality (CBT / BA / IPT) by presentation & preference; set PHQ-9 baseline.',
+        techniques: [
+          { school: 'CBT', name: 'psychoeducation + cognitive-behavioural formulation', how: 'Explain the depression cycle (low activity → low mood → withdrawal); agree goals; set measurement-based care.', src: [S('BECK_CBT'), S('CANMAT_MDD')] },
+          { school: 'IPT', name: 'interpersonal inventory (if interpersonal trigger)', how: 'Map key relationships and a focal problem area (grief, role transition, role dispute, sensitivities).', src: [S('KLERMAN_IPT')] },
+        ],
+        phaseTarget: 'Diagnosis & risk clarified, bipolarity screened, modality agreed, baseline PHQ-9 recorded.' },
+      { phase: 1, name: 'Acute phase — reduce symptoms to response/remission', duration: '~8–16 weekly sessions',
+        goals: 'Reverse inactivity & anhedonia; restructure depressive cognition; or resolve the focal interpersonal problem — to response then remission.',
+        techniques: [
+          { school: 'BA', name: 'behavioural activation & activity scheduling', how: 'Monitor activity–mood links; schedule value- and mastery-based activities; reverse avoidance from the outside-in.', src: [S('MARTELL_BA'), S('CANMAT_MDD')] },
+          { school: 'CBT', name: 'cognitive restructuring', how: 'Thought records; identify and test depressive automatic thoughts and core beliefs; behavioural experiments.', src: [S('BECK_CBT')] },
+          { school: 'IPT', name: 'focal interpersonal work', how: 'Work the chosen focus (role transition/dispute/grief); link mood to interpersonal events; build support & communication.', src: [S('KLERMAN_IPT')] },
+        ],
+        phaseTarget: 'PHQ-9 falling toward response (≥50% drop); activity & engagement rising; cognitive/interpersonal targets addressed.' },
+      { phase: 2, name: 'Continuation — consolidate remission & tackle residuals', duration: 'continue ~4–9 months after response',
+        goals: 'Consolidate to full remission; resolve residual symptoms (sleep, anhedonia, rumination); prevent early relapse.',
+        techniques: [
+          { school: 'CBT', name: 'residual-symptom & rumination work', how: 'Target leftover cognitions, sleep and rumination; strengthen coping and problem-solving.', src: [S('BECK_CBT'), S('CANMAT_MDD')] },
+          { school: 'BA', name: 'sustained activation & routine', how: 'Embed the activity routine into daily life; maintain valued activities as mood improves.', src: [S('MARTELL_BA')] },
+        ],
+        phaseTarget: 'Full remission (PHQ-9 <5) sustained; residual symptoms minimal; routine self-maintained.' },
+      { phase: 3, name: 'Maintenance & relapse prevention', duration: 'variable; boosters',
+        goals: 'Prevent recurrence (higher priority with each past episode); build a wellness/relapse plan.',
+        techniques: [
+          { school: 'MBCT', name: 'mindfulness-based cognitive therapy', how: 'First-line relapse prevention for recurrent depression: decentring from ruminative thought; early-warning-sign awareness.', src: [S('SEGAL_MBCT'), S('CANMAT_MDD')] },
+          { school: 'CBT', name: 'relapse-prevention blueprint', how: 'Summarise what helped, early-warning signs and an action plan; taper frequency; schedule boosters.', src: [S('BECK_CBT')] },
+        ],
+        phaseTarget: 'Written relapse-prevention/wellness plan; maintenance strategy matched to recurrence risk.' },
+    ],
+    nonResponse: {
+      reviewAt: 'Measurement-based review every 2–4 wk; if PHQ-9 has not improved by ~4–6 weeks, reassess before continuing.',
+      checklist: [
+        'Adequate dose & fidelity (session number, homework/activation adherence)',
+        'Missed bipolarity — antidepressant/activation without benefit or with activation',
+        'Comorbidity — anxiety, substance use, trauma, personality, medical (thyroid, anaemia)',
+        'Ongoing psychosocial maintainer (relationship, work, isolation)',
+        'Suicidality / safety re-assessment (PHQ-9 item 9)',
+        'Correct modality — is it inactivity (BA), cognition (CBT), or interpersonal (IPT)?',
+      ],
+      alternatives: [
+        { ifX: 'Inactivity & avoidance dominate', switchTo: 'Prioritise Behavioural Activation.', src: [S('MARTELL_BA')] },
+        { ifX: 'Interpersonal trigger (loss, role change/dispute) dominates', switchTo: 'Interpersonal Psychotherapy (IPT).', src: [S('KLERMAN_IPT')] },
+        { ifX: 'Recurrent depression / relapse prevention focus', switchTo: 'MBCT (first-line relapse prevention).', src: [S('SEGAL_MBCT')] },
+        { ifX: 'Moderate–severe or psychotherapy-alone inadequate', switchTo: 'Combine with pharmacotherapy (or optimise the antidepressant) per CANMAT.', src: [S('CANMAT_MDD')] },
+        { ifX: 'Screen positive for bipolarity', switchTo: 'Re-diagnose & treat as bipolar depression (do not continue unopposed antidepressant).', src: [S('CANMAT_MDD'), S('CANMAT_BD')] },
+      ],
+    },
+    crossSchool: [
+      'Activity scheduling — shared by BA and CBT.',
+      'Mindfulness / decentring — MBCT ↔ ACT ↔ mindfulness.',
+      'Behavioural experiments — CBT ↔ BA.',
+      'Measurement-based care (PHQ-9) — across all modalities.',
+      'Problem-solving — CBT ↔ IPT interpersonal problem-solving.',
+    ],
+  },
   GAD: {
     model:
       'Stepped-care CBT course (NICE CG113): assessment & worry formulation → foundational skills (applied relaxation, worry postponement) → high-intensity CBT integrating intolerance-of-uncertainty (Dugas) and metacognitive (Wells) methods with worry/imaginal exposure → relapse prevention. High-intensity psychological therapy and drug treatment are equally effective first-line — choice by patient preference (NICE); benzodiazepines are not maintenance treatment.',
