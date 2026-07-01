@@ -272,13 +272,21 @@ function pdCertBadge(c) {
   return `<span class="pd-cert ${cls}">${E(c)}</span>`;
 }
 function pdBenefitRow(b) {
-  const stars = pdStars(b.smd, b.certainty);
   let val;
   if (b.smd != null) {
+    // Continuous effect size → Cohen stars apply (suppressed at very-low certainty).
+    const stars = pdStars(b.smd, b.certainty);
     const bits = [`SMD ${E(b.smd)}`];
     if (b.ci) bits.push(`(95% CI ${E(b.ci)})`);
     if (b.p) bits.push(`P=${E(b.p)}`);
     val = `${stars ? `<span class="pd-stars">${stars}</span> ` : ''}<span class="pd-benv">${bits.join(' · ')}</span> ${pdCertBadge(b.certainty)}`;
+  } else if (b.metricValue) {
+    // Non-SMD effect (e.g. OR for response) — shown as-is, NO Cohen stars
+    // (the |d| thresholds are SMD-specific; starring an OR would be dishonest).
+    const bits = [`${E(b.metricLabel || 'effect')} ${E(b.metricValue)}`];
+    if (b.ci) bits.push(`(95% CI ${E(b.ci)})`);
+    if (b.p) bits.push(`P=${E(b.p)}`);
+    val = `<span class="pd-benv">${bits.join(' · ')}</span> ${pdCertBadge(b.certainty)}`;
   } else {
     val = `<span class="pd-sig">signal — no pooled SMD</span> ${pdCertBadge(b.certainty)}`;
   }
@@ -333,7 +341,7 @@ function pdCompareMatrix(list) {
   if (!list.length) return '';
   const head = `<tr><th class="pd-feat">Feature</th>${list.map((m) => `<th>${E(m.drug.split(' ')[0])}</th>`).join('')}</tr>`;
   const rowStrength = `<tr><td class="pd-feat">Strength · certainty</td>${list.map((m) => `<td>${m.strength ? `${E(m.strength.level)}<br><span style="font-size:10px;color:#7a8891">${E(m.strength.certainty || '')}</span>` : '—'}</td>`).join('')}</tr>`;
-  const rowTop = `<tr><td class="pd-feat">Top pooled benefit</td>${list.map((m) => { const b = (m.benefit || []).find((x) => x.smd != null); return `<td>${b ? `SMD ${E(b.smd)}<br><span style="font-size:10px;color:#7a8891">${E(b.symptom)}</span>` : '<span style="color:#48555d">signal only</span>'}</td>`; }).join('')}</tr>`;
+  const rowTop = `<tr><td class="pd-feat">Top pooled benefit</td>${list.map((m) => { const b = (m.benefit || []).find((x) => x.smd != null) || (m.benefit || []).find((x) => x.metricValue); const v = b ? (b.smd != null ? `SMD ${E(b.smd)}` : `${E(b.metricLabel || '')} ${E(b.metricValue)}`) : null; return `<td>${b ? `${v}<br><span style="font-size:10px;color:#7a8891">${E(b.symptom)}</span>` : '<span style="color:#48555d">signal only</span>'}</td>`; }).join('')}</tr>`;
   const rowPreg = `<tr><td class="pd-feat">Pregnancy</td>${list.map((m) => { const a = (m.avoidIf || []).find((x) => /pregnan|childbearing/i.test(x.text)); return `<td>${a ? (a.tier === 'absolute' ? '<span style="color:#f09595">❌</span>' : '<span style="color:#e0b872">⚠</span>') : '<span style="color:#61707b">—</span>'}</td>`; }).join('')}</tr>`;
   return `<details class="pd-cmp" open><summary>⚖ Compare all ${list.length} — pick in one glance</summary>`
     + `<div style="padding:2px 10px 12px"><table class="pd-cmp-t"><thead>${head}</thead><tbody>${rowStrength}${rowTop}${rowPreg}</tbody></table>`

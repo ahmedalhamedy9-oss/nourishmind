@@ -42,7 +42,8 @@ export const RX_SOURCES = {
   FDA_GABA:    'FDA Drug Safety Communication — gabapentinoid respiratory depression, 19 Dec 2019.',
   FDA_SSRI_BBW:'FDA boxed warning — antidepressants & suicidality in patients <25 y.',
   CANMAT_BD:   'Yatham LN et al. CANMAT/ISBD 2018 guidelines for management of bipolar disorder (antidepressant-monotherapy caution).',
-  CANMAT_MDD:  'Lam RW et al. CANMAT 2023 update — management of MDD in adults. Can J Psychiatry 2024;69(9):641-687.',
+  CANMAT_MDD:  'Lam RW et al. CANMAT 2023 update — management of MDD in adults. Can J Psychiatry 2024;69(9):641-687. First-line antidepressants with evidence for SUPERIOR RESPONSE (8): agomelatine, bupropion, escitalopram, mirtazapine, paroxetine, sertraline, venlafaxine-XR, vortioxetine (differences ≈5–10 percentage points vs comparators). Adjunctive SGAs (aripiprazole, brexpiprazole, olanzapine, quetiapine, risperidone) = Level 1 for inadequate response; aripiprazole 2–10 mg positioned first-line adjunct.',
+  CIPRIANI2018:'Cipriani A, Furukawa TA, Salanti G, et al. Comparative efficacy and acceptability of 21 antidepressants for acute MDD: systematic review & network meta-analysis. Lancet 2018;391(10128):1357-1366 (522 trials, 116,477 pts). All 21 > placebo (efficacy OR 1.37 reboxetine → 2.13 amitriptyline). In head-to-head trials the MORE-EFFECTIVE agents were agomelatine, amitriptyline, escitalopram, mirtazapine, paroxetine, venlafaxine, vortioxetine (OR 1.19–1.96 vs other ADs); least: fluoxetine, fluvoxamine, reboxetine, trazodone (0.51–0.84). MORE-TOLERABLE (fewer dropouts): agomelatine, citalopram, escitalopram, fluoxetine, sertraline, vortioxetine; highest dropout: amitriptyline, clomipramine, duloxetine, fluvoxamine, reboxetine, trazodone, venlafaxine. Certainty mostly moderate–low (GRADE).',
   APA_OCD:     'APA Practice Guideline for OCD (Koran et al.) + subsequent reviews; high-dose SSRI / ERP.',
   ACOG_PMDD:   'ACOG Clinical Practice Guideline No.7 — premenstrual dysphoric disorder (2023).',
   DRSP:        'Endicott J, Nee J, Harrison W. Daily Record of Severity of Problems (DRSP): reliability & validity. Arch Womens Ment Health 2006;9:41-9 (prospective daily rating over ≥2 cycles; luteal vs follicular cyclicity confirms PMDD).',
@@ -584,6 +585,20 @@ const MDD = {
       specialPops: { elderly: 'Start 5, max 10; Na+.', peds: 'Escitalopram/fluoxetine the approved peds antidepressants.', pgx: 'CYP2C19 PM→↑ exposure ~50% dose; UM→alternative (CPIC).' },
       switching: 'SSRI↔SSRI direct; MAOI 14-d washout.', counseling: 'Delayed effect; no abrupt stop; report early worsening.',
       comparativeEfficacy: { note: 'Among CANMAT-2023 8 superior-efficacy agents; favourable interactions.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (CANMAT-2023 first-line; Cipriani-2018 large NMA)', note: 'First-line with evidence for SUPERIOR response AND superior tolerability — best efficacy/acceptability balance among SSRIs.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      bestIf: [
+        { text: 'First-line depression — best efficacy/tolerability balance', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+        { text: 'Minimal drug interactions needed (clean CYP profile)', src: [S('CANMAT_MDD')], verified: true, derived: true },
+        { text: 'Comorbid anxiety (SSRI covers both)', src: [S('CANMAT_MDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'QTc prolongation / significant cardiac risk — dose-dependent at 20 mg', tier: 'relative', src: [S('FDA_CIT_QT')], verified: true },
+        { text: 'High bleeding risk / anticoagulation', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — acute response', metricLabel: 'OR', metricValue: 'more-effective tier (head-to-head 1.19–1.96 vs other ADs)', certainty: 'moderate', basis: 'Cipriani 2018 NMA — escitalopram in BOTH the more-effective and more-tolerable groups; CANMAT-2023 superior-response list. Exact per-drug OR not extractable from open sources → not encoded.', src: [S('CIPRIANI2018'), S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('CPIC_SSRI'), S('FDA_SSRI_BBW'), S('SMPC')], verified: true },
 
     { id: 'sertraline', drug: 'Sertraline', class: 'SSRI', trade: { generic: 'sertraline', egypt: NEEDS },
@@ -600,6 +615,21 @@ const MDD = {
       specialPops: { elderly: 'Start low; Na+.', peds: 'Used; fluoxetine/escitalopram are the labelled ones.', pgx: 'CYP2C19/2B6; smaller PGx effect.' },
       switching: 'Direct/short cross-taper; MAOI 14-d.', counseling: 'With food; delayed effect; no abrupt stop.',
       comparativeEfficacy: { note: 'CANMAT-2023 superior-efficacy; few interactions.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (CANMAT-2023 first-line; Cipriani-2018 NMA)', note: 'First-line with superior-response evidence and best-in-class tolerability; often preferred SSRI in pregnancy / cardiac disease.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      bestIf: [
+        { text: 'First-line depression, tolerability prioritised', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+        { text: 'Pregnancy / lactation (often preferred SSRI)', src: [S('SMPC')], verified: true },
+        { text: 'Cardiac disease (low QT signal)', src: [S('CANMAT_MDD')], verified: true, derived: true },
+        { text: 'Comorbid anxiety / OCD (broad SSRI coverage)', src: [S('CANMAT_MDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Oral concentrate with disulfiram (alcohol content)', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'High bleeding risk', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — acute response', metricLabel: 'OR', metricValue: 'effective; among the MORE-TOLERABLE agents', certainty: 'moderate', basis: 'CANMAT-2023 superior-response list; Cipriani 2018 places sertraline in the more-tolerable group (not the top head-to-head efficacy tier). Exact per-drug OR not in open snippets.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('CPIC_SSRI'), S('FDA_SSRI_BBW'), S('SMPC')], verified: true },
 
     { id: 'venlafaxine_xr', drug: 'Venlafaxine XR', class: 'SNRI', trade: { generic: 'venlafaxine ER/XR', egypt: NEEDS },
@@ -616,6 +646,21 @@ const MDD = {
       specialPops: { elderly: 'BP/Na+.', peds: 'Avoid.', pgx: 'CYP2D6 substrate.' },
       switching: 'Cross-taper; MAOI 14-d.', counseling: 'Never miss/stop abruptly; BP monitoring.',
       comparativeEfficacy: { note: 'CANMAT-2023 superior-efficacy; worst withdrawal/BP.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (CANMAT-2023 first-line; Cipriani-2018 NMA)', note: 'Superior-response evidence, but among the LEAST tolerable (highest dropout) with dose-dependent hypertension + severe withdrawal — reserve where efficacy is prioritised or pain is comorbid.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      bestIf: [
+        { text: 'Depression where efficacy is prioritised over tolerability', src: [S('CIPRIANI2018'), S('CANMAT_MDD')], verified: true },
+        { text: 'Comorbid chronic / neuropathic pain (SNRI covers both)', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Comorbid anxiety', src: [S('CANMAT_MDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Uncontrolled hypertension / high cardiac risk — dose-dependent BP rise', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'High suicide-risk / overdose concern (more dangerous in overdose)', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Poor adherence — severe discontinuation (short half-life)', tier: 'relative', src: [S('MAUDSLEY_DP')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — acute response', metricLabel: 'OR', metricValue: 'more-effective tier (head-to-head 1.19–1.96)', certainty: 'moderate', basis: 'Cipriani 2018 — venlafaxine in the more-effective group BUT among the highest-dropout agents; CANMAT-2023 superior-response list. Exact per-drug OR not in open sources.', src: [S('CIPRIANI2018'), S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('MAUDSLEY_DP'), S('SMPC')], verified: true },
 
     { id: 'mirtazapine', drug: 'Mirtazapine', class: 'NaSSA (α2 antagonist)', trade: { generic: 'mirtazapine', egypt: NEEDS },
@@ -632,6 +677,20 @@ const MDD = {
       switching: 'Often combined with SSRI/SNRI as augmentation; MAOI 14-d.',
       counseling: 'Sedating + appetite — first pick for insomnia/weight loss depression; lower dose can be MORE sedating.',
       comparativeEfficacy: { note: 'CANMAT-2023 superior-efficacy; targets sleep/appetite.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (CANMAT-2023 first-line; Cipriani-2018 NMA)', note: 'Superior-response evidence; sedation + appetite stimulation help insomnia/appetite-loss depression, but weight gain limits use in others.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      bestIf: [
+        { text: 'Depression with insomnia and/or appetite / weight loss', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Sexual dysfunction on an SSRI (mirtazapine spares sexual function)', src: [S('CANMAT_MDD')], verified: true, derived: true },
+        { text: 'Efficacy prioritised (more-effective NMA tier)', src: [S('CIPRIANI2018')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Obesity / metabolic concern — weight gain', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Daytime sedation undesirable', tier: 'relative', src: [S('SMPC')], verified: true, derived: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — acute response', metricLabel: 'OR', metricValue: 'more-effective tier (head-to-head 1.19–1.96)', certainty: 'moderate', basis: 'Cipriani 2018 more-effective group; CANMAT-2023 superior-response list. Exact per-drug OR not in open sources.', src: [S('CIPRIANI2018'), S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('SMPC')], verified: true },
 
     { id: 'vortioxetine', drug: 'Vortioxetine', class: 'serotonin modulator', trade: { generic: 'vortioxetine', egypt: NEEDS },
@@ -647,6 +706,19 @@ const MDD = {
       specialPops: { elderly: 'Cognitive benefit of interest.', peds: 'Not established.', pgx: 'CYP2D6 substrate — PM lower max (10 mg).' },
       switching: 'Cross-taper; MAOI 14-d.', counseling: 'Nausea settles; low sexual side effects.',
       comparativeEfficacy: { note: 'CANMAT-2023 superior-efficacy; cognition.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (CANMAT-2023 first-line; Cipriani-2018 NMA)', note: 'Superior-response evidence AND good tolerability; signal for cognitive symptoms; low sexual dysfunction.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      bestIf: [
+        { text: 'Depression with prominent cognitive symptoms', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Efficacy AND tolerability both prioritised', src: [S('CIPRIANI2018')], verified: true },
+        { text: 'Sexual dysfunction on other agents (low rate)', src: [S('CANMAT_MDD')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'High bleeding risk (serotonergic)', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — acute response', metricLabel: 'OR', metricValue: 'more-effective AND more-tolerable tier', certainty: 'moderate', basis: 'Cipriani 2018 — vortioxetine in BOTH the more-effective and more-tolerable groups; CANMAT-2023 superior-response list. Exact per-drug OR not in open sources.', src: [S('CIPRIANI2018'), S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('SMPC')], verified: true },
 
     { id: 'bupropion', drug: 'Bupropion XL', class: 'NDRI', trade: { generic: 'bupropion XL', egypt: NEEDS },
@@ -663,6 +735,21 @@ const MDD = {
       switching: 'Add-on to SSRI for sexual dysfunction/energy; MAOI 14-d.',
       counseling: 'Activating (morning dosing); no sexual side effects; absolute contraindication in eating disorders/seizures.',
       comparativeEfficacy: { note: 'CANMAT-2023 superior-efficacy; first-line augmentation.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (CANMAT-2023 first-line superior-response)', note: 'Superior-response evidence (CANMAT); activating, weight-neutral-to-loss, minimal sexual dysfunction. NOT in the Cipriani head-to-head top-efficacy tier — chosen largely on AE profile / comorbidity fit.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      bestIf: [
+        { text: 'Depression with fatigue / low energy / hypersomnia', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Concurrent smoking cessation', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Sexual dysfunction or weight gain on an SSRI', src: [S('CANMAT_MDD')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Eating disorder (bulimia / anorexia) — seizure risk', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Seizure disorder / conditions lowering seizure threshold', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Prominent anxiety / agitation (activating)', tier: 'relative', src: [S('CANMAT_MDD')], verified: true, derived: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — acute response', metricLabel: 'OR', metricValue: 'CANMAT superior-response; not in Cipriani top head-to-head tier', certainty: 'moderate', basis: 'CANMAT-2023 superior-response list; Cipriani 2018 did NOT place bupropion in the more-effective head-to-head group — chosen on AE profile / comorbidity fit. Exact per-drug OR not in open sources.', src: [S('CANMAT_MDD'), S('CIPRIANI2018')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('SMPC')], verified: true },
   ],
   adjunct: [
@@ -675,6 +762,18 @@ const MDD = {
       contraindications: { absolute: '—', relative: 'Akathisia history.', boxed: 'Elderly dementia mortality (class); suicidality <25 y in MDD context.' },
       pregnancyLactation: 'Case-by-case.', overdose: 'Relatively low.', specialPops: { elderly: 'Boxed dementia.', pgx: 'CYP2D6/3A4 substrate.' },
       counseling: 'Add to antidepressant for partial response; watch restlessness.',
+      strength: { level: 'High', certainty: 'high (CANMAT-2023 Level 1 adjunct)', note: 'First-line adjunctive agent for inadequate antidepressant response (Level 1); low metabolic burden vs other SGAs. Dose 2–10 mg.', src: [S('CANMAT_MDD')], verified: true },
+      bestIf: [
+        { text: 'Inadequate response to a first-line antidepressant — augmentation', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Metabolic burden a concern (favourable vs other SGAs)', src: [S('CANMAT_MDD')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Prior akathisia', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Elderly with dementia — class mortality warning', tier: 'boxed', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — adjunctive response (inadequate AD response)', metricLabel: 'evidence', metricValue: 'Level 1 · CANMAT first-line adjunct', certainty: 'high', basis: 'CANMAT-2023 rates adjunctive aripiprazole (2–10 mg) Level 1 / first-line for inadequate response. Pooled effect size not extracted from open sources.', src: [S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('SMPC')], verified: true },
     { id: 'lithium_aug', drug: 'Lithium (augmentation)', class: 'mood stabiliser', grade: 'B',
       trade: { generic: 'lithium carbonate', egypt: NEEDS }, mechanism: 'Classic antidepressant augmentation; anti-suicidal evidence.',
@@ -686,6 +785,19 @@ const MDD = {
       pregnancyLactation: 'Cardiac teratogen signal; specialist.', overdose: 'DANGEROUS — narrow index.',
       specialPops: { elderly: 'Lower levels; caution.', pgx: '—' },
       counseling: 'Hydration, consistent salt, level monitoring, signs of toxicity.',
+      strength: { level: 'Moderate', certainty: 'moderate (established augmentation; CANMAT-2023 positions SGA adjuncts first-line)', note: 'Long-established antidepressant augmentation with anti-suicidal benefit; narrow therapeutic index + monitoring burden. CANMAT-2023 positions SGA adjuncts first-line; the exact 2023 evidence line for lithium was not extractable from open sources → recognised option, precise grading NEEDS.', src: [S('CANMAT_MDD')], verified: true },
+      bestIf: [
+        { text: 'Augmentation after inadequate antidepressant response', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'High suicide risk (lithium anti-suicidal)', src: [S('CANMAT_MDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Renal impairment / dehydration risk', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Poor monitoring feasibility (narrow therapeutic index)', tier: 'relative', src: [S('SMPC')], verified: true, derived: true },
+        { text: 'Pregnancy (Ebstein anomaly signal)', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — adjunctive response', metricLabel: 'evidence', metricValue: 'established augmentation; anti-suicidal', certainty: 'moderate', basis: 'CANMAT-2023 augmentation; lithium long-established with anti-suicidal effect. Exact 2023 evidence-line & pooled effect not extractable from open sources → NEEDS for precise grading.', src: [S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('SMPC')], verified: true },
     { id: 'quetiapine_aug', drug: 'Quetiapine XR (augmentation)', class: 'atypical antipsychotic', grade: 'B',
       trade: { generic: 'quetiapine XR', egypt: NEEDS }, mechanism: 'Adjunct; sedating; norquetiapine NET inhibition.',
@@ -696,6 +808,19 @@ const MDD = {
       contraindications: { absolute: 'QT-prolonging combos caution.', relative: 'Metabolic syndrome.', boxed: 'Elderly dementia mortality.' },
       pregnancyLactation: 'Case-by-case.', overdose: 'Sedation/QT/hypotension.', specialPops: { elderly: 'Boxed dementia.', pgx: 'CYP3A4.' },
       counseling: 'Sedation/metabolic; useful if insomnia/anxiety prominent.',
+      strength: { level: 'High', certainty: 'high (CANMAT-2023 Level 1 adjunct)', note: 'Level 1 adjunctive SGA for inadequate response; sedation useful with insomnia but higher metabolic burden than aripiprazole.', src: [S('CANMAT_MDD')], verified: true },
+      bestIf: [
+        { text: 'Augmentation with comorbid insomnia / anxiety (sedation)', src: [S('CANMAT_MDD')], verified: true },
+        { text: 'Inadequate antidepressant response', src: [S('CANMAT_MDD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Metabolic syndrome / obesity — weight & metabolic burden', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'QT-prolonging drug combination', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Elderly with dementia — class mortality warning', tier: 'boxed', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'Depression — adjunctive response (inadequate AD response)', metricLabel: 'evidence', metricValue: 'Level 1 · CANMAT adjunct', certainty: 'high', basis: 'CANMAT-2023 rates adjunctive quetiapine XR Level 1 for inadequate response. Pooled effect size not extracted from open sources.', src: [S('CANMAT_MDD')], verified: true },
+      ],
       src: [S('CANMAT_MDD'), S('SMPC')], verified: true },
   ],
   excluded: [
