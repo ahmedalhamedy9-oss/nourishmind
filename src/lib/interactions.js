@@ -521,21 +521,29 @@ function classifyType(ids, foodOnly) {
   return 'drug-drug';
 }
 
+/* Convert one computed match → the structured report item shape. */
+function matchToItem(m) {
+  const ids = m.agents.map((a) => a.id);
+  const labels = orderedPairLabels(m.agents).join(' + ');
+  const flag = m.verified ? '' : ' — unverified';
+  return {
+    type: classifyType(ids, m.foodOnly),
+    items: labels,
+    severity: m.severity.toLowerCase(),
+    note: `Mechanism: ${m.mechanism} Management: ${m.management} Source (${m.tier}${flag}): ${m.source}`,
+  };
+}
+
+/* Stable identity for a match (rule + its specific agents), order-independent —
+ * used to diff the widened (comorbid) set against the prescription-only set. */
+function matchKey(m) {
+  return m.ruleId + ':' + m.agents.map((a) => a.id).slice().sort().join('+');
+}
+
 export function interactionItems(input) {
-  const matches = computeInteractions(input);
   // One structured item per interacting PAIR (already deduped & severity-sorted).
   // The trigger agent is anchored first; no lumping of distinct pairs.
-  return matches.map((m) => {
-    const ids = m.agents.map((a) => a.id);
-    const labels = orderedPairLabels(m.agents).join(' + ');
-    const flag = m.verified ? '' : ' — unverified';
-    return {
-      type: classifyType(ids, m.foodOnly),
-      items: labels,
-      severity: m.severity.toLowerCase(),
-      note: `Mechanism: ${m.mechanism} Management: ${m.management} Source (${m.tier}${flag}): ${m.source}`,
-    };
-  });
+  return computeInteractions(input).map(matchToItem);
 }
 
 /* Final [INTERACTIONS] section string, formatted like the rest of the report:
@@ -551,4 +559,62 @@ export function renderInteractionsReport({ firstLineNames = [], adjunctNames = [
       : `- No interactions in the PsychDecide table (${INTERACTIONS_VERSION}) among the entered agents. Absence here does not rule out interactions outside the table; consult a specialist reference when in doubt.`;
   }
   return items.map((i) => `- [${i.type}] ${i.items}: ${i.note} (${sevLabel}: ${i.severity})`).join('\n');
+}
+
+/* ── 7. SPLIT report: prescription vs cross-protocol cautions ──────────────
+ * Fixes alert-fatigue when the screen is widened to a comorbid disorder.
+ *   Block 1 — PRESCRIPTION: current meds + THIS plan's drugs + supplements.
+ *             These are the interactions that are actually active now.
+ *   Block 2 — CROSS-PROTOCOL: the ADDITIONAL pairs that appear only because a
+ *             comorbid disorder's drugs were added to the screen. Framed as
+ *             conditional ("only if you add a drug for <comorbidity>"), so a
+ *             physician never reads a not-yet-prescribed alternative as an
+ *             active conflict. Block 2 is omitted entirely when empty, so the
+ *             single-disorder case renders exactly like the old single block.
+ * Deterministic: same input ⇒ byte-identical output, every run.
+ */
+export function renderInteractionsReportSplit({
+  primaryFirstLine = [], primaryAdjunct = [],
+  comorbidFirstLine = [], comorbidAdjunct = [],
+  currentMeds = '', supplements = '',
+  comorbidLabels = [], lang = 'en',
+} = {}) {
+  const ar = lang === 'ar';
+  const sevLabel = ar ? 'الشدة' : 'Severity';
+  const line = (it) => `- [${it.type}] ${it.items}: ${it.note} (${sevLabel}: ${it.severity})`;
+
+  // (1) active prescription only
+  const primaryMatches = computeInteractions({
+    firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct, currentMeds, supplements,
+  });
+  // (2) widened set, then keep only the NEW pairs the comorbid drugs introduced
+  const wideMatches = computeInteractions({
+    firstLineNames: [...primaryFirstLine, ...comorbidFirstLine],
+    adjunctNames: [...primaryAdjunct, ...comorbidAdjunct],
+    currentMeds, supplements,
+  });
+  const primaryKeys = new Set(primaryMatches.map(matchKey));
+  const crossMatches = wideMatches.filter((m) => !primaryKeys.has(matchKey(m)));
+
+  const primaryLines = primaryMatches.map(matchToItem).map(line);
+  const crossLines = crossMatches.map(matchToItem).map(line);
+  const cmLabel = (comorbidLabels || []).filter(Boolean).join(' / ');
+
+  const noneMsg = ar
+    ? `- لا توجد تعارضات في جدول PsychDecide (${INTERACTIONS_VERSION}) ضمن الروشتة الحالية. الغياب هنا لا ينفي تعارضات خارج الجدول؛ راجع مصدراً متخصصاً عند الشك.`
+    : `- No interactions in the PsychDecide table (${INTERACTIONS_VERSION}) within the current prescription. Absence here does not rule out interactions outside the table; consult a specialist reference when in doubt.`;
+
+  const head1 = ar
+    ? '▸ تعارضات الروشتة الحالية (الأدوية الحالية + أدوية هذه الخطة + المكملات):'
+    : "▸ PRESCRIPTION INTERACTIONS (current meds + this plan's drugs + supplements):";
+
+  const out = [head1, primaryLines.length ? primaryLines.join('\n') : noneMsg];
+
+  if (crossLines.length) {
+    const head2 = ar
+      ? `▸ تنبيهات عبر البروتوكولات — تنطبق فقط إذا أُضيف دواء لعلاج اعتلال مصاحب${cmLabel ? ` (${cmLabel})` : ''}؛ وهي ليست فعّالة في الروشتة الحالية:`
+      : `▸ CROSS-PROTOCOL CAUTIONS — apply only if a drug is ADDED for a comorbidity${cmLabel ? ` (${cmLabel})` : ''}; NOT active in the current prescription:`;
+    out.push('', head2, crossLines.join('\n'));
+  }
+  return out.join('\n');
 }

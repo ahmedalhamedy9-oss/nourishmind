@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
-import { renderInteractionGate, renderInteractionsReport, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
+import { renderInteractionGate, renderInteractionsReport, renderInteractionsReportSplit, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
 import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
@@ -949,12 +949,20 @@ const ClinicalTool = () => {
       //    screen catches cross-protocol pairs.
       if (INTERACTIONS_ACTIVE && parsed) {
         const key = disorderKey(form.disorder);
-        const { firstLine, adjunct } = comorbidDrugNames({
+        const cdn = comorbidDrugNames({
           primaryKey: key, comorbidities: form.comorbidities, recommendedDrugNames, FORMULARY,
         });
-        parsed.interactions = renderInteractionsReport({
-          firstLineNames: firstLine, adjunctNames: adjunct,
-          currentMeds: form.currentMeds, supplements: '', lang,
+        // Split output: active prescription first, comorbid cross-protocol
+        // cautions second (labelled conditional) — kills the alert-fatigue that
+        // came from printing not-yet-prescribed comorbid alternatives as if they
+        // were active conflicts. Single-disorder cases render one block as before.
+        parsed.interactions = renderInteractionsReportSplit({
+          primaryFirstLine: cdn.primary.firstLine,
+          primaryAdjunct:   cdn.primary.adjunct,
+          comorbidFirstLine: cdn.comorbid.firstLine,
+          comorbidAdjunct:   cdn.comorbid.adjunct,
+          currentMeds: form.currentMeds, supplements: '',
+          comorbidLabels: cdn.comorbid.keys, lang,
         });
       }
 

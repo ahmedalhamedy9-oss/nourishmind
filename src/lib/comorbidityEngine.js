@@ -123,14 +123,38 @@ export function renderComorbidityReport({ primaryKey, comorbidities = '', lang =
 
 /* ── Widen the interaction screen: primary + comorbid disorders' drug names ─ */
 export function comorbidDrugNames({ primaryKey, comorbidities = '', recommendedDrugNames, FORMULARY }) {
-  const keys = [primaryKey, ...detectComorbidDisorders(comorbidities, primaryKey)];
-  const firstLine = [];
-  const adjunct = [];
-  keys.forEach((k) => {
-    if (!FORMULARY[k]) return;
-    const r = recommendedDrugNames(FORMULARY[k]);
-    firstLine.push(...(r.firstLine || []));
-    adjunct.push(...(r.adjunct || []));
+  const comorbidKeys = detectComorbidDisorders(comorbidities, primaryKey);
+  const keys = [primaryKey, ...comorbidKeys];
+  const pull = (k) => (FORMULARY[k] ? recommendedDrugNames(FORMULARY[k]) : { firstLine: [], adjunct: [] });
+
+  // primary protocol (the active prescription base)
+  const p = pull(primaryKey);
+  const primary = {
+    firstLine: [...new Set(p.firstLine || [])],
+    adjunct: [...new Set(p.adjunct || [])],
+  };
+
+  // comorbid protocols only (drugs that would be ADDED if the physician treats them)
+  const cFirst = [];
+  const cAdj = [];
+  comorbidKeys.forEach((k) => {
+    const r = pull(k);
+    cFirst.push(...(r.firstLine || []));
+    cAdj.push(...(r.adjunct || []));
   });
-  return { firstLine: [...new Set(firstLine)], adjunct: [...new Set(adjunct)], disorders: keys };
+  const comorbid = {
+    firstLine: [...new Set(cFirst)],
+    adjunct: [...new Set(cAdj)],
+    keys: comorbidKeys,
+  };
+
+  return {
+    // merged view (backward-compatible with earlier callers)
+    firstLine: [...new Set([...primary.firstLine, ...comorbid.firstLine])],
+    adjunct: [...new Set([...primary.adjunct, ...comorbid.adjunct])],
+    disorders: keys,
+    // split view (used by renderInteractionsReportSplit)
+    primary,
+    comorbid,
+  };
 }
