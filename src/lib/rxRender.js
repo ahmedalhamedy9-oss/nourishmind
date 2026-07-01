@@ -4,7 +4,7 @@
    exactly like the interaction table. The model no longer writes these — it
    only explains. Reproducible every run.
    ════════════════════════════════════════════════════════════════════════ */
-import { RX, RX_ACTIVE, THERAPY_TECHNIQUES, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE, VAGAL_TONING } from './rxFormulary';
+import { RX, RX_ACTIVE, THERAPY_TECHNIQUES, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE, VAGAL_TONING, TECHNIQUE_LIBRARY, DISORDER_TECHNIQUES } from './rxFormulary';
 
 const ok = (key) => RX_ACTIVE && RX[key] && !RX[key].__pending;
 const j = (arr) => (arr || []).join('; ');
@@ -112,7 +112,7 @@ export function renderRxTherapy({ key, lang = 'en' } = {}) {
     nr.alternatives.forEach((a) => L.push(`   – ${isAr ? 'لو' : 'if'} ${a.ifX} → ${a.switchTo} _src: ${j(a.src)}_`));
 
     L.push(`\n**${isAr ? '🔗 تقنيات مشتركة بين المدارس' : '🔗 Cross-school techniques'}:** ${plan.crossSchool.join(' · ')}`);
-    return L.join('\n') + renderVagalToning({ lang });
+    return L.join('\n') + renderTechniqueLibrary({ key, lang }) + renderVagalToning({ lang });
   }
 
   // Fallback: flat per-school techniques (disorders not yet upgraded to a staged plan).
@@ -123,7 +123,31 @@ export function renderRxTherapy({ key, lang = 'en' } = {}) {
     `**${isAr ? 'التقنيات' : 'Techniques'}:** ${t.techniques}\n` +
     `**${isAr ? 'المسار' : 'Course'}:** ${t.course} _src: ${j(t.src)}_`
   ).join('\n');
-  return flat + renderVagalToning({ lang });
+  return flat + renderTechniqueLibrary({ key, lang }) + renderVagalToning({ lang });
+}
+
+/* ── 📚 TECHNIQUE LIBRARY — step-by-step protocols for the disorder's techniques ── */
+export function renderTechniqueLibrary({ key, lang = 'en' } = {}) {
+  if (!PSYCHOTHERAPY_ACTIVE || !TECHNIQUE_LIBRARY || !DISORDER_TECHNIQUES) return '';
+  const ids = DISORDER_TECHNIQUES[key];
+  if (!ids || !ids.length) return '';
+  const isAr = lang === 'ar';
+  const L = [`\n\n**${isAr ? '📚 مكتبة التقنيات — بروتوكولات خطوة بخطوة' : '📚 Technique library — step-by-step protocols'}**`];
+  let lastSchool = null;
+  ids.forEach((id) => {
+    const t = TECHNIQUE_LIBRARY[id];
+    if (!t) return;
+    if (t.school !== lastSchool) { L.push(`\n— *${t.school}* —`); lastSchool = t.school; }
+    L.push(`**${t.name}**${t.deliveredBy ? ` _(${t.deliveredBy})_` : ''}`);
+    if (t.whatItIs) L.push(`${isAr ? 'ما هي' : 'What'}: ${t.whatItIs}`);
+    if (t.whenToUse) L.push(`${isAr ? 'متى تُستخدم' : 'When to use'}: ${t.whenToUse}`);
+    if (t.steps && t.steps.length) {
+      L.push(`${isAr ? 'الخطوات' : 'Steps'}:`);
+      t.steps.forEach((s, i) => L.push(`   ${i + 1}. ${s}`));
+    }
+    L.push(`_src: ${j(t.src)}_`);
+  });
+  return '\n' + L.join('\n');
 }
 
 /* ── 🌀 VAGAL TONING — global adjunct module appended to the therapy section ── */
@@ -134,11 +158,16 @@ export function renderVagalToning({ lang = 'en' } = {}) {
   const L = [`\n\n**${isAr ? '🌀 تنغيم العصب المبهم (Vagal toning) — مساعد' : '🌀 Vagal nerve toning — adjunct'}**`];
   L.push(`${isAr ? 'الأساس' : 'Rationale'}: ${v.rationale}`);
   L.push(`${isAr ? 'الدليل' : 'Evidence'}: ${v.evidence}`);
-  v.techniques.forEach((t) => L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} _src: ${j(t.src)}_`));
+  v.techniques.forEach((t) => {
+    L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} _src: ${j(t.src)}_`);
+    if (t.steps && t.steps.length) t.steps.forEach((s, i) => L.push(`       ${i + 1}. ${s}`));
+  });
   if (v.bodyBased && v.bodyBased.length) {
     L.push(`\n${isAr ? '🧎 تمارين جسدية للعصب المبهم' : '🧎 Body-based vagal exercises'}:`);
-    v.bodyBased.forEach((t) =>
-      L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} ${isAr ? '(الفايدة: ' : '(why: '}${t.why}) _src: ${j(t.src)}_`));
+    v.bodyBased.forEach((t) => {
+      L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} ${isAr ? '(الفايدة: ' : '(why: '}${t.why}) _src: ${j(t.src)}_`);
+      if (t.steps && t.steps.length) t.steps.forEach((s, i) => L.push(`       ${i + 1}. ${s}`));
+    });
   }
   L.push(`${isAr ? 'الدمج' : 'Integrates with'}: ${v.integratesWith}`);
   L.push(`⚠ ${isAr ? 'تحذيرات' : 'Cautions'}: ${v.cautions}`);
