@@ -32,7 +32,7 @@ export const RX_SOURCES = {
   NICE_GAD:    'NICE CG113 — GAD & panic disorder in adults (updated 2020).',
   BAP_ANX:     'Baldwin DS et al. BAP evidence-based guidelines for anxiety disorders. J Psychopharmacol 2014.',
   KATZMAN2014: 'Katzman MA et al. Canadian clinical practice guidelines, anxiety/PTSD/OCD. BMC Psychiatry 2014;14(S1):S1.',
-  SLEE2019:    'Slee A et al. Pharmacological treatments for GAD: systematic review & network meta-analysis. Lancet 2019;393:768-77.',
+  SLEE2019:    'Slee A, Nazareth I, Bondaronek P, et al. Pharmacological treatments for generalised anxiety disorder: a systematic review and network meta-analysis. Lancet 2019;393:768-777 (89 trials, 25,441 pts). HAM-A mean difference vs placebo: quetiapine −3.60 (95% CrI −4.83 to −2.39; LARGEST effect but poorly tolerated, dropout OR 1.44 [1.16–1.80]); duloxetine −3.13 (−4.13 to −2.13); pregabalin −2.79 (−3.69 to −1.91); venlafaxine −2.69 (−3.50 to −1.89); escitalopram −2.45 (−3.27 to −1.63) — these four efficacious with relatively good acceptability. (MD on HAM-A, not a standardised SMD.)',
   WFSBP2023:   'Bandelow B et al. WFSBP guidelines for anxiety disorders (update). 2023.',
   MAUDSLEY_DP: 'Horowitz MA, Taylor DM. The Maudsley Deprescribing Guidelines. Wiley 2024.',
   HOROWITZ19:  'Horowitz MA, Taylor D. Tapering of SSRI treatment to mitigate withdrawal. Lancet Psychiatry 2019;6:538-46.',
@@ -168,6 +168,18 @@ const GAD = {
       switching: 'From another SSRI: usually direct or short cross-taper. To/from MAOI: 14-day washout.',
       counseling: 'Delayed benefit (weeks), early jitteriness possible, do not stop abruptly, report worsening mood/suicidality early.',
       comparativeEfficacy: { note: 'Among best efficacy+tolerability in 2019 NMA.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (NICE first-line SSRI; Slee-2019 large NMA)', note: 'First-line SSRI with among the best efficacy AND acceptability in the 2019 NMA.', src: [S('NICE_GAD'), S('SLEE2019')], verified: true },
+      bestIf: [
+        { text: 'First-line GAD — good efficacy/tolerability balance', src: [S('NICE_GAD'), S('SLEE2019')], verified: true },
+        { text: 'Comorbid depression (covers both)', src: [S('NICE_GAD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'QTc prolongation at 20 mg / cardiac risk', tier: 'relative', src: [S('FDA_CIT_QT')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — HAM-A reduction', metricLabel: 'HAM-A MD', metricValue: '−2.45', ci: '−3.27 to −1.63', certainty: 'moderate', basis: 'Slee 2019 NMA (89 trials, 25,441 pts) — efficacious with relatively good acceptability. MD on HAM-A, not a standardised SMD → no Cohen stars.', src: [S('SLEE2019')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('SLEE2019'), S('CPIC_SSRI'), S('FDA_SSRI_BBW'), S('SMPC')],
       verified: false,
     },
@@ -206,6 +218,18 @@ const GAD = {
       switching: 'SSRI↔SSRI direct/short cross-taper; MAOI 14-day washout.',
       counseling: 'Take with food to reduce GI upset; delayed benefit; no abrupt stop.',
       comparativeEfficacy: { note: 'NICE first-choice on cost-effectiveness.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (NICE first-CHOICE SSRI)', note: 'NICE CG113 first-choice SSRI on cost-effectiveness (note: off-label for GAD in some regions).', src: [S('NICE_GAD')], verified: true },
+      bestIf: [
+        { text: 'First-line GAD — NICE first-choice (cost-effectiveness)', src: [S('NICE_GAD')], verified: true },
+        { text: 'Comorbid depression / PTSD / panic', src: [S('NICE_GAD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'High bleeding risk', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — response', metricLabel: 'evidence', metricValue: 'NICE first-choice SSRI (per-drug HAM-A MD: NEEDS)', certainty: 'moderate', basis: 'NICE CG113 first-choice on cost-effectiveness; sertraline’s specific Slee-2019 per-drug MD was not in open snippets → NEEDS.', src: [S('NICE_GAD'), S('SLEE2019')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('CPIC_SSRI'), S('FDA_SSRI_BBW'), S('SMPC')],
       verified: false,
     },
@@ -234,6 +258,18 @@ const GAD = {
       switching: 'Taper carefully due to withdrawal; MAOI 14-day washout.',
       counseling: 'Do not miss doses (withdrawal); avoid in pregnancy planning.',
       comparativeEfficacy: { note: 'Effective but tolerability/withdrawal worse than escitalopram/sertraline.', stat: NEEDS },
+      strength: { level: 'Moderate', certainty: 'moderate (NICE SSRI class; tolerability/withdrawal worse)', note: 'Effective SSRI but more anticholinergic AEs, weight gain, and worse discontinuation than escitalopram/sertraline; avoid in pregnancy.', src: [S('NICE_GAD'), S('SMPC')], verified: true },
+      bestIf: [
+        { text: 'GAD where other SSRIs failed/not tolerated', src: [S('NICE_GAD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Pregnancy / childbearing potential (cardiac malformation signal)', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Poor adherence — marked discontinuation syndrome (short half-life)', tier: 'relative', src: [S('MAUDSLEY_DP')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — response', metricLabel: 'evidence', metricValue: 'effective SSRI (per-drug HAM-A MD: NEEDS)', certainty: 'moderate', basis: 'NICE SSRI class; paroxetine’s specific Slee-2019 per-drug MD not in open snippets → NEEDS. Tolerability/withdrawal worse than escitalopram/sertraline.', src: [S('NICE_GAD'), S('SLEE2019')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('CPIC_SSRI'), S('FDA_SSRI_BBW'), S('SMPC')],
       verified: false,
     },
@@ -262,6 +298,19 @@ const GAD = {
       switching: 'Cross-taper from SSRI; MAOI 14-day washout.',
       counseling: 'Nausea usually settles; first-choice if comorbid chronic pain.',
       comparativeEfficacy: { note: 'Among best efficacy in 2019 NMA; logical first pick with comorbid pain.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (Slee-2019 largest well-tolerated effect)', note: 'Largest efficacy among the WELL-TOLERATED agents in the 2019 NMA; first pick when pain is comorbid.', src: [S('SLEE2019'), S('NICE_GAD')], verified: true },
+      bestIf: [
+        { text: 'GAD with comorbid chronic / neuropathic pain / fibromyalgia (SNRI covers both)', src: [S('SLEE2019'), S('NICE_GAD')], verified: true },
+        { text: 'Comorbid depression', src: [S('NICE_GAD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+        { text: 'Significant hepatic impairment / heavy alcohol use', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Uncontrolled hypertension (SNRI BP effect)', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — HAM-A reduction', metricLabel: 'HAM-A MD', metricValue: '−3.13', ci: '−4.13 to −2.13', certainty: 'moderate', basis: 'Slee 2019 NMA — largest effect among the agents with relatively good acceptability. MD on HAM-A, not a standardised SMD.', src: [S('SLEE2019')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('SLEE2019'), S('SMPC')],
       verified: false,
     },
@@ -288,6 +337,18 @@ const GAD = {
       switching: 'Cross-taper; MAOI 14-day washout. Notorious for withdrawal between doses.',
       counseling: 'Never miss doses / stop abruptly; BP monitoring; report headache/palpitations.',
       comparativeEfficacy: { note: 'Effective (2019 NMA) but worst withdrawal + BP burden.', stat: NEEDS },
+      strength: { level: 'High', certainty: 'moderate (Slee-2019 efficacious)', note: 'Efficacious in the 2019 NMA but dose-dependent hypertension + severe discontinuation — reserve behind escitalopram/sertraline/duloxetine.', src: [S('SLEE2019'), S('SMPC')], verified: true },
+      bestIf: [
+        { text: 'GAD with comorbid depression / pain where an SNRI is wanted', src: [S('SLEE2019'), S('NICE_GAD')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Uncontrolled hypertension / high cardiac risk — dose-dependent BP rise', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Poor adherence — severe discontinuation (short half-life)', tier: 'relative', src: [S('MAUDSLEY_DP')], verified: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — HAM-A reduction', metricLabel: 'HAM-A MD', metricValue: '−2.69', ci: '−3.50 to −1.89', certainty: 'moderate', basis: 'Slee 2019 NMA — efficacious with relatively good acceptability, but highest BP/withdrawal burden. MD on HAM-A, not a standardised SMD.', src: [S('SLEE2019')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('SLEE2019'), S('MAUDSLEY_DP'), S('SMPC')],
       verified: false,
     },
@@ -316,6 +377,20 @@ const GAD = {
       switching: 'Can combine with SSRI/SNRI as add-on; taper on stop.',
       counseling: 'Controlled substance; do not combine with alcohol/opioids; rapid onset but taper to stop.',
       comparativeEfficacy: { note: 'Effective in 2019 NMA; rapid onset; reserve given misuse risk.', stat: NEEDS },
+      strength: { level: 'Moderate', certainty: 'moderate (Slee-2019 efficacious; NICE alternative)', note: 'Efficacious with rapid onset; NICE positions it when SSRIs/SNRIs are not tolerated. Misuse/dependence potential + teratogenicity signal — reserve.', src: [S('SLEE2019'), S('NICE_GAD'), S('FDA_GABA')], verified: true },
+      bestIf: [
+        { text: 'GAD where SSRIs/SNRIs not tolerated / rapid onset needed', src: [S('NICE_GAD'), S('SLEE2019')], verified: true },
+        { text: 'No antidepressant-appropriate comorbidity', src: [S('NICE_GAD')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Substance use / misuse history — dependence potential', tier: 'relative', src: [S('FDA_GABA')], verified: true },
+        { text: 'Pregnancy / childbearing potential (MHRA teratogenicity signal)', tier: 'relative', src: [S('NICE_GAD')], verified: true },
+        { text: 'Renal impairment — dose-reduce by CrCl', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Concomitant opioids — respiratory depression', tier: 'boxed', src: [S('FDA_GABA')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — HAM-A reduction', metricLabel: 'HAM-A MD', metricValue: '−2.79', ci: '−3.69 to −1.91', certainty: 'moderate', basis: 'Slee 2019 NMA — efficacious with relatively good acceptability and rapid onset. MD on HAM-A, not a standardised SMD.', src: [S('SLEE2019')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('SLEE2019'), S('FDA_GABA'), S('SMPC')],
       verified: false,
     },
@@ -336,6 +411,18 @@ const GAD = {
       pregnancyLactation: 'Limited data.', overdose: 'Low toxicity.',
       specialPops: { elderly: 'Useful (no sedation/falls advantage).', pgx: 'CYP3A4 substrate.' },
       counseling: 'Takes weeks; not a PRN; avoid grapefruit.',
+      strength: { level: 'Moderate', certainty: 'low–moderate (adjunct / augmentation)', note: 'Non-sedating, non-dependence-forming augmentation option; modest as monotherapy — best as add-on.', src: [S('NICE_GAD'), S('KATZMAN2014')], verified: true },
+      bestIf: [
+        { text: 'Augmentation of a partial SSRI/SNRI response', src: [S('KATZMAN2014')], verified: true },
+        { text: 'Dependence risk — non-addictive alternative wanted', src: [S('NICE_GAD')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Need for rapid / PRN relief (slow onset)', tier: 'relative', src: [S('SMPC')], verified: true, derived: true },
+        { text: 'MAOI within 14 days', tier: 'absolute', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — response', metricLabel: 'evidence', metricValue: 'modest; adjunct/augmentation (pooled MD: NEEDS)', certainty: 'low', basis: 'Guideline adjunct; buspirone not among the top NMA agents and a per-drug pooled MD was not extracted → NEEDS.', src: [S('NICE_GAD'), S('KATZMAN2014')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('SMPC')], verified: false,
     },
     {
@@ -351,6 +438,19 @@ const GAD = {
       pregnancyLactation: 'Case-by-case.', overdose: 'Sedation, QT, hypotension.',
       specialPops: { elderly: 'Boxed dementia warning; lowest dose.', pgx: 'CYP3A4 substrate.' },
       counseling: 'Reserve for inadequate first-line response; metabolic monitoring.',
+      strength: { level: 'Moderate', certainty: 'moderate (Slee-2019: largest effect, poor tolerability)', note: 'LARGEST HAM-A effect in the 2019 NMA but poorly tolerated (higher dropout) + metabolic/QT burden — reserve for inadequate first-line response, not first-line.', src: [S('SLEE2019'), S('KATZMAN2014')], verified: true },
+      bestIf: [
+        { text: 'GAD refractory to first-line SSRI/SNRI where efficacy is prioritised', src: [S('SLEE2019')], verified: true },
+        { text: 'Prominent insomnia / anxiety needing sedation', src: [S('KATZMAN2014')], verified: true, derived: true },
+      ],
+      avoidIf: [
+        { text: 'Metabolic syndrome / obesity — weight & metabolic burden', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'QT-prolonging combination', tier: 'relative', src: [S('FDA_CIT_QT')], verified: true },
+        { text: 'Elderly with dementia — class mortality warning', tier: 'boxed', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — HAM-A reduction', metricLabel: 'HAM-A MD', metricValue: '−3.60', ci: '−4.83 to −2.39', certainty: 'moderate', basis: 'Slee 2019 NMA — LARGEST HAM-A effect of all agents, BUT poorly tolerated (dropout OR 1.44, 95% CrI 1.16–1.80). MD on HAM-A, not a standardised SMD. Efficacy-vs-tolerability trade-off is the whole point.', src: [S('SLEE2019')], verified: true },
+      ],
       src: [S('SLEE2019'), S('KATZMAN2014'), S('FDA_CIT_QT'), S('SMPC')], verified: false,
     },
     {
@@ -366,6 +466,17 @@ const GAD = {
       pregnancyLactation: 'Avoid in early pregnancy per label.', overdose: 'Sedation, QT.',
       specialPops: { elderly: 'Caution (falls/anticholinergic).', pgx: '—' },
       counseling: 'Short-term; sedating.',
+      strength: { level: 'Moderate', certainty: 'low–moderate (short-term only)', note: 'Non-dependence-forming short-term anxiolytic; useful when a benzodiazepine is undesirable. Not for maintenance.', src: [S('KATZMAN2014')], verified: true },
+      bestIf: [
+        { text: 'Short-term / situational anxiety where dependence must be avoided', src: [S('KATZMAN2014')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'QT prolongation (dose-dependent signal)', tier: 'relative', src: [S('SMPC')], verified: true },
+        { text: 'Elderly — anticholinergic / sedation / falls', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — short-term anxiolysis', metricLabel: 'evidence', metricValue: 'short-term only (pooled MD: NEEDS)', certainty: 'low', basis: 'Guideline short-term option; no robust pooled maintenance effect encoded → NEEDS.', src: [S('KATZMAN2014')], verified: true },
+      ],
       src: [S('KATZMAN2014'), S('SMPC')], verified: false,
     },
     {
@@ -381,6 +492,19 @@ const GAD = {
       pregnancyLactation: 'Avoid.', overdose: 'Dangerous with other CNS depressants.',
       specialPops: { elderly: 'Avoid (Beers).', pgx: '—' },
       counseling: 'Bridge only while antidepressant takes effect; not long-term.',
+      strength: { level: 'Weak', certainty: 'low (short-term bridge only)', note: 'Rapid anxiolysis but tolerance/dependence — SHORT-TERM BRIDGE only (≤2–4 wk) while an antidepressant takes effect; NICE advises against maintenance use.', src: [S('NICE_GAD'), S('KATZMAN2014')], verified: true },
+      bestIf: [
+        { text: 'Severe acute anxiety needing rapid relief while first-line takes effect', src: [S('KATZMAN2014')], verified: true },
+      ],
+      avoidIf: [
+        { text: 'Substance use disorder / alcohol use — dependence & overdose risk', tier: 'absolute', src: [S('NICE_GAD')], verified: true },
+        { text: 'Maintenance / long-term use — tolerance & dependence', tier: 'absolute', src: [S('NICE_GAD')], verified: true },
+        { text: 'Concomitant opioids — respiratory depression', tier: 'boxed', src: [S('SMPC')], verified: true },
+        { text: 'Elderly — falls / cognitive impairment', tier: 'relative', src: [S('SMPC')], verified: true },
+      ],
+      benefit: [
+        { symptom: 'GAD — rapid short-term relief', metricLabel: 'evidence', metricValue: 'bridge only — not a maintenance treatment', certainty: 'low', basis: 'NICE/Katzman: short-term bridge only; no maintenance efficacy claimed. Dependence risk dominates the decision.', src: [S('NICE_GAD'), S('KATZMAN2014')], verified: true },
+      ],
       src: [S('NICE_GAD'), S('KATZMAN2014')], verified: false,
     },
   ],
