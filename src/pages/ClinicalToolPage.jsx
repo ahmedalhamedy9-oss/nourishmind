@@ -412,6 +412,13 @@ function formatReportHTML(text) {
     .replace(/^([^\n\-•|]{1,29}\S)-\s+(?=\S)/gm, '<strong>$1</strong>\n• ')
     .replace(/^\s*[\*•]\s+/gm, '• ')                              // * / • bullets
     .replace(/^\s*-\s+/gm, '• ')                                  // - bullets → •
+    // Keep SIGNED numbers intact in RTL (e.g. bone-density T-score −2.5): the
+    // leading minus is a bidi-neutral char that Arabic paragraph direction can
+    // visually detach or drop. Isolate each sign+number as its own LTR run.
+    // Matches only a real numeric sign (delimiter then "-<digit>"), never a
+    // hyphen between words or an en-dash range. Display-only — does not touch
+    // clinical content or determinism.
+    .replace(/(^|[\s(>|:—،])(-\d[\d.,]*)/gm, '$1<span dir="ltr" style="unicode-bidi:isolate">$2</span>')
     .replace(/\n{3,}/g, '\n\n')                                   // collapse blanks
     .trim();
 
@@ -640,6 +647,7 @@ function generatePDF(form, results, type, lang) {
   };
 
   const html = `<!DOCTYPE html><html dir="${dirAttr}" lang="${langAttr}"><head><meta charset="UTF-8">
+<title>NourishMind Clinical — ${isDoc ? docSubtitle : patSubtitle} — ${date}</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;600;700;900&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -656,7 +664,11 @@ body{font-family:${isAr ? "'Cairo'" : "'Inter'"}, sans-serif;background:#fff;col
 .note{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:12px;line-height:1.8;color:#166534}
 .disc{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;margin-top:18px;font-size:11px;color:#9a3412;line-height:1.7}
 .ftr{margin-top:24px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8}
-@media print{body{padding:18px}}
+@media print{body{padding:14mm 12mm}}
+/* Zero the PAGE margin so the browser's auto header/footer (which printed the
+   about:blank source URL) has no margin box to render into. Our own .ftr stays
+   as body content; safe content margins are restored via the print padding. */
+@page{margin:0}
 </style></head><body>
 <div class="hdr">
   <div class="logo">🧠 NourishMind Clinical<span>${isDoc ? docSubtitle : patSubtitle}</span></div>
