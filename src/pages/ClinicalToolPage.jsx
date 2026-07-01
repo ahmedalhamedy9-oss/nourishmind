@@ -5,7 +5,7 @@ import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
 import { renderInteractionGate, renderInteractionsReport, renderInteractionsReportSplit, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
-import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
+import { renderComorbidityReport, comorbidDrugNames, renderComorbidityHTML } from '@/lib/comorbidityEngine';
 import { renderMedicalComorbidityReport, MEDCOMORBID_ACTIVE } from '@/lib/medicalComorbidityEngine';
 import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
@@ -447,12 +447,15 @@ function generatePDF(form, results, type, lang) {
       + '</div>';
   }
   const medsHTMLpdf = isDoc ? renderRxMedicationsHTML({ key: disorderKey(form.disorder), lang, pdf: true }) : null;
+  const comorbHTMLpdf = isDoc ? renderComorbidityHTML({ primaryKey: disorderKey(form.disorder), comorbidities: form.comorbidities, history: form.history, lang, pdf: true }) : null;
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
     .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
     .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()))
     .filter(s => s.id !== 'followup' || (results.followup && String(results.followup).trim()));
-  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, (isDoc && s.id === 'medications') ? medsHTMLpdf : null)).join('');
+  const rawFor = (s) => (isDoc && s.id === 'medications') ? medsHTMLpdf
+    : (isDoc && s.id === 'comorbidity') ? comorbHTMLpdf : null;
+  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, rawFor(s))).join('');
 
   function buildPatientContent(form, results) {
     function simplify(text) {
@@ -993,6 +996,10 @@ const ClinicalTool = () => {
           : '';
         const combined = [cmReport, medReport].filter(Boolean).join('\n\n');
         if (parsed) parsed.comorbidity = combined || '';
+        // Decision-first HTML overlay (reference-design cards) — injected raw in
+        // the tab + doctor PDF, same path as the medications HTML.
+        const cmHTML = renderComorbidityHTML({ primaryKey: key, comorbidities: form.comorbidities, history: form.history, lang });
+        if (parsed) parsed.comorbidityHTML = cmHTML || '';
         setHideComorbidity(!combined);
       }
 
@@ -1333,6 +1340,9 @@ const ClinicalTool = () => {
                 {activeTab === 'medications' && results.medicationsHTML ? (
                   <div className="text-sm"
                     dangerouslySetInnerHTML={{ __html: results.medicationsHTML }} />
+                ) : activeTab === 'comorbidity' && results.comorbidityHTML ? (
+                  <div className="text-sm"
+                    dangerouslySetInnerHTML={{ __html: results.comorbidityHTML }} />
                 ) : (
                   <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: formatReportHTML(results[activeTab]) }} />

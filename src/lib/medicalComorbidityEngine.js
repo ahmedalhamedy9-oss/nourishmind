@@ -701,6 +701,17 @@ export function detectMedicalComorbidities(text = '') {
   });
 }
 
+/* ── Structured accessor (for the decision-first HTML overlay renderer) ─────
+   Returns the matched, built units VERBATIM from MED_COMORBIDITIES so a caller
+   can render decision cards without re-parsing the markdown. Same detection as
+   renderMedicalComorbidityReport (comorbidities + history). */
+export function getMedicalComorbidityUnits({ comorbidities = '', history = '' } = {}) {
+  if (!MEDCOMORBID_ACTIVE) return [];
+  const text = `${comorbidities || ''} ${history || ''}`.trim();
+  if (!text) return [];
+  return detectMedicalComorbidities(text).map((k) => MED_COMORBIDITIES[k]).filter(Boolean);
+}
+
 /* ── Renderer (markdown, matches the rest of the report) ─────────────────── */
 const TAG = (action, isAr) => {
   const a = norm(action);
