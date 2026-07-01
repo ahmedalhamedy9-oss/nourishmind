@@ -59,6 +59,12 @@ export const RX_SOURCES = {
   BSL23:       'Bohus M et al. The short version of the Borderline Symptom List (BSL-23). Psychopathology 2009;42:32-39.',
   ZANBPD:      'Zanarini MC et al. Zanarini Rating Scale for BPD (ZAN-BPD): a continuous measure. J Pers Disord 2003;17:233-42.',
   HRVB:        'HRV biofeedback / resonance-frequency breathing: Lehrer & Gevirtz 2014; meta-analyses Goessl 2017 (anxiety/stress), Pizzoli 2021 (depression); Laborde 2022 (slow-paced breathing).',
+  KOMORI2018:  'Komori T. The relaxation effect of prolonged expiratory breathing. Ment Illn 2018;10(1):7669.',
+  GHATI2021:   'Ghati N et al. RCT of bee-humming (Bhramari) breathing on BP & HRV in essential hypertension. EXPLORE 2021;17(4):312-319.',
+  VANDEKAMP2019:'van de Kamp MM et al. Body- & movement-oriented interventions for PTSD: systematic review & meta-analysis. J Trauma Stress 2019;32(6):967-976.',
+  DREISOERNER2021:'Dreisoerner A et al. Self-soothing touch and being hugged reduce cortisol responses to stress: RCT. Compr Psychoneuroendocrinol 2021;8:100091.',
+  LEVENSON1990:'Levenson RW, Ekman P, Friesen WV. Voluntary facial action generates emotion-specific ANS activity. Psychophysiology 1990;27(4):363-384.',
+  JINDANI2015: 'Jindani F et al. A yoga intervention for PTSD: a preliminary RCT. Evid Based Complement Alternat Med 2015;351746.',
   SMPC:        'Manufacturer SmPC / FDA label (drug-specific; verify current label).',
 };
 
@@ -1209,6 +1215,19 @@ export const VAGAL_TONING = {
   ],
   integratesWith: 'Slots into DBT distress-tolerance (TIPP), ACT/mindfulness, applied relaxation, and Stage-1 arousal regulation.',
   cautions: 'Avoid over-breathing (can trigger vagal withdrawal); cold-exposure caution with cardiac disease; adjunct only — does not replace evidence-based psychotherapy.',
+  bodyBased: [
+    { name: 'Vocal humming / toning', grade: 'B', how: 'Long soft hum (or "mmm"/OM) on a slow exhale, 5–10 min.', why: 'The long exhale + throat vibration push the body into the parasympathetic "rest" state and raise HRV.', src: [S('KOMORI2018'), S('GHATI2021')] },
+    { name: 'Gargling', grade: 'C', how: 'Gargle water at the back of the throat, making sound, ~30–60 s.', why: 'Engages the throat/pharyngeal muscles that lie along the vagal pathway.', src: [S('GHATI2021')] },
+    { name: 'Warm facial expression', grade: 'C', how: 'Deliberately soften the face into a calm/gentle expression.', why: 'Adopting a calm expression can nudge the felt emotion in the same direction (facial feedback).', src: [S('LEVENSON1990')] },
+    { name: 'Self-soothing touch', grade: 'B', how: 'Hand on heart / gentle self-hug / slow arm stroking with slow breathing.', why: 'Safe self-touch lowers cortisol and cues a sense of safety.', src: [S('DREISOERNER2021')] },
+    { name: 'Eye orienting / horizon scan', grade: 'C', how: 'Slowly move the gaze around the room / trace a figure-8, letting vision widen. Do NOT press on the eyes.', why: 'Widening the visual field out of stress "tunnel vision" signals the surroundings are safe.', src: [S('VANDEKAMP2019')] },
+    { name: 'Gentle neck & shoulder movement', grade: 'C', how: 'Slow neck turns/stretches and shoulder rolls paced with the breath.', why: 'Releases neck tension and pairs movement with slow breathing to lower arousal.', src: [S('VANDEKAMP2019')] },
+    { name: 'Paced pushing movements', grade: 'C', how: 'Push the arms outward on a slow exhale, syncing movement to breath, a few rounds.', why: 'Active movement + paced breath helps discharge fight/flight arousal (bottom-up).', src: [S('VANDEKAMP2019'), S('JINDANI2015')] },
+    { name: 'Gentle rocking', grade: 'C', how: 'Slow rocking of the pelvis/spine (lying or seated) at your own rhythm.', why: 'Gentle rhythmic movement helps shift the body out of a frozen/shut-down state.', src: [S('VANDEKAMP2019')] },
+    { name: 'Diaphragmatic (belly) breathing', grade: 'B', how: 'Slow belly breaths, exhale longer than inhale, optionally with gentle side movement.', why: 'Slow diaphragmatic breathing directly raises vagal tone.', src: [S('KOMORI2018')] },
+    { name: 'Grounding / orienting body scan', grade: 'C', how: 'Feel feet/seat support, name what you see–hear–touch, scan the body slowly.', why: 'Anchoring attention in present sensation and surroundings calms hyperarousal.', src: [S('VANDEKAMP2019')] },
+  ],
+  excludedManeuvers: 'EXCLUDED from self-practice (these are medical vagal maneuvers, NOT toning exercises): the Valsalva maneuver (hypotension/syncope risk; avoid in cardiac disease) and eyeball / eye-socket pressure (oculocardiac reflex → bradycardia/syncope).',
 };
 
 /* Convenience: list unverified claims so the review pass is mechanical. */

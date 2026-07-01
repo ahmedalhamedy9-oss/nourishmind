@@ -135,8 +135,14 @@ export function renderVagalToning({ lang = 'en' } = {}) {
   L.push(`${isAr ? 'الأساس' : 'Rationale'}: ${v.rationale}`);
   L.push(`${isAr ? 'الدليل' : 'Evidence'}: ${v.evidence}`);
   v.techniques.forEach((t) => L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} _src: ${j(t.src)}_`));
+  if (v.bodyBased && v.bodyBased.length) {
+    L.push(`\n${isAr ? '🧎 تمارين جسدية للعصب المبهم' : '🧎 Body-based vagal exercises'}:`);
+    v.bodyBased.forEach((t) =>
+      L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} ${isAr ? '(الفايدة: ' : '(why: '}${t.why}) _src: ${j(t.src)}_`));
+  }
   L.push(`${isAr ? 'الدمج' : 'Integrates with'}: ${v.integratesWith}`);
   L.push(`⚠ ${isAr ? 'تحذيرات' : 'Cautions'}: ${v.cautions}`);
+  if (v.excludedManeuvers) L.push(`⛔ ${v.excludedManeuvers}`);
   return '\n' + L.join('\n');
 }
 
