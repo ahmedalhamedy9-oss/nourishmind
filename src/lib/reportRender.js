@@ -15,6 +15,8 @@ import { RX, RX_ACTIVE, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE } from './rxFor
 import { computeDynamicLabs } from './labEngine';
 import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
 import { computeMetrics } from './clinicalFormulary';
+import { interactionSplitStructured, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from './interactions';
+import { renderChrono } from './chronoEngine';
 
 const jsrc = (a) => (a && a.length ? a.join('; ') : '');
 
@@ -69,6 +71,23 @@ export const RC_STYLE = `<style>
 .rc details.rc-exp[open]>summary::before{content:"▾ "}
 .rc .rc-exp-b{margin-top:6px;padding:8px 10px;background:rgba(0,0,0,.28);border-radius:8px;font-size:11.5px;color:#93a3af}
 .rc .rc-foot{font-size:10.5px;color:#61707b;margin-top:12px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px}
+/* interaction severity cards */
+.rc .rc-ix{border-radius:10px;padding:9px 11px;margin:7px 0;border:1px solid rgba(255,255,255,.08);border-left:4px solid #61707b;background:rgba(255,255,255,.02)}
+.rc .rc-ix.s-contraindicated{border-left-color:#a32d2d;background:rgba(163,45,45,.09)}
+.rc .rc-ix.s-major{border-left-color:#e0663d;background:rgba(224,102,61,.08)}
+.rc .rc-ix.s-moderate{border-left-color:#ba7517;background:rgba(186,117,23,.07)}
+.rc .rc-ix.s-minor{border-left-color:#61707b}
+.rc .rc-ix-h{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:3px}
+.rc .rc-ix-p{color:#fff;font-weight:700;font-size:12.5px}
+.rc .rc-ix-sev{font-size:9.5px;font-weight:800;letter-spacing:.03em;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.rc .rc-ix-sev.s-contraindicated{color:#f09595;background:rgba(163,45,45,.22)}
+.rc .rc-ix-sev.s-major{color:#f0a878;background:rgba(224,102,61,.2)}
+.rc .rc-ix-sev.s-moderate{color:#e0b872;background:rgba(186,117,23,.16)}
+.rc .rc-ix-sev.s-minor{color:#9aa8b5;background:rgba(255,255,255,.06)}
+.rc .rc-ix-type{font-size:9.5px;color:#7a8891;border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:0 5px}
+.rc .rc-ix-b{font-size:11.5px;color:#c2cdd6;line-height:1.45;margin:2px 0}
+.rc .rc-ix-b .k{color:#9fe3d8;font-weight:600}
+.rc .rc-ix-src{font-size:10px;color:#61707b;margin-top:2px}
 /* metric tiles (bodycomp) */
 .rc .rc-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0}
 .rc .rc-stat{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 11px}
@@ -301,6 +320,87 @@ export function renderBodycompHTML({ form, lang = 'en', pdf = false } = {}) {
     + `<div class="rc-stats">${tiles}</div>` + rationale + safety
     + `<div class="rc-foot">Numbers are computed, not model-generated — identical every run. Enter DEXA/InBody for body-composition tiles (fat mass, FFMI, muscle).</div>`;
   return shell('#8b5cf6', inner);
+}
+
+/* ── ⚠️ INTERACTIONS — severity-triaged cards (most dangerous first) ─────── */
+export function renderInteractionsHTML({
+  primaryFirstLine = [], primaryAdjunct = [],
+  comorbidFirstLine = [], comorbidAdjunct = [],
+  currentMeds = '', supplements = '', comorbidLabels = [], lang = 'en', pdf = false,
+} = {}) {
+  if (!INTERACTIONS_ACTIVE) return '';
+  const split = interactionSplitStructured({ primaryFirstLine, primaryAdjunct, comorbidFirstLine, comorbidAdjunct, currentMeds, supplements, comorbidLabels });
+  const sevCls = (s) => 's-' + String(s || 'minor').toLowerCase();
+  const card = (it) => `<div class="rc-ix ${sevCls(it.severity)}">`
+    + `<div class="rc-ix-h"><span class="rc-ix-sev ${sevCls(it.severity)}">${RC_E(it.severity)}</span>`
+    + `<span class="rc-ix-p">${RC_E(it.labels)}</span><span class="rc-ix-type">${RC_E(it.type)}</span>`
+    + (it.verified ? '' : `<span class="rc-ix-type" style="color:#e0b872">unverified</span>`) + `</div>`
+    + `<div class="rc-ix-b"><span class="k">Mechanism:</span> ${RC_E(it.mechanism)}</div>`
+    + `<div class="rc-ix-b"><span class="k">Management:</span> ${RC_E(it.management)}</div>`
+    + `<div class="rc-ix-src">source (${RC_E(it.tier)}): ${RC_E(it.source)}</div></div>`;
+
+  const noneMsg = `<div class="rc-note">No interactions in the PsychDecide table (${RC_E(INTERACTIONS_VERSION)}) within the current prescription. Absence here does not rule out interactions outside the table — consult a specialist reference when in doubt.</div>`;
+  const cmLabel = split.crossLabels.join(' / ');
+  const inner = `<div class="rc-hd">⚠️ Interactions — screened</div>`
+    + `<div class="rc-sub">deterministic · Micromedex severity · most dangerous first · ${RC_E(INTERACTIONS_VERSION)}</div>`
+    + `<div class="rc-gd">Prescription interactions — current meds + this plan + supplements</div>`
+    + (split.active.length ? split.active.map(card).join('') : noneMsg)
+    + (split.cross.length
+        ? `<div class="rc-gd">Cross-protocol cautions${cmLabel ? ` — only if a drug is ADDED for ${RC_E(cmLabel)}` : ''}</div>`
+          + `<div class="rc-note">Not active in the current prescription — shown so an added comorbidity drug is screened against the current regimen.</div>`
+          + split.cross.map(card).join('')
+        : '');
+  return shell('#ef4444', inner);
+}
+
+/* ── 🕐 CHRONO — action-first cards; mechanisms/evidence collapse ─────────
+   The chronoEngine output is deterministic markdown with regular section
+   markers (**TWO-CLOCK…**, **① CENTRAL…**, **② …**). We re-lay-it-out into
+   cards WITHOUT re-deriving the (form-dependent) clinical logic, so the exact
+   validated content is preserved; long mechanism/evidence prose folds away. ── */
+const rcInline = (s) => RC_E(s).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/_([^_]+)_/g, '<span style="color:#7a8891">$1</span>');
+export function renderChronoHTML({ key, form = {}, lang = 'en', pdf = false } = {}) {
+  const md = renderChrono({ key, form, lang });
+  if (!md || !md.trim()) return '';
+  const open = pdf ? ' open' : '';
+  const lines = md.split('\n');
+  // Split into blocks on bold-only header lines (**…**).
+  const blocks = [];
+  let cur = null;
+  const isHeader = (l) => /^\*\*.+\*\*$/.test(l.trim());
+  lines.forEach((raw) => {
+    const l = raw.replace(/\r$/, '');
+    if (isHeader(l)) { cur = { title: l.trim().replace(/^\*\*|\*\*$/g, ''), body: [] }; blocks.push(cur); }
+    else if (l.trim()) { if (!cur) { cur = { title: '', body: [] }; blocks.push(cur); } cur.body.push(l); }
+  });
+  const renderBody = (body) => {
+    const bullets = [], notes = [];
+    body.forEach((l) => {
+      const t = l.trim();
+      if (/^-\s+/.test(t)) {
+        const txt = t.replace(/^-\s+/, '');
+        const warn = /^⚠️|^🔴/.test(txt);
+        bullets.push(`<div class="rc-why" style="margin:3px 0${warn ? ';color:#e0b872' : ''}">• ${rcInline(txt)}</div>`);
+      } else if (/^_.*_$/.test(t)) {                       // pure evidence/mechanism note → collapse
+        notes.push(rcInline(t));
+      } else {
+        notes.push(rcInline(t));                            // intro prose → collapse
+      }
+    });
+    const noteBlock = notes.length
+      ? `<details class="rc-exp"${open}><summary>Why / evidence</summary><div class="rc-exp-b">${notes.join('<br>')}</div></details>` : '';
+    return bullets.join('') + noteBlock;
+  };
+  const cards = blocks.filter((b) => b.title).map((b) =>
+    `<div class="rc-card"><div class="rc-name" style="color:#f59e0b">${rcInline(b.title)}</div>${renderBody(b.body)}</div>`).join('');
+  // any leading, title-less prose (the two-clock intro) → a collapsible up top
+  const intro = blocks.filter((b) => !b.title).flatMap((b) => b.body);
+  const introBlock = intro.length
+    ? `<details class="rc-exp"${open}><summary>The two-clock principle</summary><div class="rc-exp-b">${intro.map(rcInline).join('<br>')}</div></details>` : '';
+  const inner = `<div class="rc-hd">🕐 Circadian &amp; Chronotherapy — ${RC_E(key)}</div>`
+    + `<div class="rc-sub">action-first · central (light/sleep) + peripheral (meals) + drug timing · mechanisms on expand · sourced</div>`
+    + introBlock + cards;
+  return shell('#f59e0b', inner);
 }
 
 /* ── Shared wrapper: present pre-formatted markdown-HTML inside the .rc shell

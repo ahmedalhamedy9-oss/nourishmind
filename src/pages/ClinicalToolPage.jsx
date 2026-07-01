@@ -11,7 +11,7 @@ import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExc
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
-import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML, renderBodycompHTML, wrapReportHTML } from '@/lib/reportRender';
+import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML, renderBodycompHTML, renderInteractionsHTML, renderChronoHTML, wrapReportHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -460,7 +460,7 @@ function generatePDF(form, results, type, lang) {
     therapy:     renderTherapyHTML({ key: dk, lang, pdf: true, extra: (() => { const e = [renderTechniqueLibrary({ key: dk, lang }), renderVagalToning({ lang })].filter(Boolean).join('\n'); return e ? formatReportHTML(e) : ''; })() }) || results.therapyHTML || null,
     followup:    renderFollowupHTML({ key: dk, lang, pdf: true }) || results.followupHTML || null,
     bodycomp:    renderBodycompHTML({ form, lang, pdf: true }) || results.bodycompHTML || null,
-    chrono:      results.chronoHTML || null,
+    chrono:      renderChronoHTML({ key: dk, form, lang, pdf: true }) || results.chronoHTML || null,
     interactions: results.interactionsHTML || null,
     nutrigenomics: results.nutrigenomicsHTML || null,
   } : {};
@@ -989,14 +989,17 @@ const ClinicalTool = () => {
         // cautions second (labelled conditional) — kills the alert-fatigue that
         // came from printing not-yet-prescribed comorbid alternatives as if they
         // were active conflicts. Single-disorder cases render one block as before.
-        parsed.interactions = renderInteractionsReportSplit({
+        const ixArgs = {
           primaryFirstLine: cdn.primary.firstLine,
           primaryAdjunct:   cdn.primary.adjunct,
           comorbidFirstLine: cdn.comorbid.firstLine,
           comorbidAdjunct:   cdn.comorbid.adjunct,
           currentMeds: form.currentMeds, supplements: '',
           comorbidLabels: cdn.comorbid.keys, lang,
-        });
+        };
+        parsed.interactions = renderInteractionsReportSplit(ixArgs);
+        // decision-first severity-triaged cards (most dangerous first)
+        parsed.interactionsHTML = renderInteractionsHTML(ixArgs) || '';
       }
 
       // ── COMORBIDITY: deterministic, source-based merge layer. Surfaces the
@@ -1101,8 +1104,9 @@ const ClinicalTool = () => {
           const html = wrapReportHTML({ title, accent, sub, bodyHTML: formatReportHTML(parsed[id]) });
           if (html) parsed[id + 'HTML'] = html;
         };
-        if (parsed.chrono) wrap('chrono', isAr ? '🕐 الإيقاع اليومي والعلاج الزمني' : '🕐 Circadian & Chronotherapy', '#f59e0b', isAr ? 'نموذج الساعتين' : 'two-clock model · sourced');
-        if (parsed.interactions) wrap('interactions', isAr ? '⚠️ التعارضات' : '⚠️ Interactions', '#ef4444', isAr ? 'من الجدول المقفول' : 'from the locked interaction table');
+        const chrHTML = renderChronoHTML({ key: disorderKey(form.disorder), form, lang });
+        if (chrHTML) parsed.chronoHTML = chrHTML;
+        // interactionsHTML already built (severity cards) in the interactions block above.
         const genShownNow = hasGeneticInput(form);
         if (genShownNow && parsed.nutrigenomics) wrap('nutrigenomics', isAr ? '🧬 التغذية الجينية' : '🧬 Nutrigenomics', '#ec4899', isAr ? 'مبني على المتغيرات المُدخَلة' : 'gated on entered variants');
       }
