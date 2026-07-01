@@ -11,7 +11,7 @@ import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExc
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
-import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML } from '@/lib/reportRender';
+import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML, renderBodycompHTML, wrapReportHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -459,6 +459,10 @@ function generatePDF(form, results, type, lang) {
     supplements: renderSupplementsHTML({ key: dk, lang, pdf: true, extra: (() => { const p = renderPsychobioticsFor({ key: dk, lang }); return p ? formatReportHTML(p) : ''; })() }) || results.supplementsHTML || null,
     therapy:     renderTherapyHTML({ key: dk, lang, pdf: true, extra: (() => { const e = [renderTechniqueLibrary({ key: dk, lang }), renderVagalToning({ lang })].filter(Boolean).join('\n'); return e ? formatReportHTML(e) : ''; })() }) || results.therapyHTML || null,
     followup:    renderFollowupHTML({ key: dk, lang, pdf: true }) || results.followupHTML || null,
+    bodycomp:    renderBodycompHTML({ form, lang, pdf: true }) || results.bodycompHTML || null,
+    chrono:      results.chronoHTML || null,
+    interactions: results.interactionsHTML || null,
+    nutrigenomics: results.nutrigenomicsHTML || null,
   } : {};
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
@@ -1084,6 +1088,23 @@ const ClinicalTool = () => {
         parsed.nutrigenomics = isAr
           ? 'لم تُدخَل تغيرات جينية معروفة، لذلك حُذف هذا القسم. أدخل SNPs معروفة للحصول على توجيه دوائي/غذائي مبني على الجينات.'
           : 'No known genetic variants entered, so this section is omitted. Enter known SNPs to receive pharmacogenomic/nutrigenomic guidance.';
+      }
+
+      // ── DECISION-FIRST HTML for the remaining tabs, built once here after all
+      //    parsed fields are final. bodycomp = deterministic metric tiles
+      //    (overrides model text); chrono/interactions/nutrigenomics keep their
+      //    content but are wrapped in the shared design shell for consistency.
+      if (parsed) {
+        const bcHTML = renderBodycompHTML({ form, lang });
+        if (bcHTML) parsed.bodycompHTML = bcHTML;
+        const wrap = (id, title, accent, sub) => {
+          const html = wrapReportHTML({ title, accent, sub, bodyHTML: formatReportHTML(parsed[id]) });
+          if (html) parsed[id + 'HTML'] = html;
+        };
+        if (parsed.chrono) wrap('chrono', isAr ? '🕐 الإيقاع اليومي والعلاج الزمني' : '🕐 Circadian & Chronotherapy', '#f59e0b', isAr ? 'نموذج الساعتين' : 'two-clock model · sourced');
+        if (parsed.interactions) wrap('interactions', isAr ? '⚠️ التعارضات' : '⚠️ Interactions', '#ef4444', isAr ? 'من الجدول المقفول' : 'from the locked interaction table');
+        const genShownNow = hasGeneticInput(form);
+        if (genShownNow && parsed.nutrigenomics) wrap('nutrigenomics', isAr ? '🧬 التغذية الجينية' : '🧬 Nutrigenomics', '#ec4899', isAr ? 'مبني على المتغيرات المُدخَلة' : 'gated on entered variants');
       }
 
       setResults(parsed);

@@ -14,6 +14,7 @@
 import { RX, RX_ACTIVE, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE } from './rxFormulary';
 import { computeDynamicLabs } from './labEngine';
 import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
+import { computeMetrics } from './clinicalFormulary';
 
 const jsrc = (a) => (a && a.length ? a.join('; ') : '');
 
@@ -68,6 +69,16 @@ export const RC_STYLE = `<style>
 .rc details.rc-exp[open]>summary::before{content:"▾ "}
 .rc .rc-exp-b{margin-top:6px;padding:8px 10px;background:rgba(0,0,0,.28);border-radius:8px;font-size:11.5px;color:#93a3af}
 .rc .rc-foot{font-size:10.5px;color:#61707b;margin-top:12px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px}
+/* metric tiles (bodycomp) */
+.rc .rc-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:8px 0}
+.rc .rc-stat{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 11px}
+.rc .rc-stat .k{display:block;font-size:10px;color:#61707b;text-transform:uppercase;letter-spacing:.04em}
+.rc .rc-stat .v{display:block;color:#e2e8f0;font-weight:700;font-size:16px;margin-top:2px}
+.rc .rc-stat .u{color:#7a8891;font-size:10.5px;font-weight:400}
+.rc .rc-stat .sub{color:#93a3af;font-size:10.5px;margin-top:2px}
+/* generic wrapped-markdown body (chrono / interactions / nutrigenomics) */
+.rc .rc-md{color:#c2cdd6;font-size:12.5px;line-height:1.6;white-space:pre-wrap}
+.rc .rc-md strong{color:#e2e8f0}
 </style>`;
 
 function shell(accent, inner) {
@@ -263,4 +274,42 @@ export function renderFollowupHTML({ key, lang = 'en', pdf = false } = {}) {
     + `<div class="rc-sub">phases · monitoring · taper — as a timeline · sourced</div>`
     + `<div class="rc-tl">${tl}</div>`;
   return shell('#10b981', inner);
+}
+
+/* ── 📊 BODYCOMP — deterministic metric tiles from computeMetrics ────────── */
+export function renderBodycompHTML({ form, lang = 'en', pdf = false } = {}) {
+  const m = computeMetrics(form);
+  if (!m) return ''; // needs weight + height; fall back to model text
+  const tile = (k, v, u, sub) => `<div class="rc-stat"><span class="k">${RC_E(k)}</span>`
+    + `<span class="v">${RC_E(v)}${u ? ` <span class="u">${RC_E(u)}</span>` : ''}</span>${sub ? `<span class="sub">${RC_E(sub)}</span>` : ''}</div>`;
+  const tiles = [
+    tile('BMI', m.bmi, 'kg/m²'),
+    tile('BMR', m.bmr, 'kcal/d', 'Mifflin–St Jeor'),
+    tile('TDEE', `${m.tdee.sedentary}–${m.tdee.light}`, 'kcal/d', 'sedentary → light'),
+    tile('Caloric target', `${m.calLow}–${m.calHigh}`, 'kcal/d', `${m.calDirection} · floored at BMR`),
+    tile('Protein', `${m.proteinLow}–${m.proteinHigh}`, 'g/d', m.proteinBasis),
+    m.fatPct != null ? tile('Body fat', m.fatPct, '%') : '',
+    m.fatMass != null ? tile('Fat mass', m.fatMass, 'kg') : '',
+    m.ffm != null ? tile('Fat-free mass', m.ffm, 'kg', m.ffmi != null ? `FFMI ${m.ffmi}` : '') : '',
+    m.smm != null ? tile('Skeletal muscle', m.smm, 'kg', m.fmr != null ? `FMR ${m.fmr}` : '') : '',
+  ].filter(Boolean).join('');
+  const rationale = m.calRationale
+    ? `<div class="rc-gd">Caloric direction — ${RC_E(String(m.calDirection).toUpperCase())}</div><div class="rc-note">${RC_E(m.calRationale)}</div>` : '';
+  const safety = m.calNote ? `<div class="rc-row req"><span class="rc-tag req">⚠ SAFETY</span><div class="rc-b"><div class="rc-why">${RC_E(m.calNote)}</div></div></div>` : '';
+  const inner = `<div class="rc-hd">📊 Body Composition &amp; Metabolic Targets</div>`
+    + `<div class="rc-sub">deterministic — computed from age/sex/weight/height + DEXA/InBody · weight is not a treatment goal</div>`
+    + `<div class="rc-stats">${tiles}</div>` + rationale + safety
+    + `<div class="rc-foot">Numbers are computed, not model-generated — identical every run. Enter DEXA/InBody for body-composition tiles (fat mass, FFMI, muscle).</div>`;
+  return shell('#8b5cf6', inner);
+}
+
+/* ── Shared wrapper: present pre-formatted markdown-HTML inside the .rc shell
+   so text/model tabs (chrono / interactions / nutrigenomics) match the system.
+   `bodyHTML` must already be escaped/formatted (e.g. via formatReportHTML). ── */
+export function wrapReportHTML({ title, accent = '#5fbfb0', sub = '', bodyHTML = '' } = {}) {
+  if (!bodyHTML || !String(bodyHTML).trim()) return '';
+  const inner = `<div class="rc-hd">${RC_E(title)}</div>`
+    + (sub ? `<div class="rc-sub">${RC_E(sub)}</div>` : '')
+    + `<div class="rc-md">${bodyHTML}</div>`;
+  return shell(accent, inner);
 }
