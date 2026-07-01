@@ -9,6 +9,7 @@ import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEng
 import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderDynamicLabs } from '@/lib/labEngine';
+import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
 import Header from '@/components/Header';
@@ -325,7 +326,7 @@ const SECTIONS_EN = [
   { id:'labs',          icon:'🧪', title:'Required Lab Tests',         color:'#5bb8c4' },
   { id:'bodycomp',      icon:'📊', title:'DEXA / InBody',              color:'#8b5cf6' },
   { id:'diet',          icon:'🥗', title:'Dietary Plan',               color:'#4a9b8e' },
-  { id:'chrono',        icon:'🕐', title:'Chrononutrition',            color:'#f59e0b' },
+  { id:'chrono',        icon:'🕐', title:'Circadian & Chronotherapy',  color:'#f59e0b' },
   { id:'nutrigenomics', icon:'🧬', title:'Nutrigenomics',              color:'#ec4899' },
   { id:'supplements',   icon:'🧴', title:'Supplements',                color:'#5bb8c4' },
   { id:'interactions',  icon:'⚠️', title:'Interactions',               color:'#ef4444' },
@@ -340,7 +341,7 @@ const SECTIONS_AR = [
   { id:'labs',          icon:'🧪', title:'التحاليل المطلوبة',     color:'#5bb8c4' },
   { id:'bodycomp',      icon:'📊', title:'DEXA / InBody',         color:'#8b5cf6' },
   { id:'diet',          icon:'🥗', title:'النظام الغذائي',        color:'#4a9b8e' },
-  { id:'chrono',        icon:'🕐', title:'Chrononutrition',       color:'#f59e0b' },
+  { id:'chrono',        icon:'🕐', title:'الإيقاع اليومي والعلاج',  color:'#f59e0b' },
   { id:'nutrigenomics', icon:'🧬', title:'التغذية الجينية',       color:'#ec4899' },
   { id:'supplements',   icon:'🧴', title:'المكملات الغذائية',     color:'#5bb8c4' },
   { id:'interactions',  icon:'⚠️', title:'التعارضات',             color:'#ef4444' },
@@ -594,7 +595,7 @@ function generatePDF(form, results, type, lang) {
 
     const scheduleSection = `<div class="sec">`
       + `<div class="sec-title" style="border-right-color:#f59e0b;background:#f59e0b18">${schedLabel}</div>`
-      + `<div class="sec-body" style="white-space:pre-wrap">${extractSchedule(results.chrono)}</div>`
+      + `<div class="sec-body" style="white-space:pre-wrap">${results.chrono || '—'}</div>`
       + `</div>`;
 
     const suppSection = `<div class="sec">`
@@ -983,6 +984,11 @@ const ClinicalTool = () => {
         const nSupp = renderNutritionSupplements({ key, lang });
         if (nDiet) parsed.diet = nDiet;
         if (nSupp) parsed.supplements = nSupp;
+
+        // 🕐 Circadian & Chronotherapy — deterministic two-clock model
+        // (central: light/sleep + drug chronotiming; peripheral: meal timing).
+        const chr = renderChrono({ key, form, lang });
+        if (chr) parsed.chrono = chr;
       }
 
       // ── GENETICS GATE: the nutrigenomics section is suppressed entirely when
