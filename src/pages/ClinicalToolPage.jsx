@@ -11,7 +11,7 @@ import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExc
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
-import { renderLabsHTML, renderExcludedHTML } from '@/lib/reportRender';
+import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -455,6 +455,8 @@ function generatePDF(form, results, type, lang) {
     comorbidity: renderComorbidityHTML({ primaryKey: dk, comorbidities: form.comorbidities, history: form.history, lang, pdf: true }),
     labs:        renderLabsHTML({ key: dk, form, lang, pdf: true }),
     excluded:    renderExcludedHTML({ key: dk, lang, pdf: true }),
+    diet:        renderDietHTML({ key: dk, lang, pdf: true, extra: (() => { const m = renderMacrosAndMeals({ key: dk, metrics: computeMetrics(form), form, lang }); return m ? formatReportHTML(m) : ''; })() }) || results.dietHTML || null,
+    supplements: renderSupplementsHTML({ key: dk, lang, pdf: true, extra: (() => { const p = renderPsychobioticsFor({ key: dk, lang }); return p ? formatReportHTML(p) : ''; })() }) || results.supplementsHTML || null,
   } : {};
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
@@ -1050,6 +1052,13 @@ const ClinicalTool = () => {
         if (macroBlock) parsed.diet = [parsed.diet, macroBlock].filter(Boolean).join('\n');
         const psycho = renderPsychobioticsFor({ key, lang });
         if (psycho) parsed.supplements = [parsed.supplements, psycho].filter(Boolean).join('\n');
+
+        // Decision-first HTML for diet + supplements — the macro/meal and
+        // psychobiotics blocks are folded in as `extra` so NO content is lost.
+        const dietHTML = renderDietHTML({ key, lang, extra: macroBlock ? formatReportHTML(macroBlock) : '' });
+        const suppHTML = renderSupplementsHTML({ key, lang, extra: psycho ? formatReportHTML(psycho) : '' });
+        if (dietHTML) parsed.dietHTML = dietHTML;
+        if (suppHTML) parsed.supplementsHTML = suppHTML;
 
         // 🕐 Circadian & Chronotherapy — deterministic two-clock model
         // (central: light/sleep + drug chronotiming; peripheral: meal timing).

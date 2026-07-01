@@ -13,6 +13,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 import { RX, RX_ACTIVE } from './rxFormulary';
 import { computeDynamicLabs } from './labEngine';
+import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
 
 const ok = (key) => RX_ACTIVE && RX[key] && !RX[key].__pending;
 export const RC_E = (s) => String(s == null ? '' : s)
@@ -106,4 +107,97 @@ export function renderExcludedHTML({ key, lang = 'en', pdf = false } = {}) {
   const inner = `<div class="rc-hd">🚫 Excluded Options — ${RC_E(key)}</div>`
     + `<div class="rc-sub">what NOT to do, and why · sourced</div>` + cards;
   return shell('#64748b', inner);
+}
+
+/* ── evidence → {label, css} pill (honest: "weak–moderate" grades DOWN) ──── */
+function evPill(e) {
+  const s = String(e || '').toLowerCase();
+  if (!s) return '';
+  const cls = /strong/.test(s) ? 'rc-ev-strong'
+    : (/moderate/.test(s) && !/weak|prelim/.test(s)) ? 'rc-ev-mod'
+    : /weak/.test(s) ? 'rc-ev-weak' : 'rc-ev-prelim';
+  return `<span class="rc-ev ${cls}">${RC_E(e)}</span>`;
+}
+/* Supported bucket = strong OR clean-moderate; everything else = weak/preliminary. */
+function evBucket(e) {
+  const s = String(e || '').toLowerCase();
+  return (/strong/.test(s) || (/moderate/.test(s) && !/weak|prelim/.test(s))) ? 'supported' : 'weak';
+}
+
+/* ── 🧴 SUPPLEMENTS — Supported / Weak / ⛔ Avoid buckets + synergy ──────── */
+export function renderSupplementsHTML({ key, lang = 'en', pdf = false, extra = '', extraTitle = 'Psychobiotics & gut–brain adjuncts' } = {}) {
+  if (!ok(key) || !NUTRITION_ACTIVE || !NUTRITION[key] || NUTRITION[key].__pending) return '';
+  const n = NUTRITION[key];
+  const cat = (arr, label) => (arr || []).map((s) => ({ ...s, __cat: label }));
+  const all = [
+    ...cat(n.supplements, 'vitamin / mineral / amino'),
+    ...cat(n.herbs, 'herb'),
+    ...cat(n.adaptogens, 'adaptogen'),
+    ...cat(n.mushrooms, 'functional mushroom'),
+  ];
+  if (!all.length && !(n.avoidWithProtocol || []).length) return '';
+  const supp = all.filter((s) => evBucket(s.evidence) === 'supported');
+  const weak = all.filter((s) => evBucket(s.evidence) !== 'supported');
+
+  const card = (s) => `<div class="rc-card"><div class="rc-name">${RC_E(s.name)} ${evPill(s.evidence)}`
+    + `<span class="rc-ev rc-ev-prelim">${RC_E(s.__cat)}</span></div>`
+    + `<div class="rc-kv">`
+    + (s.forms ? `<span class="k">Forms</span><span class="v">${RC_E(s.forms)}</span>` : '')
+    + (s.dose ? `<span class="k">Dose</span><span class="v">${RC_E(s.dose)}</span>` : '')
+    + (s.timing ? `<span class="k">Timing</span><span class="v">${RC_E(s.timing)}</span>` : '')
+    + `</div>`
+    + (s.synergy ? `<div class="rc-why">✅ <b style="color:#97c459">Synergy:</b> ${RC_E(s.synergy)}</div>` : '')
+    + (s.interaction ? `<div class="rc-why">⚠️ <b style="color:#e0b872">Interaction:</b> ${RC_E(s.interaction)}</div>` : '')
+    + rcSrc(s.src) + `</div>`;
+
+  const avoidCards = (n.avoidWithProtocol || []).map((s) =>
+    `<div class="rc-row"><span class="rc-tag avoid">⛔ ${RC_E(s.severity || 'AVOID')}</span><div class="rc-b">`
+    + `<div class="rc-t">${RC_E(s.item)}</div><div class="rc-why">${RC_E(s.why)}</div>${rcSrc(s.src)}</div></div>`).join('');
+  const synergyNote = (n.synergyWithProtocol || []).length
+    ? `<div class="rc-gd">✅ Safe synergy with the locked protocol</div>`
+      + n.synergyWithProtocol.map((s) => `<div class="rc-row opt"><span class="rc-tag opt">SYNERGY</span><div class="rc-b"><div class="rc-t">${RC_E(s.item)}</div><div class="rc-why">${RC_E(s.note)}</div>${rcSrc(s.src)}</div></div>`).join('')
+    : '';
+
+  const inner = `<div class="rc-hd">🧴 Supplements — ${RC_E(key)}</div>`
+    + `<div class="rc-sub">bucketed by evidence · doses & timing · drug–supplement safety · sourced</div>`
+    + (supp.length ? `<div class="rc-gd">✅ Supported (strong / moderate evidence)</div>` + supp.map(card).join('') : '')
+    + (weak.length ? `<div class="rc-gd">🟡 Weak / preliminary — optional, by preference</div>` + weak.map(card).join('') : '')
+    + synergyNote
+    + (avoidCards ? `<div class="rc-gd">⛔ Avoid with the locked protocol (safety)</div>` + avoidCards : '')
+    + (extra ? `<div class="rc-gd">${RC_E(extraTitle)}</div><div class="rc-exp-b">${extra}</div>` : '')
+    + `<div class="rc-foot">Grades are honest: a "weak–moderate" item is shown under Weak, not Supported. Avoid-list items are unsafe alongside the first-line drugs.</div>`;
+  return shell('#5bb8c4', inner);
+}
+
+/* ── 🥗 DIET — Summary (patterns + top foods) + Advanced expand ─────────── */
+export function renderDietHTML({ key, lang = 'en', pdf = false, extra = '', extraTitle = 'Meal architecture & macros' } = {}) {
+  if (!ok(key) || !NUTRITION_ACTIVE || !NUTRITION[key] || NUTRITION[key].__pending) return '';
+  const d = NUTRITION[key].diet;
+  if (!d) return '';
+  const open = pdf ? ' open' : '';
+  const patterns = (d.patterns || []).map((p) =>
+    `<div class="rc-row opt"><span class="rc-tag opt">PATTERN</span><div class="rc-b"><div class="rc-t">${RC_E(p.name)} ${evPill(p.evidence)}</div><div class="rc-why">${RC_E(p.note)}</div>${rcSrc(p.src)}</div></div>`).join('');
+  const foodRow = (f, cls, tag) =>
+    `<div class="rc-row ${cls}"><span class="rc-tag ${cls}">${tag}</span><div class="rc-b"><div class="rc-t">${RC_E(f.item)}</div><div class="rc-why">${RC_E(f.why)}${f.interaction ? ` ⚠️ (${RC_E(f.interaction)})` : ''}</div>${rcSrc(f.src)}</div></div>`;
+  const goodTop = (d.beneficialFoods || []).slice(0, 4).map((f) => foodRow(f, 'opt', '✅ EAT')).join('');
+  const avoidTop = (d.avoidFoods || []).slice(0, 4).map((f) => foodRow(f, 'req', '🚫 LIMIT')).join('');
+
+  const advBlock = (title, rows, cls, tag, fmt) => rows && rows.length
+    ? `<div class="rc-gd2" style="color:#9fe3d8;font-size:11px;text-transform:uppercase;margin:8px 0 4px">${title}</div>` + rows.map(fmt).join('')
+    : '';
+  const advanced = `<details class="rc-exp"${open}><summary>Advanced — full food, drink & oil lists</summary><div class="rc-exp-b" style="background:transparent;padding:0">`
+    + advBlock('All beneficial foods', d.beneficialFoods, 'opt', '✅', (f) => foodRow(f, 'opt', '✅ EAT'))
+    + advBlock('All foods to limit / avoid', d.avoidFoods, 'req', '🚫', (f) => foodRow(f, 'req', '🚫 LIMIT'))
+    + advBlock('Drinks', d.drinks, 'rec', '🥤', (f) => `<div class="rc-row rec"><span class="rc-tag rec">🥤 DRINK</span><div class="rc-b"><div class="rc-t">${RC_E(f.item)} ${evPill(f.evidence)}</div><div class="rc-why">${RC_E(f.why)}</div>${rcSrc(f.src)}</div></div>`)
+    + advBlock('Oils', d.oils, 'rec', '🫒', (f) => `<div class="rc-row rec"><span class="rc-tag rec">🫒 OIL</span><div class="rc-b"><div class="rc-t">${RC_E(f.item)} ${evPill(f.evidence)}</div><div class="rc-why">${RC_E(f.why)}</div>${rcSrc(f.src)}</div></div>`)
+    + `</div></details>`;
+
+  const inner = `<div class="rc-hd">🥗 Dietary Plan — ${RC_E(key)}</div>`
+    + `<div class="rc-sub">decision summary up top · full lists on expand · sourced</div>`
+    + (patterns ? `<div class="rc-gd">Evidence-based patterns</div>${patterns}` : '')
+    + (goodTop ? `<div class="rc-gd">Top beneficial foods</div>${goodTop}` : '')
+    + (avoidTop ? `<div class="rc-gd">Top foods to limit / avoid</div>${avoidTop}` : '')
+    + advanced
+    + (extra ? `<div class="rc-gd">${RC_E(extraTitle)}</div><div class="rc-exp-b">${extra}</div>` : '');
+  return shell('#4a9b8e', inner);
 }
