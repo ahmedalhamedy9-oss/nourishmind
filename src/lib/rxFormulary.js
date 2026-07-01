@@ -72,6 +72,12 @@ export const RX_SOURCES = {
   FOA_ERP:     'Foa EB, Yadin E, Lichner TK. Exposure and Response (Ritual) Prevention for OCD, Therapist Guide, 2nd ed. Oxford 2012.',
   KLERMAN_IPT: 'Weissman MM, Markowitz JC, Klerman GL. The Guide to Interpersonal Psychotherapy, updated ed. Oxford 2018.',
   OST_RELAX:   'Öst L-G. Applied relaxation: description of a coping technique and review of controlled studies. Behav Res Ther 1987;25(5):397-409.',
+  WELLS_MCT:   'Wells A. Metacognitive Therapy for Anxiety and Depression. Guilford 2009 (detached mindfulness; metacognitive beliefs about worry).',
+  DUGAS_IU:    'Dugas MJ, Robichaud M. Cognitive-Behavioral Treatment for GAD: From Science to Practice. Routledge 2007 (intolerance-of-uncertainty model).',
+  VDHEIDEN2012:'van der Heiden C et al. RCT of metacognitive therapy vs intolerance-of-uncertainty therapy for GAD. Behav Res Ther 2012;50(2):100-9 (both effective; MCT numerically strongest).',
+  GAD7:        'Spitzer RL, Kroenke K, Williams JBW, Löwe B. A brief measure for assessing generalized anxiety disorder: the GAD-7. Arch Intern Med 2006;166(10):1092-7.',
+  PSWQ:        'Meyer TJ, Miller ML, Metzger RL, Borkovec TD. Development & validation of the Penn State Worry Questionnaire. Behav Res Ther 1990;28(6):487-95.',
+  IUS12:       'Carleton RN, Norton MAPJ, Asmundson GJG. Fearing the unknown: a short version of the Intolerance of Uncertainty Scale (IUS-12). J Anxiety Disord 2007;21(1):105-17.',
   SEGAL_MBCT:  'Segal ZV, Williams JMG, Teasdale JD. Mindfulness-Based Cognitive Therapy for Depression, 2nd ed. Guilford 2013.',
   SMPC:        'Manufacturer SmPC / FDA label (drug-specific; verify current label).',
 };
@@ -1129,6 +1135,80 @@ export const THERAPY_TECHNIQUES = {
 export const PSYCHOTHERAPY_ACTIVE = true;
 
 export const PSYCHOTHERAPY_PLAN = {
+  GAD: {
+    model:
+      'Stepped-care CBT course (NICE CG113): assessment & worry formulation → foundational skills (applied relaxation, worry postponement) → high-intensity CBT integrating intolerance-of-uncertainty (Dugas) and metacognitive (Wells) methods with worry/imaginal exposure → relapse prevention. High-intensity psychological therapy and drug treatment are equally effective first-line — choice by patient preference (NICE); benzodiazepines are not maintenance treatment.',
+    coreMeasures: [
+      { tool: 'GAD-7', kind: 'self-report (7 items, 0–21)', cadence: 'baseline + every session / biweekly',
+        interpret: 'Severity & primary tracking (5/10/15 = mild/moderate/severe; ≥10 ≈ probable GAD). Most change-sensitive scale — follow the trend.', src: [S('GAD7')], verified: false },
+      { tool: 'PSWQ', kind: 'self-report trait worry (16 items, 16–80)', cadence: 'baseline + every 4–6 wk / at each phase boundary',
+        interpret: 'Pathological worry — the core GAD feature (cut-off ≈ 62–65). Changes more slowly than GAD-7; captures the worry construct itself.', src: [S('PSWQ')], verified: false },
+      { tool: 'IUS-12', kind: 'self-report mediator (12 items, 12–60)', cadence: 'baseline + Phase-2 boundaries',
+        interpret: 'Intolerance of uncertainty — track when using IU-targeted CBT (a mechanism/mediator, not a severity index).', src: [S('IUS12'), S('DUGAS_IU')], verified: false },
+      { tool: 'PHQ-9', kind: 'self-report', cadence: 'baseline + biweekly',
+        interpret: 'Screens the very common comorbid depression; a dominant depressive picture changes the plan.', src: [S('GAD7')], verified: false },
+    ],
+    phases: [
+      { phase: 0, name: 'Assessment, psychoeducation & worry formulation (NICE Step 1)', duration: '1–2 sessions',
+        goals: 'Comprehensive assessment (severity, impairment, comorbidity, substance/caffeine, risk); psychoeducation about GAD & the worry cycle; a shared cognitive formulation (intolerance-of-uncertainty / metacognitive model); orient to stepped care; set outcome measures & active monitoring.',
+        techniques: [
+          { school: 'CBT', name: 'psychoeducation + worry-cycle formulation', how: 'Explain GAD and how avoidance, checking and reassurance maintain the worry cycle; build a shared IU/metacognitive formulation; agree goals.', src: [S('BECK_CBT'), S('NICE_GAD')] },
+          { school: 'CBT', name: 'active monitoring & stepped-care orientation', how: 'Record baseline GAD-7/PSWQ; explain least-intrusive-first stepped care and that high-intensity therapy vs medication are equally effective (choice by preference).', src: [S('NICE_GAD')] },
+        ],
+        phaseTarget: 'Patient understands the worry model, has a shared formulation & goals, baseline measures recorded, and is oriented to stepped care.' },
+      { phase: 1, name: 'Foundational skills — low-intensity (NICE Step 2)', duration: 'typically 4–6 weeks',
+        goals: 'Build regulation & worry-management skills; guided self-help for milder presentations; lower physiological arousal and worry frequency before deeper cognitive work.',
+        techniques: [
+          { school: 'Applied relaxation', name: 'Öst applied-relaxation progression', how: 'Progressive → release-only → cue-controlled → rapid → applied relaxation, rehearsed until it can be deployed in real anxiety-provoking situations.', src: [S('OST_RELAX'), S('NICE_GAD')] },
+          { school: 'CBT', name: 'worry postponement / worry period', how: 'Defer worry to a scheduled 15–20 min "worry time"; note the worry and return to task, breaking all-day rumination.', src: [S('BECK_CBT'), S('WELLS_MCT')] },
+          { school: 'CBT', name: 'guided self-help + sleep/caffeine hygiene', how: 'CBT-based self-help materials; cut caffeine, protect sleep, reduce reassurance-seeking.', src: [S('NICE_GAD')] },
+          { school: 'Vagal', name: 'bottom-up arousal down-regulation', how: 'Slow-paced (~6/min) resonance breathing / HRV biofeedback as an autonomic adjunct (see VAGAL_TONING).', src: [S('HRVB')] },
+        ],
+        phaseTarget: 'GAD-7 trending down; a usable relaxation/worry-postponement skill in daily use; arousal & caffeine addressed.' },
+      { phase: 2, name: 'High-intensity CBT — core (NICE Step 3)', duration: '12–15 weekly 1-hr sessions',
+        goals: 'Restructure worry beliefs and reduce the processes that maintain GAD: intolerance of uncertainty, negative metacognitive beliefs, cognitive avoidance and safety/reassurance behaviours.',
+        techniques: [
+          { school: 'CBT', name: 'cognitive restructuring of worry', how: 'Thought records; test probability/cost of feared outcomes; separate productive problem-solving from unproductive worry.', src: [S('BECK_CBT')] },
+          { school: 'IU-CBT', name: 'intolerance-of-uncertainty work (Dugas)', how: 'Target the function of worry; problem-orientation training; behavioural uncertainty exposure (acting without certainty); reduce cognitive avoidance.', src: [S('DUGAS_IU'), S('VDHEIDEN2012')] },
+          { school: 'MCT', name: 'metacognitive therapy (Wells)', how: 'Challenge positive & negative metacognitive beliefs (uncontrollability/danger of worry); detached mindfulness; drop worry as a coping strategy.', src: [S('WELLS_MCT'), S('VDHEIDEN2012')] },
+          { school: 'CBT', name: 'worry/imaginal exposure + behavioural experiments', how: 'Imaginal exposure to the core feared image to habituation; experiments dropping checking/reassurance/overpreparation.', src: [S('BECK_CBT')] },
+        ],
+        phaseTarget: 'PSWQ & IUS falling; safety/reassurance behaviours largely dropped; worry experienced as controllable and non-dangerous.' },
+      { phase: 3, name: 'Relapse prevention, values & functioning', duration: 'final 2–4 sessions + boosters',
+        goals: 'Consolidate gains, prevent relapse, and re-engage valued life activity.',
+        techniques: [
+          { school: 'CBT', name: 'relapse-prevention blueprint', how: 'Summarise what helped, early-warning signs and an if-worry-returns plan; taper session frequency; schedule boosters.', src: [S('BECK_CBT'), S('NICE_GAD')] },
+          { school: 'ACT', name: 'values & committed action', how: 'Clarify values and take committed action toward them, letting worry be present without controlling behaviour (defusion, acceptance).', src: [S('HAYES_ACT'), S('HARRIS_ACT')] },
+        ],
+        phaseTarget: 'Gains maintained off weekly therapy; a written relapse-prevention plan; return to valued roles/activities.' },
+    ],
+    nonResponse: {
+      reviewAt: 'Review at each phase boundary; if GAD-7 is not improving by ~6–8 weeks of high-intensity CBT, reassess before continuing.',
+      checklist: [
+        'Homework & exposure adherence — is uncertainty/worry exposure actually happening?',
+        'Residual safety / reassurance / checking behaviours maintaining worry',
+        'Correct model — IU-driven vs metacognitive (worry-about-worry)?',
+        'Caffeine / alcohol / poor sleep sustaining arousal',
+        'Missed comorbidity — depression, panic, social anxiety, substance use',
+        'Adequate dose & manual fidelity (12–15 sessions)',
+        'Diagnostic accuracy — GAD vs primary depression vs health anxiety',
+      ],
+      alternatives: [
+        { ifX: 'Dominant worry-about-worry / metacognitive beliefs', switchTo: 'Metacognitive Therapy (Wells) — numerically strongest in head-to-head RCT.', src: [S('WELLS_MCT'), S('VDHEIDEN2012')] },
+        { ifX: 'Uncertainty-driven worry & cognitive avoidance', switchTo: 'Intolerance-of-Uncertainty therapy (Dugas).', src: [S('DUGAS_IU')] },
+        { ifX: 'Cannot engage cognitive work / prefers a somatic route', switchTo: 'Applied relaxation as the primary high-intensity option (NICE-equivalent).', src: [S('OST_RELAX'), S('NICE_GAD')] },
+        { ifX: 'Partial response to high-intensity CBT', switchTo: 'Add an SSRI/SNRI (combined treatment) or refer to Step 4.', src: [S('NICE_GAD'), S('SLEE2019')] },
+        { ifX: 'Dominant comorbid depression', switchTo: 'Treat the depression first (CBT-D / antidepressant), then reassess GAD.', src: [S('NICE_GAD')] },
+      ],
+    },
+    crossSchool: [
+      'Worry postponement — shared by CBT and MCT.',
+      'Detached mindfulness / defusion — MCT ↔ ACT ↔ mindfulness (MBCT).',
+      'Exposure principle — worry/imaginal exposure ↔ interoceptive exposure ↔ ERP logic.',
+      'Applied relaxation ↔ vagal/HRV down-regulation ↔ DBT distress-tolerance arousal skills.',
+      'Behavioural experiments — CBT ↔ IU-therapy ↔ metacognitive tests.',
+    ],
+  },
   BPD: {
     model:
       'Stage-based integrative plan on a DBT staging spine (Linehan) with a GPM generalist backbone. MBT / Schema / TFP techniques woven in by presentation; EMDR reserved for comorbid trauma AFTER behavioural control. Psychotherapy is first-line; medication is symptom-targeted and adjunct only.',
