@@ -4,7 +4,7 @@
    exactly like the interaction table. The model no longer writes these — it
    only explains. Reproducible every run.
    ════════════════════════════════════════════════════════════════════════ */
-import { RX, RX_ACTIVE, THERAPY_TECHNIQUES } from './rxFormulary';
+import { RX, RX_ACTIVE, THERAPY_TECHNIQUES, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE, VAGAL_TONING } from './rxFormulary';
 
 const ok = (key) => RX_ACTIVE && RX[key] && !RX[key].__pending;
 const j = (arr) => (arr || []).join('; ');
@@ -83,16 +83,61 @@ export function renderRxExcluded({ key, lang = 'en' } = {}) {
   return (d.excluded || []).map((e) => `- **${e.item}**: ${e.why} _src: ${j(e.src)}_`).join('\n');
 }
 
-/* ── 🧠 THERAPY — schools + SPECIFIC techniques (#7) ────────────────────── */
+/* ── 🧠 THERAPY — staged INTEGRATIVE plan (preferred) or flat techniques (#7) ─ */
 export function renderRxTherapy({ key, lang = 'en' } = {}) {
-  const techs = THERAPY_TECHNIQUES[key];
-  if (!RX_ACTIVE || !techs) return '';
+  if (!RX_ACTIVE) return '';
   const isAr = lang === 'ar';
-  return techs.map((t) =>
+  const plan = PSYCHOTHERAPY_ACTIVE ? PSYCHOTHERAPY_PLAN[key] : null;
+
+  // Preferred: full staged integrative plan (reviewed template).
+  if (plan) {
+    const L = [`_${plan.model}_`];
+
+    L.push(`\n**${isAr ? '📏 مقاييس المتابعة' : '📏 Outcome measures'}:**`);
+    plan.coreMeasures.forEach((m) =>
+      L.push(`• **${m.tool}** (${m.kind}) — ${isAr ? 'التكرار' : 'cadence'}: ${m.cadence}. ${m.interpret} _src: ${j(m.src)}_`));
+
+    L.push(`\n**${isAr ? '🪜 المراحل' : '🪜 Phases'}:**`);
+    plan.phases.forEach((p) => {
+      L.push(`\n**${isAr ? 'المرحلة' : 'Phase'} ${p.phase} — ${p.name}** _(${p.duration})_`);
+      L.push(`${isAr ? 'الأهداف' : 'Goals'}: ${p.goals}`);
+      p.techniques.forEach((t) => L.push(`   – [${t.school}] **${t.name}** — ${t.how} _src: ${j(t.src)}_`));
+      L.push(`✅ ${isAr ? 'محك إنجاز المرحلة' : 'Phase target'}: ${p.phaseTarget}`);
+    });
+
+    const nr = plan.nonResponse;
+    L.push(`\n**${isAr ? '🔁 عند عدم الاستجابة' : '🔁 If no progress'}** (${nr.reviewAt})`);
+    L.push(`${isAr ? 'راجع' : 'Review'}: ${nr.checklist.join(' · ')}`);
+    L.push(`${isAr ? 'بدائل' : 'Alternatives'}:`);
+    nr.alternatives.forEach((a) => L.push(`   – ${isAr ? 'لو' : 'if'} ${a.ifX} → ${a.switchTo} _src: ${j(a.src)}_`));
+
+    L.push(`\n**${isAr ? '🔗 تقنيات مشتركة بين المدارس' : '🔗 Cross-school techniques'}:** ${plan.crossSchool.join(' · ')}`);
+    return L.join('\n') + renderVagalToning({ lang });
+  }
+
+  // Fallback: flat per-school techniques (disorders not yet upgraded to a staged plan).
+  const techs = THERAPY_TECHNIQUES[key];
+  if (!techs) return '';
+  const flat = techs.map((t) =>
     `\n**${t.school}** (${isAr ? 'أولوية' : 'priority'} ${t.priority}${t.grade ? `, ${isAr ? 'مستوى' : 'Level'} ${t.grade}` : ''})\n` +
     `**${isAr ? 'التقنيات' : 'Techniques'}:** ${t.techniques}\n` +
     `**${isAr ? 'المسار' : 'Course'}:** ${t.course} _src: ${j(t.src)}_`
   ).join('\n');
+  return flat + renderVagalToning({ lang });
+}
+
+/* ── 🌀 VAGAL TONING — global adjunct module appended to the therapy section ── */
+export function renderVagalToning({ lang = 'en' } = {}) {
+  if (!PSYCHOTHERAPY_ACTIVE || !VAGAL_TONING) return '';
+  const isAr = lang === 'ar';
+  const v = VAGAL_TONING;
+  const L = [`\n\n**${isAr ? '🌀 تنغيم العصب المبهم (Vagal toning) — مساعد' : '🌀 Vagal nerve toning — adjunct'}**`];
+  L.push(`${isAr ? 'الأساس' : 'Rationale'}: ${v.rationale}`);
+  L.push(`${isAr ? 'الدليل' : 'Evidence'}: ${v.evidence}`);
+  v.techniques.forEach((t) => L.push(`   – **${t.name}** _(Level ${t.grade})_ — ${t.how} _src: ${j(t.src)}_`));
+  L.push(`${isAr ? 'الدمج' : 'Integrates with'}: ${v.integratesWith}`);
+  L.push(`⚠ ${isAr ? 'تحذيرات' : 'Cautions'}: ${v.cautions}`);
+  return '\n' + L.join('\n');
 }
 
 /* ── 📋 FOLLOW-UP & SAFETY — phases + monitoring + withdrawal-vs-relapse + taper (#8) ─ */

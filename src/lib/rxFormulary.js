@@ -50,6 +50,15 @@ export const RX_SOURCES = {
   NICKEL2006:  'Nickel MK et al. Aripiprazole in BPD, RCT. Am J Psychiatry 2006.',
   LABILE2018:  'Crawford MJ et al. LABILE — lamotrigine for BPD, RCT (n=276, no benefit). 2018.',
   FDA_VALP:    'FDA/SmPC valproate — teratogenicity boxed warning; avoid in pregnancy / childbearing potential.',
+  LINEHAN_DBT: 'Linehan MM. Cognitive-Behavioral Treatment of BPD (Guilford 1993) & DBT Skills Training Manual, 2nd ed. (Guilford 2015) — stages of treatment & target hierarchy.',
+  GUNDERSON_GPM:'Gunderson JG, Links PS. Handbook of Good Psychiatric Management for BPD (APPI 2014); Gunderson, Masland, Choi-Kain, review 2018.',
+  BATEMAN_MBT: 'Bateman A, Fonagy P. Mentalization-Based Treatment for Personality Disorders (Oxford 2016).',
+  YOUNG_SCHEMA:'Young JE, Klosko JS, Weishaar ME. Schema Therapy: A Practitioner\u2019s Guide (Guilford 2003) — mode work for BPD.',
+  CLARKIN_TFP: 'Clarkin JF, Yeomans FE, Kernberg OF. Transference-Focused Psychotherapy for BPD (APPI 2006).',
+  SHAPIRO_EMDR:'Shapiro F. EMDR: Basic Principles, Protocols and Procedures, 3rd ed. (Guilford 2018) — 8-phase protocol; extended stabilisation in complex trauma/dissociation.',
+  BSL23:       'Bohus M et al. The short version of the Borderline Symptom List (BSL-23). Psychopathology 2009;42:32-39.',
+  ZANBPD:      'Zanarini MC et al. Zanarini Rating Scale for BPD (ZAN-BPD): a continuous measure. J Pers Disord 2003;17:233-42.',
+  HRVB:        'HRV biofeedback / resonance-frequency breathing: Lehrer & Gevirtz 2014; meta-analyses Goessl 2017 (anxiety/stress), Pizzoli 2021 (depression); Laborde 2022 (slow-paced breathing).',
   SMPC:        'Manufacturer SmPC / FDA label (drug-specific; verify current label).',
 };
 
@@ -1095,6 +1104,111 @@ export const THERAPY_TECHNIQUES = {
       techniques: 'Aerobic exercise, sleep regularity, reduced caffeine/alcohol in luteal phase, stress management.',
       course: 'supportive.', src: [S('ACOG_PMDD')], verified: false },
   ],
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   PSYCHOTHERAPY_PLAN — staged INTEGRATIVE plan (phases · techniques-by-school ·
+   measurement · non-response review · alternatives). Deterministic, source-anchored.
+   BPD is the reviewed TEMPLATE; MDD/GAD/OCD/PMDD replicate this exact shape.
+   Schools: DBT · MBT · Schema · TFP · GPM · EMDR · CBT/ERP/ACT (woven by presentation).
+   ════════════════════════════════════════════════════════════════════════ */
+export const PSYCHOTHERAPY_ACTIVE = true;
+
+export const PSYCHOTHERAPY_PLAN = {
+  BPD: {
+    model:
+      'Stage-based integrative plan on a DBT staging spine (Linehan) with a GPM generalist backbone. MBT / Schema / TFP techniques woven in by presentation; EMDR reserved for comorbid trauma AFTER behavioural control. Psychotherapy is first-line; medication is symptom-targeted and adjunct only.',
+    coreMeasures: [
+      { tool: 'BSL-23', kind: 'self-report (past week)', cadence: 'baseline + every 4 wk / at each phase boundary',
+        interpret: 'mean 0–4 (or sum 0–92); mean ≥1.50 = BPD-range; sensitive to change — track the downward trend, not a single value.', src: [S('BSL23')], verified: false },
+      { tool: 'ZAN-BPD', kind: 'clinician-rated (9 DSM items)', cadence: 'baseline + every 8–12 wk',
+        interpret: '0–36; a clinically significant change ≈ 6–8 points.', src: [S('ZANBPD')], verified: false },
+      { tool: 'NSSI / suicidality frequency (DBT diary card)', kind: 'behavioural log', cadence: 'weekly',
+        interpret: 'PRIMARY Stage-1 target — frequency & intensity must trend down before advancing.', src: [S('LINEHAN_DBT')], verified: false },
+      { tool: 'PHQ-9', kind: 'self-report', cadence: 'baseline + biweekly',
+        interpret: 'tracks comorbid depression; do NOT mistake BPD affective lability for MDD.', src: [S('BSL23')], verified: false },
+    ],
+    phases: [
+      { phase: 0, name: 'Pretreatment — commitment & framing (GPM + DBT)', duration: '1–4 sessions',
+        goals: 'Diagnostic disclosure + psychoeducation (medicalise the disorder); interpersonal-hypersensitivity formulation; agree targets & hierarchy; crisis/safety plan; set realistic expectations of the improvement course.',
+        techniques: [
+          { school: 'GPM', name: 'psychoeducation + medicalising the diagnosis', how: 'Frame BPD as treatable with a known improvement trajectory; organise around interpersonal hypersensitivity; involve family where useful.', src: [S('GUNDERSON_GPM')] },
+          { school: 'DBT', name: 'commitment strategies + target hierarchy + diary card', how: 'Orient to the frame; build the personalised behavioural-target hierarchy; begin diary-card self-monitoring.', src: [S('LINEHAN_DBT')] },
+        ],
+        phaseTarget: 'Patient understands the diagnosis, is oriented to the frame, has a safety plan, and has started self-monitoring.' },
+      { phase: 1, name: 'Behavioural control & safety (DBT Stage 1)', duration: 'typically ≥ 6–12 months',
+        goals: 'Reduce IN STRICT ORDER: (1) life-threatening behaviours (suicide, NSSI); (2) therapy-interfering behaviours; (3) quality-of-life-interfering behaviours; (4) acquire skills.',
+        techniques: [
+          { school: 'DBT', name: 'four skills modules', how: 'Mindfulness; distress tolerance (TIPP, radical acceptance); emotion regulation (opposite action, check-the-facts, PLEASE); interpersonal effectiveness (DEAR MAN).', src: [S('LINEHAN_DBT')] },
+          { school: 'DBT', name: 'chain & solution analysis', how: 'Behavioural chain analysis of each target behaviour → insert skilful alternatives.', src: [S('LINEHAN_DBT')] },
+          { school: 'DBT', name: 'inter-session (phone) coaching', how: 'Generalise skills to real crises in vivo.', src: [S('LINEHAN_DBT')] },
+          { school: 'GPM', name: 'suicidality / self-harm management', how: 'Distinguish chronic from acute-on-chronic risk; avoid reflexive hospitalisation; keep the patient active in their own life.', src: [S('GUNDERSON_GPM')] },
+          { school: 'Vagal', name: 'bottom-up arousal down-regulation', how: 'Slow-paced (~6/min) breathing + TIPP temperature as distress-tolerance adjuncts (see VAGAL_TONING).', src: [S('HRVB')] },
+        ],
+        phaseTarget: 'NSSI/suicidal behaviour clearly trending down; core skills in use; attendance stable. DO NOT advance to trauma work until behavioural control is achieved.' },
+      { phase: 2, name: 'Emotional processing & trauma (DBT Stage 2 · EMDR if indicated)', duration: 'variable',
+        goals: 'Move from "quiet desperation" to full emotional experiencing; process trauma/invalidation ONLY after Stage-1 control.',
+        techniques: [
+          { school: 'DBT', name: 'exposure-based emotion processing', how: 'Reduce avoidance of primary emotions; address shame and traumatic invalidation.', src: [S('LINEHAN_DBT')] },
+          { school: 'MBT', name: 'mentalizing under attachment stress', how: 'Not-knowing/curious stance; restore mentalizing when high arousal collapses it.', src: [S('BATEMAN_MBT')] },
+          { school: 'EMDR', name: '8-phase reprocessing (comorbid PTSD/trauma)', how: 'ONLY with adequate stabilisation (extended Phase-2 preparation) and reliable dual attention; hold while active dissociation or behavioural dyscontrol persists. Strong evidence in PTSD; adjunct-for-trauma in BPD.', src: [S('SHAPIRO_EMDR')] },
+        ],
+        phaseTarget: 'Trauma-linked triggers lose charge; affect tolerated without dyscontrol; dissociation reduced.' },
+      { phase: 3, name: 'Identity, relationships & building a life (DBT Stage 3 · Schema/TFP · GPM)', duration: 'variable',
+        goals: 'Self-respect, more stable identity, ordinary problem-solving, vocational/relational functioning.',
+        techniques: [
+          { school: 'Schema', name: 'mode work', how: 'Target modes — vulnerable/abandoned child, angry-impulsive child, punitive/demanding parent, detached protector → strengthen the Healthy Adult via limited reparenting.', src: [S('YOUNG_SCHEMA')] },
+          { school: 'TFP', name: 'transference-focused clarification', how: 'Work identity diffusion and split self/other representations in the here-and-now therapeutic relationship.', src: [S('CLARKIN_TFP')] },
+          { school: 'GPM', name: '"build a life" / social adaptation', how: 'Prioritise work/structure over a patient identity; a getting-a-life agenda.', src: [S('GUNDERSON_GPM')] },
+        ],
+        phaseTarget: 'Improved role functioning; more stable identity & relationships; reduced reliance on crisis services.' },
+    ],
+    nonResponse: {
+      reviewAt: 'Stage 1: reassess ~12 wk if NSSI/suicidality is not trending down. Overall: a formal review at every phase boundary.',
+      checklist: [
+        'Diary-card adherence & homework completion',
+        'Correct target hierarchy — is a higher-priority behaviour being skipped?',
+        'Therapeutic alliance & therapy-interfering behaviours (both patient and therapist)',
+        'Missed comorbidity — PTSD, substance use, eating disorder, ADHD, bipolar',
+        'Dose of therapy — are individual + skills group + coaching all present?',
+        'Iatrogenic sedation / polypharmacy masking progress (esp. benzodiazepines)',
+        'Diagnostic accuracy — BPD vs bipolar vs complex-PTSD',
+      ],
+      alternatives: [
+        { ifX: 'Cannot sustain full DBT intensity / limited access', switchTo: 'GPM generalist model (once-weekly) — near-equivalent outcomes, easier to deliver.', src: [S('GUNDERSON_GPM')] },
+        { ifX: 'Predominant mentalizing collapse / attachment-driven crises', switchTo: 'MBT programme.', src: [S('BATEMAN_MBT')] },
+        { ifX: 'Entrenched identity/relational schemas persist after behavioural control', switchTo: 'Schema Therapy or TFP.', src: [S('YOUNG_SCHEMA'), S('CLARKIN_TFP')] },
+        { ifX: 'Dominant comorbid PTSD once stabilised', switchTo: 'Add EMDR / trauma-focused module (Stage 2).', src: [S('SHAPIRO_EMDR')] },
+      ],
+    },
+    crossSchool: [
+      'Mindfulness — shared by DBT, MBT, Schema (grounding) and ACT.',
+      'Distress tolerance / crisis-survival — DBT TIPP overlaps vagal down-regulation.',
+      'Chain / functional analysis — DBT ↔ CBT.',
+      'Validation — DBT ↔ GPM ↔ MBT relational stance.',
+      'Exposure principle — DBT Stage-2 emotion exposure ↔ EMDR reprocessing ↔ ERP logic.',
+    ],
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   VAGAL_TONING — global adjunct module (bottom-up autonomic regulation).
+   Honest evidence: HRVB / slow-paced breathing = Level B; other maneuvers = Level C.
+   ════════════════════════════════════════════════════════════════════════ */
+export const VAGAL_TONING = {
+  rationale:
+    'Raise cardiac vagal tone & baroreflex sensitivity to widen the window of tolerance and support top-down therapy (neurovisceral-integration model). Adjunct — never a stand-alone treatment.',
+  evidence:
+    'Slow-paced / resonance-frequency breathing & HRV biofeedback: meta-analytic benefit for stress/anxiety (Goessl 2017) and depression (Pizzoli 2021); effect present even without a biofeedback device (Laborde 2022) — Level B. Other maneuvers are physiologically plausible with limited outcome data — Level C.',
+  techniques: [
+    { name: 'Resonance-frequency / slow-paced breathing', grade: 'B', how: '~6 breaths/min (individual resonance ~4.5–7 bpm ≈ 0.1 Hz); inhale ~4 s / exhale ~6 s; exhale longer than inhale; 10–20 min daily.', src: [S('HRVB')] },
+    { name: 'HRV biofeedback', grade: 'B', how: 'Same breathing with an HRV display/app to find and train the personal resonance frequency over weeks.', src: [S('HRVB')] },
+    { name: 'Extended-exhale / physiological sigh', grade: 'C', how: 'Double inhale then a long slow exhale; rapid acute down-regulation for arousal spikes.', src: [S('HRVB')] },
+    { name: 'Humming / chanting / gargling', grade: 'C', how: 'Laryngeal–pharyngeal vagal activation via a prolonged voiced exhale.', src: [S('HRVB')] },
+    { name: 'Cold exposure (diving reflex)', grade: 'C', how: 'Cold water on the face / brief cold → parasympathetic surge; overlaps DBT TIPP. Caution with cardiac disease.', src: [S('HRVB')] },
+  ],
+  integratesWith: 'Slots into DBT distress-tolerance (TIPP), ACT/mindfulness, applied relaxation, and Stage-1 arousal regulation.',
+  cautions: 'Avoid over-breathing (can trigger vagal withdrawal); cold-exposure caution with cardiac disease; adjunct only — does not replace evidence-based psychotherapy.',
 };
 
 /* Convenience: list unverified claims so the review pass is mechanical. */
