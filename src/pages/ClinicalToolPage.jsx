@@ -11,6 +11,7 @@ import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExc
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
+import { renderLabsHTML, renderExcludedHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -446,16 +447,21 @@ function generatePDF(form, results, type, lang) {
       + (rawHTML ? rawHTML : `<div class="sec-body">${formatReportHTML(body)}</div>`)
       + '</div>';
   }
-  const medsHTMLpdf = isDoc ? renderRxMedicationsHTML({ key: disorderKey(form.disorder), lang, pdf: true }) : null;
-  const comorbHTMLpdf = isDoc ? renderComorbidityHTML({ primaryKey: disorderKey(form.disorder), comorbidities: form.comorbidities, history: form.history, lang, pdf: true }) : null;
+  // Doctor PDF: decision-first HTML sections rendered with collapsibles OPEN
+  // (the physician record must be complete). Extensible map keyed by section id.
+  const dk = disorderKey(form.disorder);
+  const htmlPdf = isDoc ? {
+    medications: renderRxMedicationsHTML({ key: dk, lang, pdf: true }),
+    comorbidity: renderComorbidityHTML({ primaryKey: dk, comorbidities: form.comorbidities, history: form.history, lang, pdf: true }),
+    labs:        renderLabsHTML({ key: dk, form, lang, pdf: true }),
+    excluded:    renderExcludedHTML({ key: dk, lang, pdf: true }),
+  } : {};
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
     .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
     .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()))
     .filter(s => s.id !== 'followup' || (results.followup && String(results.followup).trim()));
-  const rawFor = (s) => (isDoc && s.id === 'medications') ? medsHTMLpdf
-    : (isDoc && s.id === 'comorbidity') ? comorbHTMLpdf : null;
-  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, rawFor(s))).join('');
+  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, isDoc ? (htmlPdf[s.id] || null) : null)).join('');
 
   function buildPatientContent(form, results) {
     function simplify(text) {
@@ -1020,6 +1026,11 @@ const ClinicalTool = () => {
         if (rxMedHTML) parsed.medicationsHTML = rxMedHTML;
         if (rxLab) parsed.labs = rxLab;
         if (rxExc) parsed.excluded = rxExc;
+        // Decision-first HTML for labs + excluded (injected raw, same path as meds).
+        const labHTML = renderLabsHTML({ key, form, lang });
+        const excHTML = renderExcludedHTML({ key, lang });
+        if (labHTML) parsed.labsHTML = labHTML;
+        if (excHTML) parsed.excludedHTML = excHTML;
         if (rxThr) parsed.therapy = rxThr;
         parsed.followup = rxFup || '';
         setHideFollowup(!rxFup);
@@ -1337,12 +1348,9 @@ const ClinicalTool = () => {
                   <span className="text-2xl">{SECTIONS.find(s=>s.id===activeTab)?.icon}</span>
                   <span className="font-bold text-white">{SECTIONS.find(s=>s.id===activeTab)?.title}</span>
                 </div>
-                {activeTab === 'medications' && results.medicationsHTML ? (
+                {results[activeTab + 'HTML'] ? (
                   <div className="text-sm"
-                    dangerouslySetInnerHTML={{ __html: results.medicationsHTML }} />
-                ) : activeTab === 'comorbidity' && results.comorbidityHTML ? (
-                  <div className="text-sm"
-                    dangerouslySetInnerHTML={{ __html: results.comorbidityHTML }} />
+                    dangerouslySetInnerHTML={{ __html: results[activeTab + 'HTML'] }} />
                 ) : (
                   <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: formatReportHTML(results[activeTab]) }} />
