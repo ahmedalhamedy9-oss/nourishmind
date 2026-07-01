@@ -8,6 +8,7 @@ import { renderInteractionGate, renderInteractionsReport, renderInteractionsRepo
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
 import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
+import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
@@ -1001,6 +1002,15 @@ const ClinicalTool = () => {
         const nSupp = renderNutritionSupplements({ key, lang });
         if (nDiet) parsed.diet = nDiet;
         if (nSupp) parsed.supplements = nSupp;
+
+        // 📊🍽️ Macros + carb/fat quality + meal architecture — deterministic,
+        //    computed from computeMetrics (ED-gate + renal/muscle-aware protein↔fat
+        //    logic). Non-empty only for disorders with a macroTemplate (GAD first);
+        //    the other 4 append nothing until rolled out. 🦠 Psychobiotics → supplements.
+        const macroBlock = renderMacrosAndMeals({ key, metrics: computeMetrics(form), form, lang });
+        if (macroBlock) parsed.diet = [parsed.diet, macroBlock].filter(Boolean).join('\n');
+        const psycho = renderPsychobioticsFor({ key, lang });
+        if (psycho) parsed.supplements = [parsed.supplements, psycho].filter(Boolean).join('\n');
 
         // 🕐 Circadian & Chronotherapy — deterministic two-clock model
         // (central: light/sleep + drug chronotiming; peripheral: meal timing).

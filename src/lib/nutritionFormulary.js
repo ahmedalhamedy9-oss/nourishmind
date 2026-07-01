@@ -51,6 +51,17 @@ export const NUT_SOURCES = {
   VITEX:       'Vitex agnus-castus (chasteberry) for PMS — RCTs (Agnolyt extract); dopaminergic/prolactin modulation.',
   PMS_REVIEW:  'PMS dietary/herbal systematic reviews (calcium good; B6/Vitex some; magnesium mixed; evening primrose oil NO benefit).',
   BPD_OMEGA3:  'Omega-3 (EPA-predominant) for BPD affective instability/impulsivity/aggression — RCTs/meta-analysis (modest).',
+  // — macro / meal-architecture / psychobiotic layer —
+  WHO_DIET:    'WHO Healthy Diet fact sheet & guidelines (2023–2025): total fat ≤30%E; saturated fat <10%E; trans <1%E; unsaturated (MUFA/PUFA) from plant sources preferred; carbohydrate mainly from whole grains/vegetables/fruit/pulses; ≥25 g naturally-occurring fibre/day; free sugars <10%E (ideally <5%).',
+  NA_AMDR_2024:'National Academies of Sciences 2024 — Rethinking the AMDR: macronutrient QUALITY (carb type refined/complex/fibre; protein amino-acid profile; fat SFA/MUFA/PUFA & n-3/n-6) is at least as important as quantitative ratios.',
+  MACRO_ANX_DEF:'Perez-Cornago et al. Nutrients 2019;11:1206 — 16-wk hypocaloric RCT (n=305): moderately-high-protein diet (~30%P/30%F/40%C) improved trait-anxiety score in women vs low-fat; energy restriction + weight loss beneficial on anxiety/depression traits.',
+  LOWCARB_NULL:'Low-carbohydrate-diet adherence & psychological disorders — cross-sectional (n large): LCD score NOT associated with anxiety/depression/distress → carbohydrate restriction per se is not anxiolytic (favour quality/stability over ratio extremes). PMC6929485.',
+  MEALTIME_MOOD:'Chellappa SL et al. PNAS 2022;119:e2206348119 (Brigham controlled 14-d protocol): daytime-only vs day+night eating — meal timing had moderate–large effects on depression-/anxiety-like mood, tracking internal circadian misalignment.',
+  MACRO_TIMING_DEP:'Macronutrient quality, food source & timing vs depression — NHANES cross-sectional (n=23,313), J Affect Disord 2024: high-quality carbohydrate & total protein inversely associated with depression; added sugar positively; high-quality carbs at breakfast & dinner inversely associated.',
+  LATE_EATING: 'Late-night eating, circadian disruption & mood — review (PMC12127805): late-night eating (>25% intake within 2–3 h of bed) linked to circadian misalignment & mood disturbance; earlier/consistent meal timing & TRE as non-pharmacological levers.',
+  PSYCHO_ANX:  'Psychobiotics for anxiety/stress — meta-analyses & systematic reviews (Reis 2018; Smith 2021; multi-strain RCT Front Nutr 2023, 4×10⁹ CFU): L. rhamnosus, L. plantarum, B. longum strongest human signal; modest & scale-dependent (self-report > clinician scales); 1–50 ×10⁹ CFU/day, 8–12 wk.',
+  PSYCHO_STRAINS:'Strain-specific anxiety/stress RCTs: L. helveticus R0052 + B. longum R0175 (Messaoudi, anxiolytic in humans); B. longum 1714; L. rhamnosus CNCM I-3690 decreases subjective academic stress (Gut Microbes 2022). Adjunct, not treatment.',
+  FERMENTED_FIBRE:'Fermented foods (kefir, live-culture yogurt, kimchi, sauerkraut, miso) + prebiotic fibre (chicory, onion/garlic/leek, green banana, cooked-cooled starch) support microbial diversity beyond supplements. Caveat: with suspected SIBO, do NOT load prebiotic fibre before treatment.',
 };
 const N = (k) => NUT_SOURCES[k] || k;
 
@@ -89,6 +100,56 @@ const GAD = {
       { item: 'Extra-virgin olive oil', evidence: 'moderate', why: 'Core Mediterranean fat; anti-inflammatory.', src: [N('NUTRIENT_REV')], verified: false },
       { item: 'Fish oil (culinary EPA/DHA source)', evidence: 'moderate', why: 'See omega-3 supplement.', src: [N('OMEGA3_ANX')], verified: false },
     ],
+  },
+
+  /* ── 📊 MACRO TEMPLATE (feeds computeMacros in mealPlanEngine) ──────────── */
+  macroTemplate: {
+    strategy: 'Blood-sugar stability: regular meals, NO skipped meals, low-GI high-fibre carbs; protein anchored to lean mass and front-loaded; Mediterranean unsaturated fat. In a caloric DEFICIT protein is raised toward a lean-preserving target WHEN renally safe (a moderately-high-protein pattern independently benefited trait anxiety in women); with renal impairment protein is instead capped to RDA (0.8 g/kg) and the freed energy is shifted into healthy fat, with nephrology referral.',
+    fatPctEnergy: 30,            // WHO: total fat ≤30%E
+    sfaCapPctEnergy: 10,         // WHO: saturated fat <10%E
+    addedSugarCapPctEnergy: 10,  // WHO: free sugars <10%E (ideally <5%)
+    evidence: 'weak–moderate (guideline + observational + one deficit RCT); ratio extremes not required',
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_ANX_DEF'), N('LOWCARB_NULL')], verified: false,
+  },
+  carbQuality: {
+    prefer: [
+      { type: 'Complex / low-GI, high-fibre', examples: 'oats, barley, bulgur & other whole grains; legumes/pulses; vegetables; whole fruit', why: 'Steady glucose → fewer reactive-hypoglycaemia swings that mimic/worsen anxiety; aids tryptophan transport.' },
+    ],
+    fibreTarget: '≥25 g/day (WHO); ≈14 g per 1000 kcal',
+    avoid: [
+      { type: 'Refined / simple / added sugar', examples: 'white bread & refined snacks, sugary drinks, sweets', why: 'Glucose spike→crash → jitteriness mimicking anxiety. Free/added sugars <10%E (ideally <5%).' },
+    ],
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('MACRO_TIMING_DEP')], verified: false,
+  },
+  fatQuality: {
+    prefer: [
+      { type: 'MUFA', examples: 'extra-virgin olive oil, avocado, nuts', why: 'Core Mediterranean fat; anti-inflammatory.' },
+      { type: 'PUFA n-3 (EPA/DHA)', examples: 'oily fish (salmon/sardines/mackerel) ≥2×/wk; walnuts, flax/chia', why: 'Anxiolytic omega-3 signal; improves n-3:n-6 balance.' },
+    ],
+    limit: [
+      { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; replace with unsaturated fat.' },
+      { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO; no safe amount of industrial trans fat.' },
+    ],
+    src: [N('WHO_DIET'), N('OMEGA3_ANX')], verified: false,
+  },
+  mealArchitecture: {
+    meals: 3, snacks: 1, noSkip: true,
+    distribution: [0.30, 0.35, 0.25],   // breakfast / lunch / dinner (+ ~0.10 optional snack); front-loaded
+    timing: 'Daytime-loaded: front-load energy earlier and keep the last main meal ≥3 h before bed. Protein-forward at breakfast (alertness); complex carbohydrate acceptable at the evening meal (tryptophan→serotonin/melatonin). Regular fixed meal times stabilise cortisol. Cap caffeine ≤200 mg/day during SSRI initiation.',
+    src: [N('MEALTIME_MOOD'), N('MACRO_TIMING_DEP'), N('LATE_EATING')], verified: false,
+  },
+  psychobiotics: {
+    note: 'ADJUNCT only; modest, scale-dependent signal (stronger on self-report anxiety than clinician scales). Not a treatment; try ≥8–12 wk before judging.',
+    strains: [
+      { name: 'Lactobacillus rhamnosus (e.g. CNCM I-3690 / HN001)', dose: '1–10 ×10⁹ CFU/day', evidence: 'candidate anxiolytic; academic-stress RCT' },
+      { name: 'Lactiplantibacillus plantarum', dose: '~1 ×10⁹ CFU/day (often in multi-strain)', evidence: 'human anxiety/stress signal' },
+      { name: 'Bifidobacterium longum (e.g. 1714 / R0175)', dose: '~1 ×10⁹ CFU/day', evidence: 'stress/anxiety RCTs' },
+      { name: 'L. helveticus R0052 + B. longum R0175 (combination)', dose: 'combined ~3 ×10⁹ CFU/day', evidence: 'anxiolytic combination in humans (Messaoudi)' },
+    ],
+    duration: '8–12 weeks for a consistent effect',
+    foodSources: 'plain kefir, unsweetened live-culture yoghurt, kimchi, sauerkraut, miso — 1–2 servings/day; + prebiotic fibre 10–15 g/day (chicory, onion/garlic/leek, green banana, cooked-cooled potato/rice)',
+    caution: 'If SIBO is suspected, do NOT load prebiotic fibre before treating it (can worsen bloating & acutely worsen anxiety).',
+    src: [N('PSYCHO_ANX'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: false,
   },
 
   /* ── 🧴 ADAPTOGENS ────────────────────────────────────────────────────── */
