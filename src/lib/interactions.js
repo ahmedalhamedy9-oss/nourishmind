@@ -594,7 +594,19 @@ export function renderInteractionsReportSplit({
     currentMeds, supplements,
   });
   const primaryKeys = new Set(primaryMatches.map(matchKey));
-  const crossMatches = wideMatches.filter((m) => !primaryKeys.has(matchKey(m)));
+  const crossRaw = wideMatches.filter((m) => !primaryKeys.has(matchKey(m)));
+
+  // Keep only cross-protocol pairs that TOUCH the active regimen (current meds,
+  // supplements, or THIS plan's drugs). A comorbid-vs-comorbid pair — where
+  // neither drug is prescribed — is noise, not a caution about the actual plan:
+  // it would only matter if the physician added BOTH comorbid drugs at once, and
+  // that comorbid protocol is itself screened when treated as primary. Dropping
+  // these keeps the cross block to "if you ADD <comorbid drug>, watch it against
+  // the current plan", which is the whole point of the block.
+  const activeIds = new Set(buildPresentSet({
+    firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct, currentMeds, supplements,
+  }).keys());
+  const crossMatches = crossRaw.filter((m) => m.agents.some((a) => activeIds.has(a.id)));
 
   const primaryLines = primaryMatches.map(matchToItem).map(line);
   const crossLines = crossMatches.map(matchToItem).map(line);
