@@ -45,6 +45,8 @@ export const RX_SOURCES = {
   CANMAT_MDD:  'Lam RW et al. CANMAT 2023 update — management of MDD in adults. Can J Psychiatry 2024;69(9):641-687.',
   APA_OCD:     'APA Practice Guideline for OCD (Koran et al.) + subsequent reviews; high-dose SSRI / ERP.',
   ACOG_PMDD:   'ACOG Clinical Practice Guideline No.7 — premenstrual dysphoric disorder (2023).',
+  DRSP:        'Endicott J, Nee J, Harrison W. Daily Record of Severity of Problems (DRSP): reliability & validity. Arch Womens Ment Health 2006;9:41-9 (prospective daily rating over ≥2 cycles; luteal vs follicular cyclicity confirms PMDD).',
+  PMDD_SSRI:   'PMDD pharmacotherapy — SSRIs (continuous, luteal-phase-only, or symptom-onset dosing) are first-line/gold-standard with rapid low-dose response (scoping review Focus 2023; Cochrane; FDA-approved fluoxetine/sertraline/paroxetine-CR). CBT evidence is modest/inconsistent — adjunct or by preference.',
   NICE_BPD:    'NICE CG78 — borderline personality disorder (drug treatment not for core BPD; symptom-targeted only).',
   COCHRANE_BPD:'Stoffers-Winterling et al. Pharmacological interventions for BPD — Cochrane reviews.',
   NICKEL2006:  'Nickel MK et al. Aripiprazole in BPD, RCT. Am J Psychiatry 2006.',
@@ -70,6 +72,10 @@ export const RX_SOURCES = {
   HARRIS_ACT:  'Harris R. ACT Made Simple, 2nd ed. New Harbinger 2019 (dropping anchor / ACE).',
   ARNTZ_SCHEMA:'Arntz A, Jacob G. Schema Therapy in Practice. Wiley-Blackwell 2013 (mode & chair work, imagery rescripting).',
   FOA_ERP:     'Foa EB, Yadin E, Lichner TK. Exposure and Response (Ritual) Prevention for OCD, Therapist Guide, 2nd ed. Oxford 2012.',
+  NICE_OCD:    'NICE CG31 — obsessive-compulsive disorder & body dysmorphic disorder (2005; 2019 surveillance). Stepped care; CBT incl. ERP first-line; add SSRI for inadequate response/severe.',
+  YBOCS:       'Goodman WK et al. The Yale-Brown Obsessive-Compulsive Scale (Y-BOCS). Arch Gen Psychiatry 1989;46:1006-16 (clinician-rated; 0–40: 8–15 mild, 16–23 moderate, 24–31 severe, 32–40 extreme).',
+  VANOPPEN_CT: 'van Oppen P, Arntz A. Cognitive therapy for OCD. Behav Res Ther 1994;32:79-87; OCCWG belief domains (inflated responsibility, over-importance/control of thoughts, threat/perfectionism, intolerance of uncertainty).',
+  TWOHIG_ACT:  'Twohig MP et al. ACT vs progressive relaxation for OCD — RCT. J Consult Clin Psychol 2010;78:705-16 (ACT as alternative/adjunct).',
   KLERMAN_IPT: 'Weissman MM, Markowitz JC, Klerman GL. The Guide to Interpersonal Psychotherapy, updated ed. Oxford 2018.',
   OST_RELAX:   'Öst L-G. Applied relaxation: description of a coping technique and review of controlled studies. Behav Res Ther 1987;25(5):397-409.',
   WELLS_MCT:   'Wells A. Metacognitive Therapy for Anxiety and Depression. Guilford 2009 (detached mindfulness; metacognitive beliefs about worry).',
@@ -1137,6 +1143,134 @@ export const THERAPY_TECHNIQUES = {
 export const PSYCHOTHERAPY_ACTIVE = true;
 
 export const PSYCHOTHERAPY_PLAN = {
+  PMDD: {
+    model:
+      'Luteal-focused plan. First-line pharmacotherapy is an SSRI (continuous, luteal-phase-only, or symptom-onset dosing — rapid, low-dose); CBT (PMDD-adapted) is an evidence-supported NON-pharmacological option with modest/inconsistent effect, used by preference, for comorbidity, or as an adjunct. Prospective daily DRSP charting over ≥2 cycles is essential to confirm luteal cyclicity (and to distinguish PMDD from premenstrual EXACERBATION of another disorder). Lifestyle (diet/exercise/sleep/light) supports.',
+    coreMeasures: [
+      { tool: 'DRSP (Daily Record of Severity of Problems)', kind: 'prospective daily self-rating', cadence: 'daily for ≥2 baseline cycles, then ongoing',
+        interpret: 'Diagnostic gold standard AND outcome: luteal symptom elevation that remits after menses (follicular near-normal). Confirms cyclicity; a flat cross-cycle pattern suggests a non-PMDD diagnosis.', src: [S('DRSP')], verified: false },
+      { tool: 'PHQ-9 (follicular vs luteal)', kind: 'self-report', cadence: 'both phases',
+        interpret: 'If depression persists in the follicular phase, consider MDD or premenstrual exacerbation (PME), not pure PMDD.', src: [S('PHQ9')], verified: false },
+    ],
+    phases: [
+      { phase: 0, name: 'Prospective charting & diagnosis', duration: '≥2 menstrual cycles',
+        goals: 'Confirm PMDD with ≥2 cycles of prospective DRSP (luteal elevation, follicular remission); rule out premenstrual exacerbation of another disorder; psychoeducation on the cycle–symptom link; agree first-line options (SSRI vs CBT/lifestyle by severity & preference).',
+        techniques: [
+          { school: 'CBT (PMDD-adapted)', name: 'psychoeducation + prospective symptom charting', how: 'Teach the luteal→menses pattern; establish daily DRSP; map symptom–cycle timing and functional impact.', src: [S('ACOG_PMDD'), S('DRSP')] },
+        ],
+        phaseTarget: 'PMDD confirmed by prospective charting (not recall); PME/MDD excluded; treatment path agreed.' },
+      { phase: 1, name: 'Skills & luteal-phase coping', duration: '~ several cycles',
+        goals: 'Reduce luteal symptom impact through cognitive-behavioural skills, stress regulation and cycle-timed lifestyle changes.',
+        techniques: [
+          { school: 'CBT (PMDD-adapted)', name: 'cognitive restructuring of premenstrual thoughts', how: 'Identify and test catastrophic/self-critical premenstrual cognitions; reduce symptom-driven conflict.', src: [S('BECK_CBT')] },
+          { school: 'CBT (PMDD-adapted)', name: 'luteal-phase behavioural planning', how: 'Anticipate the luteal window; schedule lighter demands, self-care and coping ahead of symptom onset.', src: [S('ACOG_PMDD')] },
+          { school: 'Vagal / relaxation', name: 'stress regulation', how: 'Slow-paced breathing / relaxation / mindfulness for premenstrual arousal & irritability (see VAGAL_TONING).', src: [S('HRVB')] },
+          { school: 'Lifestyle', name: 'cycle-timed diet, exercise & sleep', how: 'Luteal complex-carb + frequent smaller meals; reduce caffeine/sodium/alcohol premenstrually; regular aerobic exercise; protect sleep; consider light therapy if SAD overlap.', src: [S('ACOG_PMDD')] },
+        ],
+        phaseTarget: 'DRSP luteal scores falling; usable luteal coping plan; lifestyle changes in place.' },
+      { phase: 2, name: 'Interpersonal impact & consolidation', duration: 'variable',
+        goals: 'Address the relational/occupational impact of luteal symptoms and consolidate gains across cycles.',
+        techniques: [
+          { school: 'CBT (PMDD-adapted)', name: 'communication & problem-solving', how: 'Plan communication around the luteal phase; involve partner/family in understanding the pattern; problem-solve recurring luteal conflicts.', src: [S('BECK_CBT'), S('ACOG_PMDD')] },
+        ],
+        phaseTarget: 'Reduced luteal interpersonal/functional disruption; gains stable across ≥2 cycles.' },
+      { phase: 3, name: 'Relapse prevention & maintenance', duration: 'ongoing; boosters',
+        goals: 'Sustain skills across cycles; keep charting; plan escalation if inadequate.',
+        techniques: [
+          { school: 'CBT (PMDD-adapted)', name: 'maintenance blueprint + continued charting', how: 'Keep a brief DRSP; early-warning plan; boosters; agreed threshold to add/escalate an SSRI.', src: [S('ACOG_PMDD'), S('DRSP')] },
+        ],
+        phaseTarget: 'Skills maintained; charting ongoing; a clear rule for stepping up to pharmacotherapy.' },
+    ],
+    nonResponse: {
+      reviewAt: 'Review after ~2 cycles; if DRSP luteal burden is not improving, escalate — CBT/lifestyle alone is often insufficient for moderate–severe PMDD.',
+      checklist: [
+        'Is the diagnosis right — prospective luteal cyclicity, or premenstrual EXACERBATION (PME) of MDD/anxiety/bipolar?',
+        'Charting adherence (recall bias inflates/obscures the pattern)',
+        'Adequate lifestyle/CBT dose across enough cycles',
+        'Comorbidity — depression, anxiety, thyroid',
+        'Severity — moderate–severe usually needs pharmacotherapy',
+      ],
+      alternatives: [
+        { ifX: 'Moderate–severe PMDD or inadequate response to CBT/lifestyle', switchTo: 'First-line SSRI — continuous, luteal-phase-only, or symptom-onset dosing.', src: [S('PMDD_SSRI'), S('ACOG_PMDD')] },
+        { ifX: 'Premenstrual EXACERBATION of an underlying disorder (PME)', switchTo: 'Treat the underlying disorder (MDD/anxiety/bipolar) — not PMDD-only care.', src: [S('DRSP'), S('CANMAT_MDD')] },
+        { ifX: 'SSRI declined / contraception also wanted', switchTo: 'Consider drospirenone-containing COC (per guideline) or specialist referral.', src: [S('ACOG_PMDD')] },
+        { ifX: 'Severe/refractory', switchTo: 'Specialist referral (e.g. GnRH-analogue strategies under specialist care).', src: [S('ACOG_PMDD')] },
+      ],
+    },
+    crossSchool: [
+      'Prospective self-monitoring (DRSP) — the diagnostic backbone across all modalities.',
+      'Cognitive restructuring — CBT ↔ stress-management coping.',
+      'Relaxation / paced breathing — CBT ↔ vagal down-regulation.',
+      'Lifestyle (diet/exercise/sleep/light) — adjunct across drug and psychotherapy paths.',
+    ],
+  },
+  OCD: {
+    model:
+      'Stepped-care CBT centred on Exposure & Response (Ritual) Prevention (ERP) — the grade-A first-line psychotherapy for OCD (NICE CG31 / APA). Cognitive work targets OCD belief domains; family accommodation is actively reduced. For inadequate response or severe OCD, add a high-dose SSRI (or combine). Y-BOCS-guided; psychotherapy is first-line, not adjunct.',
+    coreMeasures: [
+      { tool: 'Y-BOCS', kind: 'clinician-rated (10 items, 0–40)', cadence: 'baseline + every 2–4 wk / phase boundary',
+        interpret: 'Gold-standard severity (8–15 mild, 16–23 moderate, 24–31 severe, 32–40 extreme); response ≈ ≥35% reduction. Rate obsessions & compulsions separately.', src: [S('YBOCS')], verified: false },
+      { tool: 'Family Accommodation (FAS) / accommodation review', kind: 'clinician-rated / interview', cadence: 'baseline + periodic',
+        interpret: 'High family accommodation maintains OCD and predicts poorer outcome — track and reduce it.', src: [S('FOA_ERP'), S('APA_OCD')], verified: false },
+      { tool: 'PHQ-9', kind: 'self-report', cadence: 'baseline + biweekly',
+        interpret: 'Comorbid depression is common and can blunt ERP engagement.', src: [S('PHQ9')], verified: false },
+    ],
+    phases: [
+      { phase: 0, name: 'Assessment, psychoeducation & hierarchy building', duration: '1–3 sessions',
+        goals: 'Assess Y-BOCS, symptom subtype (contamination, checking, symmetry/ordering, taboo/harm intrusions), insight and comorbidity; psychoeducation + cognitive-behavioural model + ERP rationale; build a graded fear/trigger hierarchy; map and plan to reduce family accommodation.',
+        techniques: [
+          { school: 'CBT-ERP', name: 'psychoeducation + ERP rationale', how: 'Explain the obsession→anxiety→compulsion→relief cycle and how rituals/avoidance maintain it; agree goals; give the treatment rationale.', src: [S('FOA_ERP'), S('NICE_OCD')] },
+          { school: 'CBT-ERP', name: 'fear/trigger hierarchy construction', how: 'List and rank triggers by distress (SUDS); plan graded exposures from moderate upward.', src: [S('FOA_ERP')] },
+          { school: 'Family', name: 'family-accommodation assessment', how: 'Identify accommodation (reassurance, participation in rituals, avoidance) and plan its systematic reduction with the family/carers.', src: [S('APA_OCD'), S('NICE_OCD')] },
+        ],
+        phaseTarget: 'Shared formulation & ERP rationale; a ranked hierarchy; baseline Y-BOCS; an accommodation-reduction plan.' },
+      { phase: 1, name: 'Core ERP — exposure with response/ritual prevention', duration: '~13–20 weekly sessions (intensive if severe)',
+        goals: 'Habituate to triggers and break the ritual cycle: graded in-vivo and imaginal exposure while preventing compulsions, reassurance and avoidance.',
+        techniques: [
+          { school: 'CBT-ERP', name: 'graded in-vivo + imaginal exposure', how: 'Work up the hierarchy; imaginal exposure for feared consequences that cannot be tested in vivo (e.g. harm/taboo intrusions).', src: [S('FOA_ERP')] },
+          { school: 'CBT-ERP', name: 'response (ritual) prevention', how: 'Prevent overt AND covert (mental) rituals during and after exposure; eliminate reassurance-seeking and checking.', src: [S('FOA_ERP')] },
+          { school: 'Family', name: 'reduce family accommodation', how: 'Coach family to stop providing reassurance/participating in rituals; support the patient tolerating distress.', src: [S('APA_OCD')] },
+        ],
+        phaseTarget: 'Y-BOCS falling (≥35% reduction as target); rituals & reassurance largely prevented; hierarchy items completed.' },
+      { phase: 2, name: 'Cognitive work & generalisation', duration: 'interwoven / following ERP',
+        goals: 'Address the beliefs that maintain OCD and generalise gains across contexts and residual mental rituals.',
+        techniques: [
+          { school: 'Cognitive', name: 'OCD belief-domain restructuring', how: 'Target inflated responsibility, thought-action fusion, over-importance/control of thoughts, threat overestimation and intolerance of uncertainty.', src: [S('VANOPPEN_CT')] },
+          { school: 'CBT-ERP', name: 'generalisation & covert-ritual elimination', how: 'Extend exposures to new contexts; catch and drop neutralising/mental rituals.', src: [S('FOA_ERP')] },
+        ],
+        phaseTarget: 'Maladaptive OCD beliefs weakened; mental rituals reduced; gains generalise beyond the therapy room.' },
+      { phase: 3, name: 'Relapse prevention & maintenance', duration: 'final 2–3 sessions + boosters',
+        goals: 'Consolidate, prevent relapse and plan for symptom re-emergence.',
+        techniques: [
+          { school: 'CBT-ERP', name: 'relapse-prevention blueprint', how: 'Self-directed exposure plan, early-warning signs, an if-OCD-returns plan; taper frequency; boosters.', src: [S('FOA_ERP'), S('NICE_OCD')] },
+          { school: 'ACT', name: 'acceptance/defusion for residual intrusions (optional)', how: 'Willingness to have intrusions without acting; values-based action — alternative/adjunct where engagement with ERP is limited.', src: [S('TWOHIG_ACT')] },
+        ],
+        phaseTarget: 'A written self-management plan; residual intrusions handled without rituals; maintenance strategy set.' },
+    ],
+    nonResponse: {
+      reviewAt: 'Review at each phase boundary; if Y-BOCS has not fallen after adequate ERP (~8–10 weeks with genuine ritual prevention), reassess.',
+      checklist: [
+        'Is response prevention actually happening — including covert/mental rituals?',
+        'Residual reassurance-seeking or family accommodation',
+        'Insight / overvalued ideation limiting exposure engagement',
+        'Comorbidity — depression, tics/Tourette, ASD, hoarding subtype',
+        'Adequate ERP dose & hierarchy coverage (avoided items left undone?)',
+        'Medication — is a high-dose SSRI needed/optimised?',
+      ],
+      alternatives: [
+        { ifX: 'Poor insight / strong OCD beliefs blocking exposure', switchTo: 'Add cognitive therapy on belief domains before/with ERP.', src: [S('VANOPPEN_CT')] },
+        { ifX: 'Experiential avoidance / won\u2019t engage ERP', switchTo: 'ACT for OCD as alternative/adjunct.', src: [S('TWOHIG_ACT')] },
+        { ifX: 'High family accommodation', switchTo: 'Family-based intervention to withdraw accommodation.', src: [S('APA_OCD'), S('NICE_OCD')] },
+        { ifX: 'Inadequate response to CBT alone or severe OCD', switchTo: 'Add a high-dose SSRI, or intensive/residential ERP (combined treatment).', src: [S('NICE_OCD'), S('APA_OCD')] },
+      ],
+    },
+    crossSchool: [
+      'Exposure principle — ERP ↔ imaginal/interoceptive exposure ↔ worry exposure logic.',
+      'Cognitive restructuring — OCD belief work ↔ CBT ↔ intolerance-of-uncertainty.',
+      'Acceptance / defusion — ACT ↔ MBCT ↔ mindfulness for intrusions.',
+      'Dropping reassurance — ERP response prevention ↔ family-accommodation reduction.',
+    ],
+  },
   MDD: {
     model:
       'Measurement-based CANMAT 2023 course. First-line psychotherapies for MDD are CBT, Behavioural Activation (BA) and Interpersonal Psychotherapy (IPT); for moderate–severe depression combined pharmacotherapy + psychotherapy is preferred, and MBCT is a first-line relapse-prevention option (especially recurrent depression). Acute → continuation → maintenance phases, guided by PHQ-9.',

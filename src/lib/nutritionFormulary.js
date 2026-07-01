@@ -51,6 +51,8 @@ export const NUT_SOURCES = {
   VITEX:       'Vitex agnus-castus (chasteberry) for PMS — RCTs (Agnolyt extract); dopaminergic/prolactin modulation.',
   PMS_REVIEW:  'PMS dietary/herbal systematic reviews (calcium good; B6/Vitex some; magnesium mixed; evening primrose oil NO benefit).',
   BPD_OMEGA3:  'Omega-3 (EPA-predominant) for BPD affective instability/impulsivity/aggression — RCTs/meta-analysis (modest).',
+  BPD_OMEGA3_MA:'Adjunctive omega-3 PUFA in BPD — meta-analysis of 4–5 RCTs (J Clin Psychiatry): significantly reduces overall BPD severity, especially affective dysregulation & impulsive behavioural dyscontrol (+ suicidality/depressive symptoms). Add-on only.',
+  BPD_ED:      'BPD–eating-disorder comorbidity is high (personality disorders in up to ~37% of ED patients; BPD especially with bulimia & binge/purge presentations). Emotion dysregulation is a shared, mediating mechanism; BPD/BPD+ED show poorer diet quality (esp. omega-3/Mediterranean foods). Nature Sci Rep 2026; ACUTE/AJP reviews. → screen for disordered eating; do NOT impose caloric restriction.',
   // — macro / meal-architecture / psychobiotic layer —
   WHO_DIET:    'WHO Healthy Diet fact sheet & guidelines (2023–2025): total fat ≤30%E; saturated fat <10%E; trans <1%E; unsaturated (MUFA/PUFA) from plant sources preferred; carbohydrate mainly from whole grains/vegetables/fruit/pulses; ≥25 g naturally-occurring fibre/day; free sugars <10%E (ideally <5%).',
   NA_AMDR_2024:'National Academies of Sciences 2024 — Rethinking the AMDR: macronutrient QUALITY (carb type refined/complex/fibre; protein amino-acid profile; fat SFA/MUFA/PUFA & n-3/n-6) is at least as important as quantitative ratios.',
@@ -62,6 +64,9 @@ export const NUT_SOURCES = {
   PSYCHO_ANX:  'Psychobiotics for anxiety/stress — meta-analyses & systematic reviews (Reis 2018; Smith 2021; multi-strain RCT Front Nutr 2023, 4×10⁹ CFU): L. rhamnosus, L. plantarum, B. longum strongest human signal; modest & scale-dependent (self-report > clinician scales); 1–50 ×10⁹ CFU/day, 8–12 wk.',
   PSYCHO_STRAINS:'Strain-specific anxiety/stress RCTs: L. helveticus R0052 + B. longum R0175 (Messaoudi, anxiolytic in humans); B. longum 1714; L. rhamnosus CNCM I-3690 decreases subjective academic stress (Gut Microbes 2022). Adjunct, not treatment.',
   FERMENTED_FIBRE:'Fermented foods (kefir, live-culture yogurt, kimchi, sauerkraut, miso) + prebiotic fibre (chicory, onion/garlic/leek, green banana, cooked-cooled starch) support microbial diversity beyond supplements. Caveat: with suspected SIBO, do NOT load prebiotic fibre before treatment.',
+  OCD_DIET:    'Dietary quality & nutrient intake in adult OCD — cross-sectional (PMC8612013): anti-inflammatory/Mediterranean, higher-fibre (and in one model higher magnesium) patterns inversely associated with OCD severity, but findings are correlational and inconsistent across studies. NO OCD-specific macronutrient prescription is established.',
+  OCD_MICROBIOME:'Gut microbiota & OCD — systematic/narrative reviews (PMC12565408; PMC11201482; Monash 2023): human evidence is limited, heterogeneous and mainly correlational (reduced α-diversity / butyrate producers, poor replication); probiotic benefit is largely PRECLINICAL (rodent OCD-like behaviour). Psychobiotics = experimental adjunct only in OCD. Clinically, screen for OCD-driven food/fluid restriction, eating rituals and comorbid GI symptoms.',
+  PMDD_DIET:   'PMDD/PMS nutrition reviews (StatPearls; Frontiers Nutr 2023 10.3389/fnut.2023.1079417; burden-of-illness PMC2440788; PMC11206370): luteal-phase complex carbohydrate + adequate protein ("slow fuels") ↑tryptophan→serotonin; frequent smaller meals to steady glucose; reduce refined sugar, sodium (bloating), caffeine and alcohol premenstrually. Evidence is modest/inconsistent (calcium has the strongest RCT support; omega-3 anti-inflammatory).',
 };
 const N = (k) => NUT_SOURCES[k] || k;
 
@@ -410,6 +415,50 @@ const OCD = {
       { item: 'Extra-virgin olive oil', evidence: 'weak (general)', why: 'Anti-inflammatory pattern.', src: [N('OCD_NUTRA')], verified: false },
     ],
   },
+  macroTemplate: {
+    strategy: 'GENERAL anti-inflammatory Mediterranean healthy-eating pattern applied to OCD — there is NO established OCD-specific macronutrient prescription (dietary evidence is correlational and inconsistent). Adequate protein, high-quality complex carbohydrate, unsaturated fat (MUFA + n-3), WHO caps. Renal/muscle protein↔fat gate inherited from the engine. Nutrition is a general-health adjunct, NOT an OCD treatment (first-line is CBT-ERP ± SSRI).',
+    fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
+    evidence: 'very weak — general healthy-eating pattern; no OCD-specific macronutrient evidence',
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('OCD_DIET')], verified: false,
+  },
+  carbQuality: {
+    prefer: [
+      { type: 'Complex / high-fibre', examples: 'whole grains, legumes/pulses, vegetables, whole fruit', why: 'Anti-inflammatory, gut-supportive; general healthy pattern (not OCD-specific).' },
+    ],
+    fibreTarget: '≥25 g/day (WHO); ≈14 g per 1000 kcal',
+    avoid: [
+      { type: 'Refined / added sugar', examples: 'sugary drinks, sweets, refined snacks', why: 'Pro-inflammatory; free/added sugars <10%E (ideally <5%).' },
+    ],
+    src: [N('WHO_DIET'), N('OCD_DIET')], verified: false,
+  },
+  fatQuality: {
+    prefer: [
+      { type: 'MUFA', examples: 'extra-virgin olive oil, avocado, nuts', why: 'Anti-inflammatory Mediterranean fat.' },
+      { type: 'PUFA n-3', examples: 'oily fish, walnuts, flax/chia', why: 'Anti-inflammatory; general pattern.' },
+    ],
+    limit: [
+      { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; replace with unsaturated fat.' },
+      { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
+    ],
+    src: [N('WHO_DIET'), N('OCD_DIET')], verified: false,
+  },
+  mealArchitecture: {
+    meals: 3, snacks: 1, noSkip: true,
+    distribution: [0.30, 0.35, 0.25],
+    timing: 'Regular, structured meals; do not skip. ⚠️ Clinically screen for OCD-driven food/fluid restriction, contamination-related avoidance and eating rituals — do NOT reinforce them; assess for comorbid GI symptoms. Meal-timing/mood evidence is not OCD-specific, so timing here is general healthy structure only.',
+    src: [N('OCD_MICROBIOME')], verified: false,
+  },
+  psychobiotics: {
+    note: '⚠️ EXPERIMENTAL in OCD — human evidence is limited/correlational; benefit is largely PRECLINICAL (rodent OCD-like behaviour). Adjunct at best, never a substitute for CBT-ERP/SSRI.',
+    strains: [
+      { name: 'Lactobacillus rhamnosus (e.g. GG/ATCC 53103)', dose: '1–10 ×10⁹ CFU/day', evidence: 'preclinical (rodent) attenuation of OCD-like behaviour' },
+      { name: 'L. helveticus R0052 + B. longum R0175 (combination)', dose: 'combined ~3 ×10⁹ CFU/day', evidence: 'human anxiety/OCD-scoring signal (Messaoudi)' },
+    ],
+    duration: '8–12 weeks (if trialled)',
+    foodSources: 'plain kefir, unsweetened live-culture yoghurt, kimchi, sauerkraut, miso; + prebiotic fibre 10–15 g/day (chicory, onion/garlic/leek, green banana, cooked-cooled starch)',
+    caution: 'If SIBO suspected, do NOT load prebiotic fibre before treating it. Do not let a probiotic/diet focus displace evidence-based OCD treatment.',
+    src: [N('OCD_MICROBIOME'), N('PSYCHO_STRAINS'), N('FERMENTED_FIBRE')], verified: false,
+  },
   adaptogens: [
     { name: 'Saffron', forms: 'extract', dose: '~30 mg/day', timing: 'with meals',
       evidence: 'preliminary (small OCD/anxiety signal)', interaction: 'Serotonergic caution with SSRI.', synergy: 'Possible adjunct.', src: [N('SAFFRON')], verified: false },
@@ -469,6 +518,39 @@ const BPD = {
       { item: 'Fish oil / olive oil', evidence: 'weak–moderate', why: 'Omega-3 / Mediterranean fat.', src: [N('BPD_OMEGA3')], verified: false },
     ],
   },
+  macroTemplate: {
+    strategy: 'GENERAL Mediterranean/anti-inflammatory pattern with EPA-omega-3 emphasis (the one BPD nutrition signal — reduces affective dysregulation & impulsivity; adjunct, lives in supplements). There is NO BPD-specific macronutrient prescription. ⚠️ BPD is highly comorbid with eating disorders: if any disordered-eating history is present, the engine WITHHOLDS caloric deficits and numeric targets and refers to ED-informed care. Otherwise: adequate protein, high-quality complex carbohydrate, unsaturated fat, WHO caps; renal/muscle gate inherited. Nutrition is an adjunct — first-line BPD treatment is psychotherapy (DBT/GPM).',
+    fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
+    evidence: 'very weak for macros (general pattern); EPA-omega-3 has the only disorder-specific signal',
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('BPD_OMEGA3_MA'), N('BPD_ED')], verified: false,
+  },
+  carbQuality: {
+    prefer: [
+      { type: 'Complex / high-fibre', examples: 'whole grains, legumes/pulses, vegetables, whole fruit', why: 'Steady energy; general healthy pattern (not BPD-specific).' },
+    ],
+    fibreTarget: '≥25 g/day (WHO); ≈14 g per 1000 kcal',
+    avoid: [
+      { type: 'Refined / added sugar', examples: 'sugary drinks, sweets, refined snacks', why: 'Pro-inflammatory; poorer diet quality is linked with symptom severity. <10%E (ideally <5%). NB: frame gently — avoid rigid food rules if disordered eating is present.' },
+    ],
+    src: [N('WHO_DIET'), N('BPD_ED')], verified: false,
+  },
+  fatQuality: {
+    prefer: [
+      { type: 'PUFA n-3 (EPA-predominant)', examples: 'oily fish ≥2×/wk; walnuts, flax/chia; EPA supplement', why: 'The main BPD nutrition signal — reduces affective dysregulation & impulsivity (adjunct).' },
+      { type: 'MUFA', examples: 'extra-virgin olive oil, avocado, nuts', why: 'Mediterranean base; anti-inflammatory.' },
+    ],
+    limit: [
+      { type: 'Saturated (SFA)', cap: '<10% of energy', examples: 'fatty meat, butter, palm/coconut oil', why: 'WHO cap; poorer diet quality linked to severity.' },
+      { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
+    ],
+    src: [N('WHO_DIET'), N('BPD_OMEGA3_MA')], verified: false,
+  },
+  mealArchitecture: {
+    meals: 3, snacks: 1, noSkip: true,
+    distribution: [0.30, 0.35, 0.25],
+    timing: '⚠️ SCREEN for disordered/impulsive eating FIRST (binge, purge, restrict — high BPD comorbidity). If present, do NOT impose rigid meal rules or deficits — use eating-disorder-informed care (the engine withholds numeric targets automatically). Otherwise: regular, structured, flexible meals; do not skip. Pair with DBT emotion-regulation skills for emotional/impulsive eating. (No psychobiotic block — no BPD-specific evidence.)',
+    src: [N('BPD_ED')], verified: false,
+  },
   adaptogens: [],
   mushrooms: [],
   herbs: [],
@@ -512,6 +594,39 @@ const PMDD = {
     oils: [
       { item: 'Evening primrose oil', evidence: 'NEGATIVE — no consistent benefit (honest flag)', why: 'Rigorous trials show no benefit.', src: [N('PMS_REVIEW')], verified: false },
     ],
+  },
+  macroTemplate: {
+    strategy: 'Phase-aware pattern. In the LUTEAL phase favour complex carbohydrate + adequate protein ("slow fuels") to raise tryptophan→serotonin, with frequent smaller meals to steady glucose; reduce refined sugar, sodium (bloating), caffeine and alcohol premenstrually. Whole-foods/Mediterranean base with omega-3; adequate calcium/vitamin-D/magnesium (see supplements — calcium has the strongest RCT support). Evidence is modest/inconsistent; nutrition is an ADJUNCT, not a substitute for first-line SSRI. Renal/muscle protein↔fat gate inherited.',
+    fatPctEnergy: 30, sfaCapPctEnergy: 10, addedSugarCapPctEnergy: 10,
+    evidence: 'modest/inconsistent; calcium strongest RCT support; luteal carbohydrate–serotonin rationale',
+    src: [N('WHO_DIET'), N('NA_AMDR_2024'), N('PMDD_DIET')], verified: false,
+  },
+  carbQuality: {
+    prefer: [
+      { type: 'Complex / high-fibre (esp. luteal)', examples: 'whole grains, oats, legumes/pulses, vegetables, whole fruit', why: 'Steady glucose + tryptophan→serotonin; may ease luteal mood/cravings (self-medication rationale).' },
+    ],
+    fibreTarget: '≥25 g/day (WHO); ≈14 g per 1000 kcal',
+    avoid: [
+      { type: 'Refined / added sugar', examples: 'sweets, sugary drinks, refined snacks', why: 'Glucose crash worsens premenstrual mood/irritability; correlated with PMS severity. <10%E (ideally <5%).' },
+    ],
+    src: [N('WHO_DIET'), N('PMDD_DIET')], verified: false,
+  },
+  fatQuality: {
+    prefer: [
+      { type: 'PUFA n-3', examples: 'oily fish, walnuts, flax/chia', why: 'Anti-inflammatory; supports premenstrual symptom load.' },
+      { type: 'MUFA', examples: 'extra-virgin olive oil, avocado, nuts', why: 'Mediterranean base fat.' },
+    ],
+    limit: [
+      { type: 'Saturated / fried / simple fats', cap: '<10% energy (SFA)', examples: 'fatty/fried foods, butter, palm/coconut oil', why: 'WHO cap; fried/simple fats correlate with PMS severity.' },
+      { type: 'Trans (industrial)', cap: '<1% of energy — avoid', why: 'WHO.' },
+    ],
+    src: [N('WHO_DIET'), N('PMDD_DIET')], verified: false,
+  },
+  mealArchitecture: {
+    meals: 3, snacks: 1, noSkip: true,
+    distribution: [0.30, 0.35, 0.25],
+    timing: 'Phase-aware: in the LUTEAL phase favour FREQUENT SMALLER meals (≈5–6/day) built on complex carbohydrate to steady glucose and support serotonin; reduce sodium (bloating), caffeine and alcohol premenstrually. Regular meals; do not skip. (No psychobiotic block: there is no PMDD-specific probiotic evidence — calcium & omega-3 are the better-supported nutrients, in supplements.)',
+    src: [N('PMDD_DIET')], verified: false,
   },
   adaptogens: [
     { name: 'Saffron', forms: 'extract', dose: '~30 mg/day', timing: 'with meals',

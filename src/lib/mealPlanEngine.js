@@ -44,6 +44,16 @@ export function hasRenalImpairment(comorbidities = '') {
   return true;
 }
 
+/* Eating-disorder SAFETY gate — anorexia/bulimia/BED/purging/disordered eating.
+ * Highly comorbid with BPD (and present across disorders). When detected, the
+ * macro/meal layer WITHHOLDS caloric deficits and numeric macro/meal targets and
+ * instead shows a safety+referral block: numeric restriction can trigger or
+ * worsen disordered eating, so targets must be set by an ED-informed team. */
+const ED_RE = /\b(anorexi\w*|bulimi\w*|binge[- ]?eating|\bBED\b|\bED\b|EDNOS|OSFED|ARFID|purg(?:e|es|ing)|self[- ]?induced vomit\w*|laxative abuse|eating disorder|disordered eating|أنوريكسيا|بوليميا|النهام|القهم|الشره|اضطراب(?:ات)? الأكل|الأكل القهمي)\b/i;
+export function hasEatingDisorder(comorbidities = '', history = '') {
+  return ED_RE.test(`${comorbidities || ''} ${history || ''}`);
+}
+
 /* Poor muscle: agreed threshold = low FFMI (ERS: <15 ♀ / <17 ♂) OR a high
  * fat-to-skeletal-muscle ratio. Uses metrics already computed by computeMetrics. */
 export function hasPoorMuscle({ ffmi, fmr, male } = {}) {
@@ -247,6 +257,24 @@ export function renderPsychobiotics({ psychobiotics, lang = 'en' } = {}) {
  * they are rolled out). */
 export function renderMacrosAndMeals({ key, metrics, form = {}, lang = 'en' } = {}) {
   if (!okM(key) || !metrics) return '';
+  const isAr = lang === 'ar';
+  // SAFETY GATE: eating-disorder history/comorbidity → withhold deficit & numeric
+  // targets; show structured-eating + referral guidance instead.
+  if (hasEatingDisorder(form.comorbidities, form.history)) {
+    return isAr
+      ? ['\n**🍽️ التغذية — تنبيه أمان**',
+         '⚠️ فيه إشارة لاضطراب أكل/تاريخ اضطراب أكل — لذلك **حُجبت أهداف السعرات/الماكروز الرقمية وأي عجز حراري** (الأرقام التقييدية ممكن تُحفّز أو تفاقم اضطراب الأكل).',
+         '- ركّز على **أكل منتظم ومنظّم وغير تقييدي**، من غير عدّ سعرات أو أهداف رقمية.',
+         '- ضع خطة التغذية **بالتعاون مع فريق مختص في اضطرابات الأكل**، وتُحدَّد الأهداف من خلالهم.',
+         '- للدعم: National Alliance for Eating Disorders helpline.',
+         '_(الأوميغا-3 EPA كإضافة لأعراض BPD موجودة في قسم المكملات، بلا أي توصية تقييدية.)_'].join('\n')
+      : ['\n**🍽️ Nutrition — safety notice**',
+         '⚠️ An eating-disorder history/comorbidity is indicated, so **numeric calorie/macro targets and any caloric deficit are withheld** (numeric restriction can trigger or worsen disordered eating).',
+         '- Prioritise **regular, structured, non-restrictive eating** — no calorie counting or numeric targets.',
+         '- Set the nutrition plan **with an eating-disorder-informed team**; targets should come from them.',
+         '- Support: National Alliance for Eating Disorders helpline.',
+         '_(EPA-omega-3 as a BPD-symptom adjunct is in the supplements section, with no restrictive advice.)_'].join('\n');
+  }
   const n = NUTRITION[key];
   const male = /^m|male|ذكر/i.test(String(form.gender || ''));
   const weightKg = parseFloat(form.weight) || null;
