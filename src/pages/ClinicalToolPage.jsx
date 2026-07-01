@@ -360,6 +360,7 @@ const EMPTY_FORM = {
   knownGeneticVariants:'',
   cyclePhase:'',
   chronotype:'',
+  sleepTime:'', wakeTime:'', sleepTimeFree:'', wakeTimeFree:'',
 };
 
 /* ════════════════════════════════════════════════
@@ -780,6 +781,11 @@ const ClinicalTool = () => {
     phaseUnknown:  isAr ? 'غير معروف'               : 'Unknown',
     chronotype:    isAr ? 'النمط الزمني (Chronotype)' : 'Chronotype',
     chooseCt:      isAr ? 'اختر النمط'              : 'Select chronotype',
+    sleepHdr:      isAr ? 'ساعات النوم (لحساب منتصف النوم واختلاف التوقيت الاجتماعي)' : 'Sleep times (for mid-sleep & social jet lag)',
+    bedWork:       isAr ? 'ميعاد النوم المعتاد (س:د)'   : 'Usual bedtime (HH:MM)',
+    wakeWork:      isAr ? 'ميعاد الصحيان — أيام الشغل'   : 'Wake time (workday)',
+    bedFree:       isAr ? 'النوم — أيام الأجازة (اختياري)' : 'Bedtime (free days, optional)',
+    wakeFree:      isAr ? 'الصحيان — أيام الأجازة (اختياري)' : 'Wake (free days, optional)',
     ctMorning:     isAr ? 'صباحي (Morning)'          : 'Morning',
     ctInter:       isAr ? 'متوسط (Intermediate)'     : 'Intermediate',
     ctEvening:     isAr ? 'مسائي (Evening)'          : 'Evening',
@@ -1117,6 +1123,22 @@ const ClinicalTool = () => {
               <option value="Unknown">{T.ctUnknown}</option>
             </select>
           </FormInput>
+
+          <div className="text-[11px] font-semibold text-teal-500/70 mt-1 mb-1">{T.sleepHdr}</div>
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput label={T.bedWork}>
+              <input type="time" className={inputCls} value={form.sleepTime} onChange={e=>set('sleepTime',e.target.value)} />
+            </FormInput>
+            <FormInput label={T.wakeWork}>
+              <input type="time" className={inputCls} value={form.wakeTime} onChange={e=>set('wakeTime',e.target.value)} />
+            </FormInput>
+            <FormInput label={T.bedFree}>
+              <input type="time" className={inputCls} value={form.sleepTimeFree} onChange={e=>set('sleepTimeFree',e.target.value)} />
+            </FormInput>
+            <FormInput label={T.wakeFree}>
+              <input type="time" className={inputCls} value={form.wakeTimeFree} onChange={e=>set('wakeTimeFree',e.target.value)} />
+            </FormInput>
+          </div>
 
           <div className="my-4 flex items-center gap-2">
             <div className="flex-1 h-px bg-white/8" />

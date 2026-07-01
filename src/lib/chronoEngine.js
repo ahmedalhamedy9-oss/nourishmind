@@ -22,8 +22,84 @@ export const CHRONO_SOURCES = {
   PERIPH_FOOD:'Feeding rhythms & circadian regulation of metabolism — food is the dominant zeitgeber of peripheral clocks (liver/pancreas/gut/muscle) (Damiola classic). PMC7182033; Front Endocrinol 2024.',
   PERIPH_META:'Peripheral clock misalignment & metabolic disease — shift-work desync (pancreas/liver/gut) → insulin resistance/T2DM; active- vs inactive-phase eating & glucose tolerance.',
   TRE_WEAK:   'Chrononutrition/TRE & mood — mechanistically plausible but mainly perspectives/cross-sectional; TRE RCT showed NO significant mood effect; night-eating raised depressive/anxious mood in a simulated-shift study (causal mood role UNPROVEN).',
+  INSULIN:    'Circadian clock & glucose — insulin sensitivity/glucose tolerance peak at waking, decline through the day; dawn phenomenon in T2D. PMC9117496.',
+  CYP_MET:    'Circadian clock-controlled drug metabolism — clinical implications for chronotherapeutics (hepatic CYP/metabolic gene rhythms). ScienceDirect 2025.',
+  KIDNEY:     'Circadian clock in the kidney — GFR, renal blood flow & Na⁺/K⁺ excretion peak in the active (day) phase, decline at night; RAAS rises at night; renal rhythms dampen with age. PMC5797999; Front Physiol 2025.',
+  CORTISOL:   'Cortisol awakening response (peak after waking, nadir at night); glucocorticoid dysregulation linked to depression/anxiety; light entrains the cortisol rhythm. PMC10146651.',
+  DIGEST:     'Circadian control of gastric emptying/GI motility & digestion (slower in the evening/night); disrupted-feeding GI/metabolic/immune alterations. PMC4199674.',
+  GLP1:       'Circadian GLP-1 secretion — peaks at the onset of the feeding period, Bmal1-regulated; supports earlier eating window. Front Endocrinol 2022; PMC6920326.',
+  GHRELIN:    'Ghrelin (hunger) is higher in the biological EVENING (peak hunger); circadian misalignment raises appetite for energy-dense foods. Brigham human protocol, PMC6424662.',
+  BODYTEMP:   'Core body temperature — nadir ~2–3 h before habitual wake; a circadian phase marker. Light AFTER the temperature minimum phase-ADVANCES the clock; before it, delays.',
+  MICROBIOME: 'Gut microbiome has a diurnal rhythm (Clostridiales/Lactobacillales/Bacteroidales ~60% oscillate) entrained by feeding & host clock; dysbiosis linked to HPA/mood. PMC6290721; Front Psychiatry 2025.',
+  MELATONIN:  'Melatonin nocturnal rhythm & light suppression (chronobiology).',
+  PSYCHOBIOTIC:'Psychobiotics for mood — strain-specific meta-analysis (12 RCTs, n=707): significant on BDI, NON-significant on HAMD/MADRS/DASS → MODEST, scale-dependent, ADJUNCT not a treatment. Gut Pathogens 2024; Syst Rev PMC11085935.',
 };
 const CS = (k) => CHRONO_SOURCES[k] || k;
+
+/* ── ⑥ CIRCADIAN MECHANISMS (physiology layer) ─────────────────────────
+   Each: rhythm (peak/trough) + clinical translation + evidence grade + src.
+   `gate`: 'metabolic' | 'lithiumOrElderly' | null (always shown).
+   ──────────────────────────────────────────────────────────────────── */
+const MECHANISMS = [
+  { id: 'insulin', gate: 'metabolic', grade: 'strong',
+    en: ['Insulin / glucose', 'Insulin sensitivity & glucose tolerance PEAK at waking and decline through the day (dawn phenomenon in T2D).', 'Eat earlier/larger by day; avoid late-night carbohydrate. Most impactful with metabolic comorbidity or weight-active agents.'],
+    ar: ['الأنسولين / الجلوكوز', 'حساسية الأنسولين وتحمّل الجلوكوز ذروتهم عند الاستيقاظ وبيقلّوا خلال اليوم (ظاهرة الفجر في السكري).', 'كُل أبكر/أكبر بالنهار؛ تجنّب النشويات المتأخرة. الأثر الأكبر مع مرض أيضي أو دواء مؤثر على الوزن.'], src: [CS('INSULIN')] },
+  { id: 'cyp', gate: null, grade: 'mechanism strong / clinical emerging',
+    en: ['Hepatic metabolism (CYP)', 'Hepatic drug-metabolising enzymes are clock-controlled (diurnal CYP/metabolic-gene rhythms).', 'Mechanistic basis for drug chronotiming (§③); hepatic clearance varies by time of day.'],
+    ar: ['أيض الكبد (CYP)', 'إنزيمات أيض الدواء في الكبد بتتحكم فيها الساعة (إيقاع يومي لـ CYP).', 'الأساس العلمي لتوقيت الدواء (§③)؛ تصفية الكبد بتتغيّر حسب وقت اليوم.'], src: [CS('CYP_MET')] },
+  { id: 'kidney', gate: 'lithiumOrElderly', grade: 'strong (physiology)',
+    en: ['Kidney (GFR / Na⁺)', 'GFR, renal blood flow & Na⁺/K⁺ excretion peak in the daytime/active phase; RAAS rises at night; rhythms dampen with age.', 'Renally-cleared drugs (esp. LITHIUM): night-time single dosing lowers renal exposure/toxicity; watch Na⁺/hydration; escalate monitoring in the elderly.'],
+    ar: ['الكلى (GFR / الصوديوم)', 'GFR وإفراز الصوديوم/البوتاسيوم ذروتهم بالنهار؛ ونظام RAAS بيرتفع بالليل؛ والإيقاع بيضعف مع السن.', 'الأدوية كلوية الإخراج (خاصة الليثيوم): الجرعة الليلية الواحدة بتقلل التعرّض الكلوي؛ راقب الصوديوم/الترطيب؛ صعّد المتابعة في كبار السن.'], src: [CS('KIDNEY')] },
+  { id: 'cortisol', gate: null, grade: 'strong',
+    en: ['Cortisol', 'Peaks shortly after waking (cortisol awakening response), nadir at night; dysregulated (flattened) in depression/anxiety.', 'Morning light + a FIXED wake time anchor and normalise the cortisol rhythm.'],
+    ar: ['الكورتيزول', 'ذروته بعد الاستيقاظ بشوية (استجابة إيقاظ الكورتيزول)، وقاعه بالليل؛ ومختل (مسطّح) في الاكتئاب/القلق.', 'ضوء الصبح + ميعاد صحيان ثابت بيثبّتوا إيقاع الكورتيزول.'], src: [CS('CORTISOL')] },
+  { id: 'melatonin', gate: null, grade: 'strong',
+    en: ['Melatonin', 'Rises in the evening, peaks at night; SUPPRESSED by light at night (esp. blue).', 'Evening light hygiene; basis of agomelatine/melatonin timing; dim screens 1–2 h pre-sleep.'],
+    ar: ['الميلاتونين', 'بيرتفع بالمسا ويوصل ذروته بالليل؛ والضوء الليلي (خاصة الأزرق) بيثبّطه.', 'نظافة ضوء المسا؛ أساس توقيت أجوميلاتين/الميلاتونين؛ خفّض الشاشات قبل النوم بساعة–ساعتين.'], src: [CS('MELATONIN')] },
+  { id: 'digestion', gate: 'metabolic', grade: 'moderate',
+    en: ['Digestion / gastric emptying', 'Gastric emptying & GI motility slow in the evening/night.', 'Avoid heavy late meals (poorer digestion, reflux); finish eating well before sleep.'],
+    ar: ['الهضم / إفراغ المعدة', 'إفراغ المعدة وحركة الأمعاء بيبطآ بالمسا/الليل.', 'تجنّب الوجبات الثقيلة المتأخرة (هضم أسوأ/ارتجاع)؛ خلّص الأكل قبل النوم بوقت كافٍ.'], src: [CS('DIGEST')] },
+  { id: 'glp1', gate: null, grade: 'mechanism strong / human emerging',
+    en: ['GLP-1 (incretin)', 'Circadian GLP-1 secretion peaks at the ONSET of the feeding period (Bmal1-regulated).', 'Supports an earlier, daytime eating window for better incretin/satiety response.'],
+    ar: ['GLP-1 (إنكريتين)', 'إفراز GLP-1 ذروته عند بداية فترة الأكل (بتنظيم Bmal1).', 'يدعم نافذة أكل أبكر نهارية لاستجابة إنكريتين/شبع أفضل.'], src: [CS('GLP1')] },
+  { id: 'ghrelin', gate: null, grade: 'moderate–strong (human)',
+    en: ['Ghrelin / leptin (appetite)', 'Ghrelin (hunger) is higher in the biological EVENING; misalignment raises cravings for energy-dense food. Leptin timing tracks meals.', 'Evening hunger/late cravings are partly physiological — plan protein/fibre earlier; keep regular meal times.'],
+    ar: ['الغريلين / اللبتين (الشهية)', 'الغريلين (الجوع) أعلى بالمسا؛ والخلل الإيقاعي بيزوّد اشتهاء الأكل عالي السعرات. وتوقيت اللبتين بيتبع الوجبات.', 'جوع المسا/اشتهاء الليل جزء منه فسيولوجي — رتّب البروتين/الألياف بدري؛ حافظ على انتظام الوجبات.'], src: [CS('GHRELIN')] },
+  { id: 'bodytemp', gate: null, grade: 'strong (phase marker)',
+    en: ['Core body temperature', 'Nadir ~2–3 h before habitual wake, peak in the evening — a circadian phase marker.', 'Light AFTER the temperature minimum (i.e. after waking) phase-ADVANCES the clock — the basis for morning-light timing.'],
+    ar: ['حرارة الجسم المركزية', 'قاعها ~٢–٣ ساعات قبل الاستيقاظ المعتاد، وذروتها بالمسا — علامة طور إيقاعي.', 'الضوء بعد قاع الحرارة (يعني بعد الصحيان) بيقدّم الساعة — وده أساس توقيت ضوء الصبح.'], src: [CS('BODYTEMP')] },
+  { id: 'microbiome', gate: null, grade: 'rhythm strong / psychobiotics MODEST',
+    en: ['Microbiome / psychobiotics', 'The gut microbiome has a diurnal rhythm entrained by feeding; dysbiosis links to HPA/mood. Psychobiotics show a MODEST, scale-dependent signal (significant on BDI, not HAMD/MADRS) — an ADJUNCT, not a treatment.', 'Regular meal timing + fibre/fermented foods support rhythmic diversity. If trialling a psychobiotic: strains with signal include L. rhamnosus, L. helveticus, B. longum, B. breve (e.g. CCFM1025), L. plantarum (e.g. JYLP-326), L. acidophilus, L. casei/paracasei, L. salivarius, B. bifidum/lactis; multispecies blends (Vivomixx, OMNi-BiOTiC Stress Repair). NOT a substitute for medication/therapy.'],
+    ar: ['الميكروبيوم / السيكوبيوتيك', 'الميكروبيوم له إيقاع يومي بتضبطه الوجبات؛ والاختلال مرتبط بمحور HPA/المزاج. السيكوبيوتيك تأثيره متواضع ومتفاوت حسب المقياس (معنوي على BDI مش على HAMD/MADRS) — مساعد مش علاج.', 'انتظام الوجبات + الألياف/المخمّرات بيدعموا التنوّع الإيقاعي. لو هتجرّب سيكوبيوتيك: سلالات عليها إشارة تشمل L. rhamnosus وL. helveticus وB. longum وB. breve (مثل CCFM1025) وL. plantarum (مثل JYLP-326) وL. acidophilus وL. casei/paracasei وL. salivarius وB. bifidum/lactis؛ وخلطات متعددة (Vivomixx، OMNi-BiOTiC Stress Repair). مش بديل للدواء/العلاج.'], src: [CS('MICROBIOME'), CS('PSYCHOBIOTIC')] },
+];
+
+/* ── sleep-hours engine: mid-sleep, duration, social jet lag, timed recs ── */
+function parseHM(s) {
+  if (!s) return null;
+  const m = String(s).trim().match(/^(\d{1,2})[:.٬،]?(\d{2})?/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10); const min = m[2] ? parseInt(m[2], 10) : 0;
+  if (isNaN(h) || h > 23 || min > 59) return null;
+  return h + min / 60;
+}
+const fmtHM = (t) => { t = ((t % 24) + 24) % 24; const h = Math.floor(t); const m = Math.round((t - h) * 60); return `${String(h).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+function computeSleep(form) {
+  const bt = parseHM(form?.sleepTime), wt = parseHM(form?.wakeTime);
+  if (bt == null || wt == null) return null;
+  const dur = ((wt - bt + 24) % 24) || 24;
+  const midWork = ((bt + dur / 2) % 24 + 24) % 24;
+  const out = { dur: +dur.toFixed(1), midWork, wake: wt, bed: bt };
+  const btF = parseHM(form?.sleepTimeFree), wtF = parseHM(form?.wakeTimeFree);
+  if (btF != null && wtF != null) {
+    const durF = ((wtF - btF + 24) % 24) || 24;
+    const midFree = ((btF + durF / 2) % 24 + 24) % 24;
+    let sjl = Math.abs(midFree - midWork); if (sjl > 12) sjl = 24 - sjl;
+    out.sjl = +sjl.toFixed(1); out.midFree = midFree;
+  }
+  return out;
+}
+
+
 
 /* ── case detection (bipolar / metabolic / chronotype) ────────────────── */
 const norm = (s) => String(s || '').toLowerCase();
@@ -138,22 +214,57 @@ export function renderChrono({ key, form = {}, lang = 'en' } = {}) {
     dis.extra.forEach((e) => L.push(`- ${e}`));
   }
 
-  // CHRONOTYPE personalisation
+  // ⑤ CHRONOTYPE — sleep-hours engine (mid-sleep / duration / social jet lag / timed recs)
+  const slp = computeSleep(form);
   const ct = norm(form?.chronotype);
-  if (ct) {
-    L.push('\n**' + H('⑤ Chronotype', '⑤ النمط الزمني') + `**`);
-    if (/eve|night|delay|مساء|ليل|متأخر/.test(ct))
-      L.push(H('- Evening/late type (phase-delayed): emphasise MORNING light + EARLIER meals to phase-advance the clock; avoid late heavy meals.',
-        '- نمط مسائي/متأخر (طور مؤجّل): ركّز على ضوء الصبح + أكل أبكر لتقديم الساعة؛ تجنّب الوجبات الثقيلة المتأخرة.'));
-    else if (/morn|early|صباح|مبكر/.test(ct))
-      L.push(H('- Morning type: maintain the aligned schedule; watch for over-early waking with depression.',
-        '- نمط صباحي: حافظ على الجدول المتوائم؛ انتبه للاستيقاظ المبكر الزائد مع الاكتئاب.'));
-    else
-      L.push(H(`- Chronotype noted (${form.chronotype}): align light and meal timing to the active phase.`,
-        `- النمط الزمني (${form.chronotype}): وائم الضوء وتوقيت الأكل مع الطور النشط.`));
+  if (slp || ct) {
+    L.push('\n**' + H('⑤ Chronotype & sleep timing', '⑤ النمط الزمني وتوقيت النوم') + '**');
+    if (slp) {
+      L.push(H(`- Sleep window: ${fmtHM(slp.bed)}→${fmtHM(slp.wake)} (${slp.dur} h) | mid-sleep ${fmtHM(slp.midWork)} — a better phase index than the label.`,
+        `- نافذة النوم: ${fmtHM(slp.bed)}→${fmtHM(slp.wake)} (${slp.dur} ساعة) | منتصف النوم ${fmtHM(slp.midWork)} — مؤشر طور أدق من اللابل.`));
+      if (slp.dur < 7)
+        L.push('- ⚠️ ' + H(`Short sleep (${slp.dur} h) — sleep restriction is itself a mood/anxiety driver; target 7–9 h.`, `نوم قصير (${slp.dur} ساعة) — الحرمان من النوم بنفسه محرّك للمزاج/القلق؛ استهدف ٧–٩ ساعات.`));
+      if (slp.sjl != null && slp.sjl >= 1)
+        L.push('- ⚠️ ' + H(`Social jet lag ≈ ${slp.sjl} h (work vs free-day mid-sleep) — an independent risk factor for mood & metabolic problems; narrow the gap.`, `اختلاف التوقيت الاجتماعي ≈ ${slp.sjl} ساعة (منتصف نوم الشغل مقابل الأجازة) — عامل خطر مستقل للمزاج والأيض؛ ضيّق الفجوة.`));
+      // timed, actionable recommendations from actual wake/sleep
+      L.push(H(`- Morning bright light: ~${fmtHM(slp.wake)}–${fmtHM(slp.wake + 0.5)} (after the core-temp minimum → phase-advances the clock).`,
+        `- ضوء صبح ساطع: حوالي ${fmtHM(slp.wake)}–${fmtHM(slp.wake + 0.5)} (بعد قاع الحرارة → بيقدّم الساعة).`));
+      L.push(H(`- Finish the last meal by ~${fmtHM(slp.bed - 3)} (≥3 h before ${fmtHM(slp.bed)} bedtime); dim light/screens from ~${fmtHM(slp.bed - 1.5)}.`,
+        `- خلّص آخر وجبة بحد أقصى ~${fmtHM(slp.bed - 3)} (≥٣ ساعات قبل النوم ${fmtHM(slp.bed)})؛ خفّض الضوء/الشاشات من ~${fmtHM(slp.bed - 1.5)}.`));
+      const lateMid = slp.midWork >= 4.5 && slp.midWork <= 12; // mid-sleep after ~04:30 ⇒ delayed
+      if (lateMid || /eve|night|delay|مساء|ليل|متأخر/.test(ct))
+        L.push(H('- Phase-delayed pattern: advance gradually — shift wake (and light) ~15 min earlier each week; bring meals earlier; strict evening light hygiene.',
+          '- نمط مؤجّل الطور: قدّم الساعة تدريجياً — بكّر الصحيان (والضوء) ~١٥ دقيقة كل أسبوع؛ بكّر الوجبات؛ نظافة ضوء مسائية صارمة.'));
+    } else if (ct) {
+      if (/eve|night|delay|مساء|ليل|متأخر/.test(ct))
+        L.push(H('- Evening/late type (label only — enter sleep/wake times for exact timing): emphasise morning light + earlier meals to phase-advance.',
+          '- نمط مسائي/متأخر (لابل فقط — أدخل ساعات النوم للتوقيت الدقيق): ركّز على ضوء الصبح + أكل أبكر للتقديم.'));
+      else if (/morn|early|صباح|مبكر/.test(ct))
+        L.push(H('- Morning type: maintain the aligned schedule; watch for early-morning waking in depression.',
+          '- نمط صباحي: حافظ على الجدول المتوائم؛ انتبه للاستيقاظ المبكر في الاكتئاب.'));
+      else
+        L.push(H(`- Chronotype noted (${form.chronotype}); enter usual sleep/wake times for timed recommendations.`,
+          `- النمط الزمني (${form.chronotype})؛ أدخل ساعات النوم/الصحيان المعتادة للحصول على توصيات موقوتة.`));
+    }
   }
 
-  const srcs = [...new Set([...(dis?.src || []), CS('PERIPH_FOOD'), CS('PERIPH_META'), CS('CHRONO_PHARM'), CS('TRE_WEAK')])];
+  // ⑥ CIRCADIAN MECHANISMS (physiology layer)
+  const onLithium = anyOf(form?.currentMeds, ['lithium', 'ليثيوم']) || (RX[key]?.adjunct || []).some((m) => /lithium/i.test(m.drug));
+  const isElderly = !isNaN(parseFloat(form?.age)) && parseFloat(form?.age) >= 60;
+  const metab = isMetabolic(form);
+  const showMech = (g) => g == null || (g === 'metabolic' && metab) || (g === 'lithiumOrElderly' && (onLithium || isElderly)) || g === 'always';
+  L.push('\n**' + H('⑥ Circadian mechanisms (physiology → action)', '⑥ الآليات الإيقاعية (فسيولوجيا ← فعل)') + '**');
+  MECHANISMS.forEach((m) => {
+    const t = isAr ? m.ar : m.en;
+    const flag = m.gate === 'metabolic' && metab ? (isAr ? ' 🔴' : ' 🔴') : (m.gate === 'lithiumOrElderly' && (onLithium || isElderly) ? ' 🔴' : '');
+    if (showMech(m.gate) || m.gate) {
+      const emphasised = (m.gate === 'metabolic' && metab) || (m.gate === 'lithiumOrElderly' && (onLithium || isElderly));
+      L.push(`- **${t[0]}**${emphasised ? flag : ''} _(${m.grade})_: ${t[1]} → ${t[2]}`);
+    }
+  });
+
+  const srcs = [...new Set([...(dis?.src || []), CS('PERIPH_FOOD'), CS('PERIPH_META'), CS('CHRONO_PHARM'), CS('TRE_WEAK'),
+    ...MECHANISMS.flatMap((m) => m.src)])];
   L.push('\n_' + H('Sources', 'المصادر') + ': ' + srcs.join(' | ') + '_');
 
   return L.join('\n');
