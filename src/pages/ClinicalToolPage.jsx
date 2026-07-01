@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
 import { renderInteractionGate, renderInteractionsReport, renderInteractionsReportSplit, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
 import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
+import { renderMedicalComorbidityReport, MEDCOMORBID_ACTIVE } from '@/lib/medicalComorbidityEngine';
 import { renderRxMedications, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
@@ -861,8 +862,9 @@ const ClinicalTool = () => {
     // signed off (DRUGDATA_ACTIVE=false → returns '' and is filtered out below).
     const dd = renderDrugDataGate({ disorderKey: key, lang });
     const cm = renderComorbidityReport({ primaryKey: key, comorbidities: form.comorbidities, lang });
+    const mc = MEDCOMORBID_ACTIVE ? renderMedicalComorbidityReport({ comorbidities: form.comorbidities, history: form.history, lang }) : '';
     const ver = `FORMULARY_VERSION: ${FORMULARY_VERSION}`;
-    return [sg, mt, fb, ig, dd, cm, ver].filter(Boolean).join('\n\n');
+    return [sg, mt, fb, ig, dd, cm, mc, ver].filter(Boolean).join('\n\n');
   };
 
   const buildContext = () => isAr
@@ -973,8 +975,12 @@ const ClinicalTool = () => {
       {
         const key = disorderKey(form.disorder);
         const cmReport = renderComorbidityReport({ primaryKey: key, comorbidities: form.comorbidities, lang });
-        if (parsed) parsed.comorbidity = cmReport || '';
-        setHideComorbidity(!cmReport);
+        const medReport = MEDCOMORBID_ACTIVE
+          ? renderMedicalComorbidityReport({ comorbidities: form.comorbidities, history: form.history, lang })
+          : '';
+        const combined = [cmReport, medReport].filter(Boolean).join('\n\n');
+        if (parsed) parsed.comorbidity = combined || '';
+        setHideComorbidity(!combined);
       }
 
       // ── RX DETERMINISTIC SECTIONS: medications / labs / excluded / therapy /
