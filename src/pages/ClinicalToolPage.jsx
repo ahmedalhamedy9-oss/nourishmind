@@ -357,6 +357,7 @@ const EMPTY_FORM = {
   currentMeds:'', allergies:'', history:'', stopMed:'',
   hasDexa:false, dexaFat:'', dexaMuscle:'', dexaBone:'',
   hasInbody:false, inbodyFat:'', inbodyMuscle:'', inbodyWater:'',
+  hasEatingDisorder:false,
   knownGeneticVariants:'',
   cyclePhase:'',
   chronotype:'',
@@ -806,6 +807,8 @@ const ClinicalTool = () => {
     stopMedPh:     isAr ? 'إيقاف paroxetine بسبب زيادة الوزن...' : 'Discontinue paroxetine due to weight gain...',
     hasDexa:       isAr ? 'عندي نتائج DEXA'         : 'I have DEXA results',
     hasInbody:     isAr ? 'عندي نتائج InBody'       : 'I have InBody results',
+    edHistory:     isAr ? 'تاريخ أو اشتباه اضطراب أكل' : 'Eating-disorder history / suspicion',
+    edHint:        isAr ? 'يمنع أي عجز سعري ويحوّل لإشراف متخصص' : 'Blocks any caloric deficit; routes to specialist supervision',
     fat:           isAr ? 'دهون %'                  : 'Fat %',
     muscle:        isAr ? 'عضلات kg'                : 'Muscle kg',
     bone:          isAr ? 'العظام'                  : 'Bone',
@@ -1184,6 +1187,11 @@ const ClinicalTool = () => {
             <FormInput label={T.muscle}><input className={inputCls} placeholder="35" value={form.inbodyMuscle} onChange={e=>set('inbodyMuscle',e.target.value)} /></FormInput>
             <FormInput label={T.water}><input className={inputCls} placeholder="30" value={form.inbodyWater} onChange={e=>set('inbodyWater',e.target.value)} /></FormInput>
           </div>}
+
+          <label className="flex items-start gap-2 mt-1 mb-2 text-sm cursor-pointer text-amber-300/90 bg-amber-500/5 border border-amber-500/20 rounded-lg px-3 py-2">
+            <input type="checkbox" className="accent-amber-500 mt-0.5" checked={form.hasEatingDisorder} onChange={e=>set('hasEatingDisorder',e.target.checked)} />
+            <span>⚠ {T.edHistory}<br/><span className="text-xs text-amber-300/50">{T.edHint}</span></span>
+          </label>
 
           <div className="my-4 flex items-center gap-2">
             <div className="flex-1 h-px bg-white/8" />

@@ -262,6 +262,33 @@ export function disorderKey(label = '') {
 
 /* ───────────────────────── Deterministic metrics ─────────────────────────
    All body-composition & nutrition numbers are computed HERE, never by the LLM. */
+/* Age/sex healthy body-fat % ranges — Gallagher DA et al., Am J Clin Nutr 2000;72:694-701. */
+function healthyFatRange(male, age) {
+  const a = age || 30;
+  if (male) {
+    if (a < 40) return [8, 19];
+    if (a < 60) return [11, 21];
+    return [13, 24];
+  }
+  if (a < 40) return [21, 33];
+  if (a < 60) return [23, 34];
+  return [24, 35];
+}
+
+/* Fail-safe eating-disorder detection from free-text history/comorbidities.
+   Only ever BLOCKS a deficit, so liberal matching is acceptable. */
+function edTextPresent(raw) {
+  const t = (raw || '').toLowerCase()
+    .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
+  const kw = [
+    'anorexia', 'bulimia', 'binge eating', 'binge-eating', 'eating disorder',
+    'arfid', 'ednos', 'osfed', 'orthorexia', 'purging',
+    'اضطراب اكل', 'اضطرابات الاكل', 'فقدان الشهيه العصبي', 'فقدان شهيه عصبي',
+    'قهم', 'نهام', 'بوليميا', 'انوريكسيا', 'الشره العصبي', 'شره الاكل',
+  ];
+  return kw.some((k) => t.includes(k));
+}
+
 export function computeMetrics(form) {
   const w = parseFloat(form.weight);
   const h = parseFloat(form.height);
@@ -295,16 +322,73 @@ export function computeMetrics(form) {
     proteinBasis = 'body weight (1.2–1.6 g/kg, FFM unavailable)';
   }
 
-  // Caloric target is MAINTENANCE (eucaloric) by design. NourishMind's nutritional-
-  // psychiatry goal is psychological support, treatment synergy, and drug–diet safety
-  // — NOT weight loss. No deficit is imposed regardless of BMI; stable energy intake
-  // also avoids hypoglycaemic anxiety exacerbation.
-  const calLow = tdee.sedentary;
-  const calHigh = tdee.light;
+  // ── Caloric DIRECTION — deterministic, source-anchored (Gallagher 2000 AJCN
+  //    fat ranges · ACE essential-fat floor · ERS FFMI low-muscle cut-off · WHO BMI).
+  //    Serves OPTIMUM body composition, not weight loss. The safety gate runs FIRST
+  //    and can only ever BLOCK a deficit (fail-safe).
+  const ffmi = ffm != null ? +(ffm / Math.pow(h / 100, 2)).toFixed(1) : null;
+  const [fatLow, fatHigh] = healthyFatRange(male, age);
+  const essentialFloor = male ? 6 : 14;   // ACE dangerous-low body fat %
+  const ffmiLow = male ? 17 : 15;         // ERS low-FFMI (undernutrition) cut-off
+
+  const edFlag = !!form.hasEatingDisorder ||
+    edTextPresent(`${form.history || ''} ${form.comorbidities || ''} ${form.stopMed || ''}`);
+
+  const underweight = bmi < 18.5;                          // WHO
+  const belowEssential = fatPct != null && fatPct < essentialFloor;
+  const lowMuscle = ffmi != null && ffmi < ffmiLow;
+  const overfat = fatPct != null && fatPct > fatHigh;
+  const depleted = underweight || belowEssential || lowMuscle;
+
+  let calDirection, calRationale, calNote = null;
+  if (edFlag) {
+    if (depleted) {
+      calDirection = 'surplus';
+      calRationale = 'Eating-disorder flag + nutritional depletion → supervised repletion.';
+      calNote = 'REFEEDING must be medically supervised (refeeding-syndrome risk). Do NOT present weight/body-composition figures as patient-facing targets.';
+    } else {
+      calDirection = 'maintenance';
+      calRationale = 'Eating-disorder flag → caloric restriction is contraindicated.';
+      calNote = 'Caloric restriction CONTRAINDICATED. Do NOT pursue body-composition goals; refer to an eating-disorder specialist.';
+    }
+  } else if (depleted) {
+    calDirection = 'surplus';
+    const why = [];
+    if (underweight) why.push(`BMI ${bmi.toFixed(1)} < 18.5 (WHO underweight)`);
+    if (belowEssential) why.push(`fat ${fatPct}% < essential floor ${essentialFloor}% (ACE)`);
+    if (lowMuscle) why.push(`FFMI ${ffmi} < ${ffmiLow} kg/m² (ERS low muscle mass)`);
+    calRationale = 'Repletion — ' + why.join('; ') + '.';
+  } else if (overfat) {
+    calDirection = 'deficit';
+    calRationale = `Fat ${fatPct}% above healthy range for age/sex (${fatLow}–${fatHigh}%, Gallagher 2000) → modest lean-preserving fat-loss deficit.`;
+  } else if (fatPct == null && bmi >= 30) {
+    calDirection = 'maintenance';
+    calRationale = `BMI ${bmi.toFixed(1)} ≥ 30 but no body-composition data → maintenance; measure DEXA/InBody before considering any deficit (weight alone does not justify restriction).`;
+  } else {
+    calDirection = 'maintenance';
+    calRationale = fatPct != null
+      ? `Fat ${fatPct}% within healthy range for age/sex (${fatLow}–${fatHigh}%, Gallagher 2000) → eucaloric.`
+      : 'Normal metrics or insufficient body-composition data → eucaloric maintenance.';
+  }
+
+  let calLow, calHigh;
+  if (calDirection === 'deficit') {
+    // ~15% below maintenance, never below BMR
+    calLow = Math.max(bmr, Math.round(tdee.sedentary * 0.85));
+    calHigh = Math.max(bmr, Math.round(tdee.light * 0.85));
+  } else if (calDirection === 'surplus') {
+    // ~12% above maintenance for repletion / lean gain
+    calLow = Math.round(tdee.sedentary * 1.12);
+    calHigh = Math.round(tdee.light * 1.12);
+  } else {
+    calLow = tdee.sedentary;
+    calHigh = tdee.light;
+  }
 
   return {
-    bmi: +bmi.toFixed(1), bmr, tdee, fatPct, fatMass, ffm, smm, fmr,
+    bmi: +bmi.toFixed(1), bmr, tdee, fatPct, fatMass, ffm, ffmi, smm, fmr,
     proteinLow, proteinHigh, proteinBasis, calLow, calHigh,
+    calDirection, calRationale, calNote,
   };
 }
 
@@ -315,9 +399,11 @@ export function renderMetrics(m) {
   L.push(`- BMI: ${m.bmi} kg/m²`);
   L.push(`- BMR (Mifflin–St Jeor): ${m.bmr} kcal/day`);
   L.push(`- TDEE: sedentary ${m.tdee.sedentary} / light ${m.tdee.light} / moderate ${m.tdee.moderate} kcal/day`);
-  L.push(`- Caloric target: ${m.calLow}–${m.calHigh} kcal/day (maintenance — weight change is not a treatment goal)`);
+  L.push(`- Caloric DIRECTION: ${m.calDirection.toUpperCase()} — ${m.calRationale}`);
+  L.push(`- Caloric target: ${m.calLow}–${m.calHigh} kcal/day (${m.calDirection}; floored at BMR; serves optimum body composition — weight is not a treatment goal)`);
+  if (m.calNote) L.push(`- ⚠ SAFETY: ${m.calNote}`);
   L.push(`- Protein target: ${m.proteinLow}–${m.proteinHigh} g/day — basis: ${m.proteinBasis}`);
-  if (m.fatMass != null) L.push(`- Fat mass: ${m.fatMass} kg | Fat-free mass: ${m.ffm} kg`);
+  if (m.fatMass != null) L.push(`- Fat mass: ${m.fatMass} kg | Fat-free mass: ${m.ffm} kg${m.ffmi != null ? ` | FFMI: ${m.ffmi} kg/m²` : ''}`);
   if (m.fmr != null) L.push(`- Fat-to-skeletal-muscle ratio: ${m.fmr}`);
   return L.join('\n');
 }
