@@ -5,12 +5,13 @@ import { doc, getDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { computeMetrics, renderMetrics, disorderKey, renderFormularyBlock, computeSafetyFlags, renderSafetyGate, FORMULARY_VERSION, FORMULARY } from '@/lib/clinicalFormulary';
 import { renderInteractionGate, renderInteractionsReport, renderInteractionsReportSplit, recommendedDrugNames, INTERACTIONS_ACTIVE, INTERACTIONS_VERSION } from '@/lib/interactions';
-import { renderComorbidityReport, comorbidDrugNames } from '@/lib/comorbidityEngine';
+import { renderComorbidityReport, comorbidDrugNames, renderComorbidityHTML } from '@/lib/comorbidityEngine';
 import { renderMedicalComorbidityReport, MEDCOMORBID_ACTIVE } from '@/lib/medicalComorbidityEngine';
-import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup } from '@/lib/rxRender';
+import { renderRxMedications, renderRxMedicationsHTML, renderRxLabs, renderRxExcluded, renderRxTherapy, renderRxFollowup, renderTechniqueLibrary, renderVagalToning } from '@/lib/rxRender';
 import { renderNutritionDiet, renderNutritionSupplements } from '@/lib/nutritionFormulary';
 import { renderMacrosAndMeals, renderPsychobioticsFor } from '@/lib/mealPlanEngine';
 import { renderDynamicLabs } from '@/lib/labEngine';
+import { renderLabsHTML, renderExcludedHTML, renderSupplementsHTML, renderDietHTML, renderTherapyHTML, renderFollowupHTML, renderBodycompHTML, renderInteractionsHTML, renderChronoHTML, renderSummaryHTML, wrapReportHTML } from '@/lib/reportRender';
 import { renderChrono } from '@/lib/chronoEngine';
 import { renderDrugDataGate, DRUGDATA_ACTIVE, DRUGDATA_VERSION } from '@/lib/drugData';
 import { logGeneration } from '@/lib/audit';
@@ -324,6 +325,7 @@ const DISORDERS = [
 ];
 
 const SECTIONS_EN = [
+  { id:'summary',       icon:'🧭', title:'Executive Summary',          color:'#e0663d' },
   { id:'medications',   icon:'💊', title:'Medication Recommendations', color:'#4a9b8e' },
   { id:'labs',          icon:'🧪', title:'Required Lab Tests',         color:'#5bb8c4' },
   { id:'bodycomp',      icon:'📊', title:'DEXA / InBody',              color:'#8b5cf6' },
@@ -339,6 +341,7 @@ const SECTIONS_EN = [
 ];
 
 const SECTIONS_AR = [
+  { id:'summary',       icon:'🧭', title:'الملخص التنفيذي',        color:'#e0663d' },
   { id:'medications',   icon:'💊', title:'التوصيات الدوائية',     color:'#4a9b8e' },
   { id:'labs',          icon:'🧪', title:'التحاليل المطلوبة',     color:'#5bb8c4' },
   { id:'bodycomp',      icon:'📊', title:'DEXA / InBody',         color:'#8b5cf6' },
@@ -446,13 +449,30 @@ function generatePDF(form, results, type, lang) {
       + (rawHTML ? rawHTML : `<div class="sec-body">${formatReportHTML(body)}</div>`)
       + '</div>';
   }
-  const medsHTMLpdf = isDoc ? renderRxMedicationsHTML({ key: disorderKey(form.disorder), lang, pdf: true }) : null;
+  // Doctor PDF: decision-first HTML sections rendered with collapsibles OPEN
+  // (the physician record must be complete). Extensible map keyed by section id.
+  const dk = disorderKey(form.disorder);
+  const htmlPdf = isDoc ? {
+    summary:     renderSummaryHTML({ key: dk, form, lang, pdf: true }),
+    medications: renderRxMedicationsHTML({ key: dk, lang, pdf: true }),
+    comorbidity: renderComorbidityHTML({ primaryKey: dk, comorbidities: form.comorbidities, history: form.history, lang, pdf: true }),
+    labs:        renderLabsHTML({ key: dk, form, lang, pdf: true }),
+    excluded:    renderExcludedHTML({ key: dk, lang, pdf: true }),
+    diet:        renderDietHTML({ key: dk, lang, pdf: true, extra: (() => { const m = renderMacrosAndMeals({ key: dk, metrics: computeMetrics(form), form, lang }); return m ? formatReportHTML(m) : ''; })() }) || results.dietHTML || null,
+    supplements: renderSupplementsHTML({ key: dk, lang, pdf: true, extra: (() => { const p = renderPsychobioticsFor({ key: dk, lang }); return p ? formatReportHTML(p) : ''; })() }) || results.supplementsHTML || null,
+    therapy:     renderTherapyHTML({ key: dk, lang, pdf: true, extra: (() => { const e = [renderTechniqueLibrary({ key: dk, lang }), renderVagalToning({ lang })].filter(Boolean).join('\n'); return e ? formatReportHTML(e) : ''; })() }) || results.therapyHTML || null,
+    followup:    renderFollowupHTML({ key: dk, lang, pdf: true }) || results.followupHTML || null,
+    bodycomp:    renderBodycompHTML({ form, lang, pdf: true }) || results.bodycompHTML || null,
+    chrono:      renderChronoHTML({ key: dk, form, lang, pdf: true }) || results.chronoHTML || null,
+    interactions: results.interactionsHTML || null,
+    nutrigenomics: results.nutrigenomicsHTML || null,
+  } : {};
 
   const sections = (isAr ? SECTIONS_AR : SECTIONS_EN)
     .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
     .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()))
     .filter(s => s.id !== 'followup' || (results.followup && String(results.followup).trim()));
-  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, (isDoc && s.id === 'medications') ? medsHTMLpdf : null)).join('');
+  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, isDoc ? (htmlPdf[s.id] || null) : null)).join('');
 
   function buildPatientContent(form, results) {
     function simplify(text) {
@@ -972,14 +992,17 @@ const ClinicalTool = () => {
         // cautions second (labelled conditional) — kills the alert-fatigue that
         // came from printing not-yet-prescribed comorbid alternatives as if they
         // were active conflicts. Single-disorder cases render one block as before.
-        parsed.interactions = renderInteractionsReportSplit({
+        const ixArgs = {
           primaryFirstLine: cdn.primary.firstLine,
           primaryAdjunct:   cdn.primary.adjunct,
           comorbidFirstLine: cdn.comorbid.firstLine,
           comorbidAdjunct:   cdn.comorbid.adjunct,
           currentMeds: form.currentMeds, supplements: '',
           comorbidLabels: cdn.comorbid.keys, lang,
-        });
+        };
+        parsed.interactions = renderInteractionsReportSplit(ixArgs);
+        // decision-first severity-triaged cards (most dangerous first)
+        parsed.interactionsHTML = renderInteractionsHTML(ixArgs) || '';
       }
 
       // ── COMORBIDITY: deterministic, source-based merge layer. Surfaces the
@@ -993,6 +1016,10 @@ const ClinicalTool = () => {
           : '';
         const combined = [cmReport, medReport].filter(Boolean).join('\n\n');
         if (parsed) parsed.comorbidity = combined || '';
+        // Decision-first HTML overlay (reference-design cards) — injected raw in
+        // the tab + doctor PDF, same path as the medications HTML.
+        const cmHTML = renderComorbidityHTML({ primaryKey: key, comorbidities: form.comorbidities, history: form.history, lang });
+        if (parsed) parsed.comorbidityHTML = cmHTML || '';
         setHideComorbidity(!combined);
       }
 
@@ -1013,9 +1040,21 @@ const ClinicalTool = () => {
         if (rxMedHTML) parsed.medicationsHTML = rxMedHTML;
         if (rxLab) parsed.labs = rxLab;
         if (rxExc) parsed.excluded = rxExc;
+        // Decision-first HTML for labs + excluded (injected raw, same path as meds).
+        const labHTML = renderLabsHTML({ key, form, lang });
+        const excHTML = renderExcludedHTML({ key, lang });
+        if (labHTML) parsed.labsHTML = labHTML;
+        if (excHTML) parsed.excludedHTML = excHTML;
         if (rxThr) parsed.therapy = rxThr;
         parsed.followup = rxFup || '';
         setHideFollowup(!rxFup);
+        // Decision-first HTML for therapy (staged timeline + technique library as
+        // `extra`) and follow-up (phases/monitoring/taper timeline).
+        const techExtra = [renderTechniqueLibrary({ key, lang }), renderVagalToning({ lang })].filter(Boolean).join('\n');
+        const thrHTML = renderTherapyHTML({ key, lang, extra: techExtra ? formatReportHTML(techExtra) : '' });
+        const fupHTML = renderFollowupHTML({ key, lang });
+        if (thrHTML) parsed.therapyHTML = thrHTML;
+        if (fupHTML) parsed.followupHTML = fupHTML;
 
         // 🥗 Diet & 🧴 Supplements — deterministic from nutritionFormulary
         // (evidence-graded, with drug-supplement interaction & synergy safety).
@@ -1032,6 +1071,13 @@ const ClinicalTool = () => {
         if (macroBlock) parsed.diet = [parsed.diet, macroBlock].filter(Boolean).join('\n');
         const psycho = renderPsychobioticsFor({ key, lang });
         if (psycho) parsed.supplements = [parsed.supplements, psycho].filter(Boolean).join('\n');
+
+        // Decision-first HTML for diet + supplements — the macro/meal and
+        // psychobiotics blocks are folded in as `extra` so NO content is lost.
+        const dietHTML = renderDietHTML({ key, lang, extra: macroBlock ? formatReportHTML(macroBlock) : '' });
+        const suppHTML = renderSupplementsHTML({ key, lang, extra: psycho ? formatReportHTML(psycho) : '' });
+        if (dietHTML) parsed.dietHTML = dietHTML;
+        if (suppHTML) parsed.supplementsHTML = suppHTML;
 
         // 🕐 Circadian & Chronotherapy — deterministic two-clock model
         // (central: light/sleep + drug chronotiming; peripheral: meal timing).
@@ -1050,9 +1096,30 @@ const ClinicalTool = () => {
           : 'No known genetic variants entered, so this section is omitted. Enter known SNPs to receive pharmacogenomic/nutrigenomic guidance.';
       }
 
+      // ── DECISION-FIRST HTML for the remaining tabs, built once here after all
+      //    parsed fields are final. bodycomp = deterministic metric tiles
+      //    (overrides model text); chrono/interactions/nutrigenomics keep their
+      //    content but are wrapped in the shared design shell for consistency.
+      if (parsed) {
+        const bcHTML = renderBodycompHTML({ form, lang });
+        if (bcHTML) parsed.bodycompHTML = bcHTML;
+        const wrap = (id, title, accent, sub) => {
+          const html = wrapReportHTML({ title, accent, sub, bodyHTML: formatReportHTML(parsed[id]) });
+          if (html) parsed[id + 'HTML'] = html;
+        };
+        const chrHTML = renderChronoHTML({ key: disorderKey(form.disorder), form, lang });
+        if (chrHTML) parsed.chronoHTML = chrHTML;
+        // interactionsHTML already built (severity cards) in the interactions block above.
+        const genShownNow = hasGeneticInput(form);
+        if (genShownNow && parsed.nutrigenomics) wrap('nutrigenomics', isAr ? '🧬 التغذية الجينية' : '🧬 Nutrigenomics', '#ec4899', isAr ? 'مبني على المتغيرات المُدخَلة' : 'gated on entered variants');
+        // Phase D — Executive Summary (snapshot + red-flags banner + timeline).
+        const sumHTML = renderSummaryHTML({ key: disorderKey(form.disorder), form, lang });
+        if (sumHTML) parsed.summaryHTML = sumHTML;
+      }
+
       setResults(parsed);
       setResultsStructured(structured);
-      setActiveTab('medications');
+      setActiveTab(parsed.summaryHTML ? 'summary' : 'medications');
       setChatMessages([{ role:'ai', text: T.chatSuccess }]);
 
       // ── #4 AUDIT LOG: record this generation (gated by AUDIT_ENABLED, never blocks) ──
@@ -1330,9 +1397,9 @@ const ClinicalTool = () => {
                   <span className="text-2xl">{SECTIONS.find(s=>s.id===activeTab)?.icon}</span>
                   <span className="font-bold text-white">{SECTIONS.find(s=>s.id===activeTab)?.title}</span>
                 </div>
-                {activeTab === 'medications' && results.medicationsHTML ? (
+                {results[activeTab + 'HTML'] ? (
                   <div className="text-sm"
-                    dangerouslySetInnerHTML={{ __html: results.medicationsHTML }} />
+                    dangerouslySetInnerHTML={{ __html: results[activeTab + 'HTML'] }} />
                 ) : (
                   <div className="text-sm leading-loose text-gray-400 whitespace-pre-wrap"
                     dangerouslySetInnerHTML={{ __html: formatReportHTML(results[activeTab]) }} />

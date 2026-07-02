@@ -469,6 +469,45 @@ function orderedPairLabels(agents) {
     .map((a) => a.label);
 }
 
+/* Structured split (for the decision-first severity-card renderer). Same logic
+ * as renderInteractionsReportSplit but returns typed data instead of markdown:
+ *   { active:[item], cross:[item], crossLabels:[], version }
+ *   item = { type, labels, severity(UPPER), mechanism, management, source, tier, verified }
+ */
+function matchToStruct(m) {
+  return {
+    type: classifyType(m.agents.map((a) => a.id), m.foodOnly),
+    labels: orderedPairLabels(m.agents).join(' + '),
+    severity: m.severity,
+    mechanism: m.mechanism,
+    management: m.management,
+    source: m.source,
+    tier: m.tier,
+    verified: m.verified,
+  };
+}
+export function interactionSplitStructured({
+  primaryFirstLine = [], primaryAdjunct = [],
+  comorbidFirstLine = [], comorbidAdjunct = [],
+  currentMeds = '', supplements = '', comorbidLabels = [],
+} = {}) {
+  const primaryMatches = computeInteractions({ firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct, currentMeds, supplements });
+  const wideMatches = computeInteractions({
+    firstLineNames: [...primaryFirstLine, ...comorbidFirstLine],
+    adjunctNames: [...primaryAdjunct, ...comorbidAdjunct], currentMeds, supplements,
+  });
+  const primaryKeys = new Set(primaryMatches.map(matchKey));
+  const crossRaw = wideMatches.filter((m) => !primaryKeys.has(matchKey(m)));
+  const activeIds = new Set(buildPresentSet({ firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct, currentMeds, supplements }).keys());
+  const crossMatches = crossRaw.filter((m) => m.agents.some((a) => activeIds.has(a.id)));
+  return {
+    active: primaryMatches.map(matchToStruct),
+    cross: crossMatches.map(matchToStruct),
+    crossLabels: (comorbidLabels || []).filter(Boolean),
+    version: INTERACTIONS_VERSION,
+  };
+}
+
 /* ── 5. Render a deterministic INTERACTIONS block for the locked context ─── */
 export function renderInteractions(matches, { lang = 'en' } = {}) {
   const ar = lang === 'ar';
