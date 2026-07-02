@@ -97,6 +97,14 @@ export const AGENTS = {
   thiazide:     { label: 'Thiazide / ACE-inhibitor', tags: ['raises_lithium'], aliases: ['hydrochlorothiazide', 'thiazide', 'lisinopril', 'enalapril', 'ramipril', 'ace inhibitor'] },
   clozapine:    { label: 'Clozapine', tags: ['cyp1a2_substrate', 'qt_prolonging', 'narrow_ti'], aliases: ['clozapine', 'clozaril', 'leponex'] },
 
+  // — Common NON-psychiatric medical co-meds (enable the already-verified qt_stack
+  //   and cyp2d6 rules to catch cardiac/HTN/endocrine regimens entered in currentMeds) —
+  amiodarone:   { label: 'Amiodarone', tags: ['qt_prolonging', 'cyp2d6_inhibitor'], aliases: ['amiodarone', 'cordarone', 'pacerone'] },
+  sotalol:      { label: 'Sotalol', tags: ['qt_prolonging'], aliases: ['sotalol'] },
+  haloperidol:  { label: 'Haloperidol', tags: ['qt_prolonging', 'cyp2d6_substrate'], aliases: ['haloperidol', 'haldol'] },
+  methadone:    { label: 'Methadone', tags: ['qt_prolonging', 'cns_depressant', 'opioid'], aliases: ['methadone'] },
+  betablocker_2d6:{ label: 'Beta-blocker (CYP2D6 substrate)', tags: ['cyp2d6_substrate'], aliases: ['metoprolol', 'carvedilol', 'nebivolol', 'propranolol', 'timolol'] },
+
   // — Supplements —
   st_johns_wort:{ label: "St. John's Wort", tags: ['serotonergic', 'cyp3a4_inducer', 'pgp_inducer'], aliases: ["st john", "st johns", "st. john", "st. johns", "saint john", "saint johns", "hypericum", "عشبة سانت جون"] },
   five_htp:     { label: '5-HTP', tags: ['serotonergic'], aliases: ['5-htp', '5 htp', '5htp', 'five htp', 'hydroxytryptophan'] },
