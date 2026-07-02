@@ -464,7 +464,18 @@ function generatePDF(form, results, type, lang) {
     followup:    renderFollowupHTML({ key: dk, lang, pdf: true }) || results.followupHTML || null,
     bodycomp:    renderBodycompHTML({ form, lang, pdf: true }) || results.bodycompHTML || null,
     chrono:      renderChronoHTML({ key: dk, form, lang, pdf: true }) || results.chronoHTML || null,
-    interactions: results.interactionsHTML || null,
+    // Recompute interactions from the CURRENT form (was stale results.* → the PDF
+    // could show interactions for an old form while the rest reflected edits).
+    interactions: (() => {
+      if (!INTERACTIONS_ACTIVE) return results.interactionsHTML || null;
+      const cdn = comorbidDrugNames({ primaryKey: dk, comorbidities: form.comorbidities, recommendedDrugNames, FORMULARY });
+      return renderInteractionsHTML({
+        primaryFirstLine: cdn.primary.firstLine, primaryAdjunct: cdn.primary.adjunct,
+        comorbidFirstLine: cdn.comorbid.firstLine, comorbidAdjunct: cdn.comorbid.adjunct,
+        currentMeds: form.currentMeds, supplements: '',
+        comorbidLabels: cdn.comorbid.keys, lang, pdf: true,
+      }) || results.interactionsHTML || null;
+    })(),
     nutrigenomics: results.nutrigenomicsHTML || null,
   } : {};
 
@@ -512,9 +523,15 @@ function generatePDF(form, results, type, lang) {
             }
           }
         } else if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
-          const labName = trimmed.replace(/^[-*]+\s*/, '').replace(/\*+/g, '').split('|')[0].split(':')[0].trim();
+          // Prefer the bolded test name (**Renal function**); the rest is
+          // rationale/when/src and must not leak into the checkbox label.
+          const bold = trimmed.match(/\*\*([^*]+)\*\*/);
+          const labName = (bold
+            ? bold[1]
+            : trimmed.replace(/^[-*]+\s*/, '').split(/\s[—–|]\s|:/)[0]
+          ).replace(/\*+/g, '').trim();
           if (labName) {
-            labLines.push(`<div class="check-row"><span class="checkbox">☐</span><span class="check-label">${labName}</span></div>`);
+            labLines.push(`<div class="check-row"><span class="checkbox">☐</span><span class="check-label">${escapeHTML(labName)}</span></div>`);
           }
         } else if (trimmed.match(/^[أ-ي]/) || trimmed.match(/^[A-Z]/)) {
           labLines.push(`<div class="lab-group">${trimmed}</div>`);
@@ -529,24 +546,28 @@ function generatePDF(form, results, type, lang) {
       const out = [];
       let currentName = '';
       let currentDose = '';
+      const flush = () => {
+        if (!currentName) return;
+        out.push(`<div class="check-row supp-row"><span class="checkbox">☐</span><div class="supp-info"><span class="supp-name">${escapeHTML(currentName)}</span>${currentDose ? `<span class="supp-dose">${escapeHTML(currentDose)}</span>` : ''}</div></div>`);
+        currentName = ''; currentDose = '';
+      };
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
-        const nameMatch = trimmed.match(/^(?:\d+\.\s*)?\*\*([^*]+)\*\*/);
-        if (nameMatch && !trimmed.includes('Dose') && !trimmed.includes('Timing') && !trimmed.includes('Form') && !trimmed.includes('Duration') && !trimmed.includes('Evidence') && !trimmed.includes('Mechanism') && !trimmed.includes('Warning') && !trimmed.includes('الجرعة') && !trimmed.includes('التوقيت') && !trimmed.includes('الصيغة') && !trimmed.includes('المدة') && !trimmed.includes('الدليل') && !trimmed.includes('الآلية') && !trimmed.includes('تحذير')) {
-          if (currentName) {
-            out.push(`<div class="check-row supp-row"><span class="checkbox">☐</span><div class="supp-info"><span class="supp-name">${currentName}</span>${currentDose ? `<span class="supp-dose">${currentDose}</span>` : ''}</div></div>`);
-            currentDose = '';
-          }
+        // A supplement item is a BULLET line ("- **Name**" or "1. **Name**").
+        // Section headers ("**🧴 …**") have no dash/number → correctly skipped
+        // (the old regex accepted them and listed headers as supplements).
+        const nameMatch = trimmed.match(/^(?:-\s+|\d+\.\s*)\*\*([^*]+)\*\*/);
+        if (nameMatch) {
+          flush();
           currentName = nameMatch[1].trim();
-        }
-        if (trimmed.includes('Dose:') || trimmed.includes('الجرعة:')) {
-          currentDose = trimmed.replace(/.*(?:Dose|الجرعة)\s*:\s*/, '').replace(/\*+/g, '').trim();
+        } else if ((trimmed.includes('Dose:') || trimmed.includes('الجرعة:')) && currentName) {
+          // Take ONLY the Dose segment from "Forms: … | Dose: … | Timing: …".
+          const seg = trimmed.split('|').find((s) => /Dose|الجرعة/.test(s)) || trimmed;
+          currentDose = seg.replace(/.*(?:Dose|الجرعة)\s*:\s*/, '').replace(/\*+/g, '').trim();
         }
       }
-      if (currentName) {
-        out.push(`<div class="check-row supp-row"><span class="checkbox">☐</span><div class="supp-info"><span class="supp-name">${currentName}</span>${currentDose ? `<span class="supp-dose">${currentDose}</span>` : ''}</div></div>`);
-      }
+      flush();
       return out.join('\n');
     }
 
@@ -696,11 +717,11 @@ body{font-family:${isAr ? "'Cairo'" : "'Inter'"}, sans-serif;background:#fff;col
   <div class="bdg">${isDoc ? docBadge : patBadge}</div>
 </div>
 <div class="info">
-  ${form.patientName ? `<div><div class="il">${labels.patient}</div><div class="iv">${form.patientName}</div></div>` : ''}
-  <div><div class="il">${labels.disorder}</div><div class="iv">${form.disorder}</div></div>
-  <div><div class="il">${labels.ageGender}</div><div class="iv">${form.age}${labels.yrs} / ${form.gender}</div></div>
-  <div><div class="il">${labels.weightHeight}</div><div class="iv">${form.weight||'—'}${labels.kg} / ${form.height||'—'}${labels.cm}</div></div>
-  <div><div class="il">${labels.severity}</div><div class="iv">${form.severity || labels.unspecified}</div></div>
+  ${form.patientName ? `<div><div class="il">${labels.patient}</div><div class="iv">${escapeHTML(form.patientName)}</div></div>` : ''}
+  <div><div class="il">${labels.disorder}</div><div class="iv">${escapeHTML(form.disorder)}</div></div>
+  <div><div class="il">${labels.ageGender}</div><div class="iv">${escapeHTML(form.age)}${labels.yrs} / ${escapeHTML(form.gender)}</div></div>
+  <div><div class="il">${labels.weightHeight}</div><div class="iv">${escapeHTML(form.weight||'—')}${labels.kg} / ${escapeHTML(form.height||'—')}${labels.cm}</div></div>
+  <div><div class="il">${labels.severity}</div><div class="iv">${escapeHTML(form.severity || labels.unspecified)}</div></div>
   <div><div class="il">${labels.reportDate}</div><div class="iv">${date}</div></div>
 </div>
 ${isDoc ? docContent : patContent}
