@@ -36,7 +36,7 @@ export function renderRxMedications({ key, lang = 'en', form = {} } = {}) {
 
   const mono = (m, role) => {
     const b = [];
-    b.push(`\n${m.drug}${m.class ? ` (${m.class})` : ''}${m.grade ? ` — ${isAr ? 'مستوى' : 'Level'} ${m.grade}` : ''}${role ? ` [${role}]` : ''}`);
+    b.push(`\n${m.drug}${m.class ? ` (${m.class})` : ''}${m.grade ? ` — ${isAr ? 'مستوى' : 'Level'} ${m.grade}` : ''}${role ? ` [${role}]` : ''}${m.verified === false ? (isAr ? ' ⚠ مسودة — غير مُتحقَّق منه' : ' ⚠ DRAFT — unverified') : ''}`);
     const al = advLine(m); if (al) b.push(al);
     b.push(line('Mechanism', m.mechanism));
     if (m.dosing) b.push(line('Dose', `start ${m.dosing.start}; titrate ${m.dosing.titration}; target ${m.dosing.target}; max ${m.dosing.max}; forms ${m.dosing.forms}`));
@@ -348,6 +348,7 @@ function pdCard(m, role, advItem) {
       + (m.class ? `<span class="pd-bdg cls">${E(m.class)}</span>` : '')
       + strengthBadge
       + (m.grade ? `<span class="pd-bdg lvl">Level ${E(m.grade)}</span>` : '')
+      + (m.verified === false ? `<span class="pd-bdg" style="color:#e0b872;background:rgba(186,117,23,.14);border-color:rgba(186,117,23,.4)" title="Drafted from the cited source; pending physician sign-off">⚠ DRAFT · unverified</span>` : '')
     + `</div>`
     + (m.mechanism ? `<div class="pd-mech">${E(m.mechanism)}</div>` : '')
     + `<div class="pd-grid2"><div class="pd-bx pd-good"><div class="pd-bxh">✅ Best if</div>${best}</div>`

@@ -169,23 +169,38 @@ export function renderSummaryHTML({ key, form = {}, lang = 'en', pdf = false } =
   // tab (Medications / Supplements / Diet) → coordinate total intake, don't
   // double-dose. Cross-references rather than deleting content (nothing lost).
   const dedupBlock = (() => {
-    const VOCAB = ['omega-3', 'epa', 'dha', 'fish oil', 'magnesium', 'vitamin d', 'vitamin b', 'b12', 'folate', 'methylfolate', 'probiotic', 'psychobiotic', 'zinc', 'iron', 'l-theanine', 'theanine', 'saffron', 'ashwagandha', 'st john', 'melatonin', 'calcium'];
+    // Synonyms collapse to ONE canonical active so a single omega-3 overlap is not
+    // printed 3× (as omega-3 + EPA + DHA + fish oil). Match on word boundaries so
+    // 'iron' doesn't hit 'environment' / 'epa' doesn't hit 'grape'. Scan the why/
+    // note text (not just names) and include drinks, so real overlaps aren't missed.
+    const GROUPS = [
+      { label: 'Omega-3 (EPA/DHA)', terms: ['omega-3', 'omega 3', 'epa', 'dha', 'fish oil'] },
+      { label: 'Magnesium', terms: ['magnesium'] },
+      { label: 'Vitamin D', terms: ['vitamin d'] },
+      { label: 'B-vitamins / folate', terms: ['vitamin b', 'b12', 'b6', 'folate', 'methylfolate'] },
+      { label: 'Probiotics / fermented', terms: ['probiotic', 'psychobiotic', 'kefir', 'yoghurt', 'yogurt', 'kimchi'] },
+      { label: 'Zinc', terms: ['zinc'] }, { label: 'Iron', terms: ['iron'] },
+      { label: 'L-theanine', terms: ['l-theanine', 'theanine', 'green tea'] },
+      { label: 'Saffron', terms: ['saffron'] }, { label: 'Ashwagandha', terms: ['ashwagandha'] },
+      { label: "St John's Wort", terms: ['st john'] }, { label: 'Melatonin', terms: ['melatonin'] },
+      { label: 'Calcium', terms: ['calcium'] },
+    ];
     const n = (NUTRITION_ACTIVE && NUTRITION[key] && !NUTRITION[key].__pending) ? NUTRITION[key] : null;
+    const join = (arr, ...keys) => (arr || []).map((x) => keys.map((k) => x[k] || '').join(' ')).join(' | ').toLowerCase();
     const src = {
-      Medications: [...(d.firstLine || []), ...(d.adjunct || [])].map((x) => x.drug || ''),
-      Supplements: n ? [...(n.supplements || []), ...(n.herbs || []), ...(n.adaptogens || []), ...(n.mushrooms || [])].map((x) => x.name || '') : [],
-      Diet: n && n.diet ? [...(n.diet.beneficialFoods || []), ...(n.diet.oils || [])].map((x) => x.item || '') : [],
+      Medications: join([...(d.firstLine || []), ...(d.adjunct || [])], 'drug', 'class'),
+      Supplements: n ? join([...(n.supplements || []), ...(n.herbs || []), ...(n.adaptogens || []), ...(n.mushrooms || [])], 'name', 'synergy') : '',
+      Diet: n && n.diet ? join([...(n.diet.beneficialFoods || []), ...(n.diet.oils || []), ...(n.diet.drinks || [])], 'item', 'why') : '',
     };
-    const hitTabs = {};
-    VOCAB.forEach((term) => {
-      const tabs = Object.entries(src).filter(([, arr]) => arr.some((s) => String(s).toLowerCase().includes(term))).map(([t]) => t);
-      if (tabs.length >= 2) hitTabs[term] = tabs;
-    });
-    const rows = Object.entries(hitTabs);
+    const has = (hay, term) => new RegExp('(^|[^a-z])' + term.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') + '([^a-z]|$)', 'i').test(hay);
+    const rows = GROUPS.map((g) => {
+      const tabs = Object.entries(src).filter(([, hay]) => g.terms.some((t) => has(hay, t))).map(([t]) => t);
+      return tabs.length >= 2 ? [g.label, tabs] : null;
+    }).filter(Boolean);
     if (!rows.length) return '';
     return `<div class="rc-gd">🔁 Cross-tab coordination — avoid double-dosing</div>`
       + `<div class="rc-note">These actives appear in more than one tab. Count TOTAL intake across food + supplement (+ drug) — coordinate, don't stack.</div>`
-      + rows.map(([term, tabs]) => `<div class="rc-row rec"><span class="rc-tag rec">${RC_E(term.toUpperCase())}</span><div class="rc-b"><div class="rc-why">appears in: ${RC_E(tabs.join(' + '))}</div></div></div>`).join('');
+      + rows.map(([term, tabs]) => `<div class="rc-row rec"><span class="rc-tag rec">${RC_E(term)}</span><div class="rc-b"><div class="rc-why">appears in: ${RC_E(tabs.join(' + '))}</div></div></div>`).join('');
   })();
 
   // D6 — conflict resolution: where guidelines differ, show BOTH + the decider.
