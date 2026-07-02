@@ -5,6 +5,7 @@
    only explains. Reproducible every run.
    ════════════════════════════════════════════════════════════════════════ */
 import { RX, RX_ACTIVE, THERAPY_TECHNIQUES, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE, VAGAL_TONING, TECHNIQUE_LIBRARY, DISORDER_TECHNIQUES } from './rxFormulary';
+import { medicationAdvisories } from './medicationSafety';
 
 const ok = (key) => RX_ACTIVE && RX[key] && !RX[key].__pending;
 const j = (arr) => (arr || []).join('; ');
@@ -12,11 +13,22 @@ const line = (label, val) => (val ? `**${label}:** ${val}` : '');
 const cd = (o) => o ? Object.entries(o).map(([k, v]) => `${k}: ${v}`).join('; ') : '';
 
 /* ── 💊 MEDICATIONS — selection logic + full monographs + switching ─────── */
-export function renderRxMedications({ key, lang = 'en' } = {}) {
+export function renderRxMedications({ key, lang = 'en', form = {} } = {}) {
   if (!ok(key)) return '';
   const d = RX[key];
   const isAr = lang === 'ar';
   const out = [];
+
+  // Patient-aware overlay: duplicate / allergy / interaction / comorbidity flags.
+  const adv = medicationAdvisories({ key, form, lang });
+  const advLine = (m) => {
+    const a = adv.get(String(m.drug).toLowerCase());
+    if (!a) return '';
+    const head = a.level === 'danger'
+      ? (isAr ? '⛔ تنبيه خاص بالمريض' : '⛔ PATIENT-SPECIFIC ALERT')
+      : (isAr ? '⚠️ ملاحظة خاصة بالمريض' : '⚠️ PATIENT-SPECIFIC NOTE');
+    return `\n**${head}:** ${a.notes.join(' | ')}`;
+  };
 
   // selection guidance first (the "choose what, on what basis")
   if (d.specifierTargeting?.text)
@@ -25,6 +37,7 @@ export function renderRxMedications({ key, lang = 'en' } = {}) {
   const mono = (m, role) => {
     const b = [];
     b.push(`\n${m.drug}${m.class ? ` (${m.class})` : ''}${m.grade ? ` — ${isAr ? 'مستوى' : 'Level'} ${m.grade}` : ''}${role ? ` [${role}]` : ''}`);
+    const al = advLine(m); if (al) b.push(al);
     b.push(line('Mechanism', m.mechanism));
     if (m.dosing) b.push(line('Dose', `start ${m.dosing.start}; titrate ${m.dosing.titration}; target ${m.dosing.target}; max ${m.dosing.max}; forms ${m.dosing.forms}`));
     b.push(line('Onset/trial', m.onset));
@@ -293,7 +306,15 @@ function pdBenefitRow(b) {
   const basis = b.basis ? `<div class="pd-src">${E(b.basis)}</div>` : '';
   return `<div class="pd-benr"><span class="pd-bens">${E(b.symptom)}</span><span>${val}</span></div>${basis}`;
 }
-function pdCard(m, role) {
+function pdCard(m, role, advItem) {
+  const band = advItem
+    ? `<div style="margin:0 0 9px;padding:8px 10px;border-radius:9px;font-size:12px;`
+      + (advItem.level === 'danger'
+        ? 'background:rgba(163,45,45,.16);border:1px solid rgba(163,45,45,.5);color:#f0a0a0">'
+        : 'background:rgba(186,117,23,.13);border:1px solid rgba(186,117,23,.45);color:#e0b872">')
+      + `<strong>${advItem.level === 'danger' ? '⛔ Patient-specific alert' : '⚠️ Patient-specific note'}:</strong> `
+      + advItem.notes.map(E).join(' &nbsp;|&nbsp; ') + `</div>`
+    : '';
   const strengthBadge = m.strength
     ? `<span class="pd-bdg" style="color:${STR_COLOR[m.strength.level] || '#9aa8b5'};background:${(STR_COLOR[m.strength.level] || '#555')}2e;border-color:${(STR_COLOR[m.strength.level] || '#555')}66" title="${E(m.strength.certainty || '')}">${E(m.strength.level)}${m.strength.certainty ? ` · ${E(m.strength.certainty)}` : ''}</span>`
     : '';
@@ -321,6 +342,7 @@ function pdCard(m, role) {
     + `</div></details>`;
   const evidence = `<details class="pd-exp"${openAttr}><summary>Evidence</summary><div class="pd-exp-b"><div class="row">${(m.src || []).map(E).join('; ')}</div></div></details>`;
   return `<div class="pd-card">`
+    + band
     + `<div class="pd-drug"><strong>${E(m.drug)}</strong>`
       + `<span class="pd-bdg role">${E(role)}</span>`
       + (m.class ? `<span class="pd-bdg cls">${E(m.class)}</span>` : '')
@@ -347,9 +369,11 @@ function pdCompareMatrix(list) {
     + `<div style="padding:2px 10px 12px"><table class="pd-cmp-t"><thead>${head}</thead><tbody>${rowStrength}${rowTop}${rowPreg}</tbody></table>`
     + `<div class="pd-src" style="padding:0 4px">Benefit = GRADE-rated pooled SMD where available; "signal only" = single-trial, no robust pooled estimate. Sources on each card.</div></div></details>`;
 }
-export function renderRxMedicationsHTML({ key, lang = 'en', pdf = false } = {}) {
+export function renderRxMedicationsHTML({ key, lang = 'en', pdf = false, form = {} } = {}) {
   if (!ok(key)) return '';
   const d = RX[key];
+  const adv = medicationAdvisories({ key, form, lang });
+  const advOf = (m) => adv.get(String(m.drug).toLowerCase());
   const first = d.firstLine || [];
   const adj = (d.adjunct || []).map((m) => ({ ...m, __pdfOpen: pdf }));
   const firstMarked = first.map((m) => ({ ...m, __pdfOpen: pdf }));
@@ -361,13 +385,13 @@ export function renderRxMedicationsHTML({ key, lang = 'en', pdf = false } = {}) 
   out.push(pdCompareMatrix(adj.length ? adj : firstMarked));
   if (firstMarked.length) {
     out.push(`<div class="pd-gd">First-line</div>`);
-    firstMarked.forEach((m) => out.push(pdCard(m, 'first-line')));
+    firstMarked.forEach((m) => out.push(pdCard(m, 'first-line', advOf(m))));
   } else {
     out.push(`<div class="pd-gd">First-line — psychotherapy is first-line (no approved first-line drug)</div>`);
   }
   if (adj.length) {
     out.push(`<div class="pd-gd">Adjunct / second-line</div>`);
-    adj.forEach((m) => out.push(pdCard(m, 'adjunct')));
+    adj.forEach((m) => out.push(pdCard(m, 'adjunct', advOf(m))));
   }
   out.push(`</div>`);
   return out.join('');

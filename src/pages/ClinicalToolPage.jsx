@@ -454,7 +454,7 @@ function generatePDF(form, results, type, lang) {
   const dk = disorderKey(form.disorder);
   const htmlPdf = isDoc ? {
     summary:     renderSummaryHTML({ key: dk, form, lang, pdf: true }),
-    medications: renderRxMedicationsHTML({ key: dk, lang, pdf: true }),
+    medications: renderRxMedicationsHTML({ key: dk, lang, pdf: true, form }),
     comorbidity: renderComorbidityHTML({ primaryKey: dk, comorbidities: form.comorbidities, history: form.history, lang, pdf: true }),
     labs:        renderLabsHTML({ key: dk, form, lang, pdf: true }),
     excluded:    renderExcludedHTML({ key: dk, lang, pdf: true }),
@@ -1030,8 +1030,8 @@ const ClinicalTool = () => {
       //    supplements/nutrigenomics from the locked context.
       if (parsed) {
         const key = disorderKey(form.disorder);
-        const rxMed  = renderRxMedications({ key, lang });
-        const rxMedHTML = renderRxMedicationsHTML({ key, lang });
+        const rxMed  = renderRxMedications({ key, lang, form });
+        const rxMedHTML = renderRxMedicationsHTML({ key, lang, form });
         const rxLab  = renderDynamicLabs({ key, form, lang });
         const rxExc  = renderRxExcluded({ key, lang });
         const rxThr  = renderRxTherapy({ key, lang });
