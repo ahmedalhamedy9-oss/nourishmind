@@ -483,7 +483,10 @@ function generatePDF(form, results, type, lang) {
     .filter(s => s.id !== 'nutrigenomics' || hasGeneticInput(form))
     .filter(s => s.id !== 'comorbidity' || (results.comorbidity && String(results.comorbidity).trim()))
     .filter(s => s.id !== 'followup' || (results.followup && String(results.followup).trim()));
-  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, isDoc ? (htmlPdf[s.id] || null) : null)).join('');
+  // In Arabic, prefer the bilingual markdown body over the English-only HTML card
+  // overlay for any section that has markdown (summary/bodycomp have none → keep HTML).
+  const useMd = (id) => isAr && results[id] && String(results[id]).trim();
+  const docContent = sections.map(s => makeSec(s.icon, s.title, results[s.id], s.color, (isDoc && !useMd(s.id)) ? (htmlPdf[s.id] || null) : null)).join('');
 
   function buildPatientContent(form, results) {
     function simplify(text) {
@@ -1421,7 +1424,11 @@ const ClinicalTool = () => {
                   <span className="text-2xl">{SECTIONS.find(s=>s.id===activeTab)?.icon}</span>
                   <span className="font-bold text-white">{SECTIONS.find(s=>s.id===activeTab)?.title}</span>
                 </div>
-                {results[activeTab + 'HTML'] ? (
+                {/* Arabic: the decision-first HTML cards are English-only, so when a
+                    bilingual markdown body exists (medications, interactions, diet,
+                    chrono, …) prefer it; HTML-only sections (summary/bodycomp) still
+                    use their overlay. */}
+                {results[activeTab + 'HTML'] && !(isAr && results[activeTab] && String(results[activeTab]).trim()) ? (
                   <div className="text-sm"
                     dangerouslySetInnerHTML={{ __html: results[activeTab + 'HTML'] }} />
                 ) : (
