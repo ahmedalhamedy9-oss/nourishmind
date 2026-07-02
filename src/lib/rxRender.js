@@ -6,6 +6,7 @@
    ════════════════════════════════════════════════════════════════════════ */
 import { RX, RX_ACTIVE, THERAPY_TECHNIQUES, PSYCHOTHERAPY_PLAN, PSYCHOTHERAPY_ACTIVE, VAGAL_TONING, TECHNIQUE_LIBRARY, DISORDER_TECHNIQUES } from './rxFormulary';
 import { medicationAdvisories } from './medicationSafety';
+import { renderTherapyModifiers } from './therapyModifiers';
 
 const ok = (key) => RX_ACTIVE && RX[key] && !RX[key].__pending;
 const j = (arr) => (arr || []).join('; ');
@@ -97,10 +98,11 @@ export function renderRxExcluded({ key, lang = 'en' } = {}) {
 }
 
 /* ── 🧠 THERAPY — staged INTEGRATIVE plan (preferred) or flat techniques (#7) ─ */
-export function renderRxTherapy({ key, lang = 'en' } = {}) {
+export function renderRxTherapy({ key, lang = 'en', form = {} } = {}) {
   if (!RX_ACTIVE) return '';
   const isAr = lang === 'ar';
   const plan = PSYCHOTHERAPY_ACTIVE ? PSYCHOTHERAPY_PLAN[key] : null;
+  const mods = renderTherapyModifiers({ primaryKey: key, comorbidities: form.comorbidities, history: form.history, severity: form.severity, lang });
 
   // Preferred: full staged integrative plan (reviewed template).
   if (plan) {
@@ -125,18 +127,18 @@ export function renderRxTherapy({ key, lang = 'en' } = {}) {
     nr.alternatives.forEach((a) => L.push(`   – ${isAr ? 'لو' : 'if'} ${a.ifX} → ${a.switchTo} _src: ${j(a.src)}_`));
 
     L.push(`\n**${isAr ? '🔗 تقنيات مشتركة بين المدارس' : '🔗 Cross-school techniques'}:** ${plan.crossSchool.join(' · ')}`);
-    return L.join('\n') + renderTechniqueLibrary({ key, lang }) + renderVagalToning({ lang });
+    return L.join('\n') + mods + renderTechniqueLibrary({ key, lang }) + renderVagalToning({ lang });
   }
 
   // Fallback: flat per-school techniques (disorders not yet upgraded to a staged plan).
   const techs = THERAPY_TECHNIQUES[key];
-  if (!techs) return '';
+  if (!techs) return mods || '';
   const flat = techs.map((t) =>
     `\n**${t.school}** (${isAr ? 'أولوية' : 'priority'} ${t.priority}${t.grade ? `, ${isAr ? 'مستوى' : 'Level'} ${t.grade}` : ''})\n` +
     `**${isAr ? 'التقنيات' : 'Techniques'}:** ${t.techniques}\n` +
     `**${isAr ? 'المسار' : 'Course'}:** ${t.course} _src: ${j(t.src)}_`
   ).join('\n');
-  return flat + renderTechniqueLibrary({ key, lang }) + renderVagalToning({ lang });
+  return flat + mods + renderTechniqueLibrary({ key, lang }) + renderVagalToning({ lang });
 }
 
 /* ── 📚 TECHNIQUE LIBRARY — step-by-step protocols for the disorder's techniques ── */
