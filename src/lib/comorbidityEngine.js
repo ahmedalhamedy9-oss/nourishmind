@@ -15,6 +15,7 @@ import { getMedicalComorbidityUnits, MEDCOMORBID_ACTIVE, MEDCOMORBID_VERSION } f
 /* Concept → match terms (English seeds + Arabic). Used to bridge the English
    `ifComorbid` rule strings to Arabic free-text the physician may type. */
 const CONCEPTS = {
+  suicide:    ['suicid', 'self-harm', 'self harm', 'self-injur', 'انتحار', 'الانتحار', 'إيذاء النفس', 'ايذاء النفس', 'اذى النفس'],
   bipolar:    ['bipolar', 'mania', 'manic', 'ثنائي القطب', 'ثنائي', 'هوس'],
   substance:  ['substance', 'alcohol', 'drug use', 'إدمان', 'مخدر', 'مخدرات', 'كحول', 'تعاطي'],
   cardiac:    ['cardiac', 'long qt', 'qt', 'arrhythmia', 'heart', 'قلب', 'قلبية', 'نظم', 'اضطراب نظم'],
@@ -40,9 +41,19 @@ const DISORDER_CONCEPT = { MDD: 'mdd', GAD: 'gad', OCD: 'ocd', PMDD: 'pmdd' /* B
 
 function norm(s) { return String(s || '').toLowerCase(); }
 
-/* does the patient's free text reference a concept? */
+/* Remove clauses that NEGATE a condition or attribute it to family history, so
+   "no diabetes", "denies HTN", "r/o bipolar", "family history of OCD" don't fire
+   a modifier for a condition the patient does NOT have. Strips from the cue up to
+   the next clause boundary (, ; . newline, or the Arabic comma ،). */
+function stripNegated(text) {
+  return String(text || '')
+    .replace(/\b(?:no|not|non|never|denies|denied|deny|without|w\/o|negative for|neg for|r\/o|rule out|ruled out|free of|resolved|family history of|fam hx of|fhx of|fhx|fh of|father|mother|sibling|brother|sister|parent|maternal|paternal)\b[^,.;\n]*/gi, ' ')
+    .replace(/(?:لا يوجد|لا توجد|بدون|نفى|ينفى|نفي|سلبي|تاريخ عائلي|تاريخ أسري|تاريخ عائلى|والده|والدته|الأب|الأم|أخ|أخت|عائلي)[^،,.;\n]*/g, ' ');
+}
+
+/* does the patient's free text reference a concept? (negation-aware) */
 function textHasConcept(text, concept) {
-  const t = norm(text);
+  const t = norm(stripNegated(text));
   return (CONCEPTS[concept] || []).some((term) => t.includes(norm(term)));
 }
 
@@ -57,14 +68,17 @@ function ruleConcepts(ifComorbid) {
 /* a rule fires if any of its concepts is present in the patient text */
 function ruleMatches(ifComorbid, text) {
   const cons = ruleConcepts(ifComorbid);
-  if (!cons.length) {
-    // fallback: direct token match on the rule's own first words
-    return norm(ifComorbid).split('|').some((tok) => {
-      const w = tok.trim().split(/\s+/).find((x) => x.length >= 4);
-      return w && norm(text).includes(w);
-    });
-  }
-  return cons.some((c) => textHasConcept(text, c));
+  if (cons.length) return cons.some((c) => textHasConcept(text, c));
+  // fallback (rule maps to no concept): token match on the rule's own words,
+  // negation-aware and skipping generic qualifiers ("high", "risk", …) that
+  // otherwise false-fire (e.g. "high suicide risk" hitting "high cholesterol").
+  const STOP = new Set(['high', 'risk', 'with', 'from', 'severe', 'acute', 'chronic',
+    'without', 'other', 'type', 'level', 'disorder', 'history', 'related', 'induced']);
+  const t = norm(stripNegated(text));
+  return norm(ifComorbid).split('|').some((tok) => {
+    const w = tok.trim().split(/\s+/).find((x) => x.length >= 4 && !STOP.has(x));
+    return w && t.includes(w);
+  });
 }
 
 /* detect which of the 5 formulary disorders appear as comorbid (excl. primary) */

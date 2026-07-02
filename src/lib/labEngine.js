@@ -88,14 +88,18 @@ function caseLabs(form) {
 /* canonical lab category for dedupe/escalation (robust to wording/superscripts) */
 function sig(test) {
   const t = norm(test);
+  // Lithium panels bundle "renal + thyroid + ECG" — bucket them as 'lithium'
+  // FIRST so the level requirement isn't swallowed by the 'ecg'/'renal' branches.
+  if (/lithium|ليثيوم/.test(t)) return 'lithium';
   if (/lft|liver|hepat/.test(t)) return 'liver';
-  if (/renal|egfr|creatinin|kidney/.test(t) && !/na|sodium/.test(t)) return 'renal';
+  // Word-boundary the sodium exclusion so the "na" inside "re·na·l" doesn't
+  // disqualify a genuine renal test (that bug mis-bucketed "Renal function …").
+  if (/renal|egfr|creatinin|kidney/.test(t) && !/\bna\b|sodium|na⁺|na\+|صوديوم/.test(t)) return 'renal';
   if (/ecg|qtc|qt\b/.test(t)) return 'ecg';
   if (/glucose|hba1c|lipid|metabolic/.test(t)) return 'metabolic';
   if (/\bna\b|sodium|na⁺|na\+/.test(t) || /صوديوم/.test(t)) return 'sodium';
   if (/cbc|blood count|bleed|inr|platelet/.test(t)) return 'cbc_bleed';
   if (/tsh|thyroid|درقية/.test(t)) return 'thyroid';
-  if (/lithium|ليثيوم/.test(t)) return 'lithium';
   if (/pregnan|βhcg|bhcg|hcg|حمل/.test(t)) return 'pregnancy';
   if (/\bbp\b|blood pressure|heart rate|ضغط/.test(t)) return 'bp';
   if (/magnesium|vitamin d|ماغنيسيوم/.test(t)) return 'mag_vitd';

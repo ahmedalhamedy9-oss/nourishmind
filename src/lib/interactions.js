@@ -101,7 +101,7 @@ export const AGENTS = {
   st_johns_wort:{ label: "St. John's Wort", tags: ['serotonergic', 'cyp3a4_inducer', 'pgp_inducer'], aliases: ["st john", "st johns", "st. john", "st. johns", "saint john", "saint johns", "hypericum", "عشبة سانت جون"] },
   five_htp:     { label: '5-HTP', tags: ['serotonergic'], aliases: ['5-htp', '5 htp', '5htp', 'five htp', 'hydroxytryptophan'] },
   tryptophan:   { label: 'L-Tryptophan', tags: ['serotonergic'], aliases: ['tryptophan'] },
-  sam_e:        { label: 'SAM-e', tags: ['serotonergic'], aliases: ['sam-e', 'same', 'ademetionine', 'adenosylmethionine'] },
+  sam_e:        { label: 'SAM-e', tags: ['serotonergic'], aliases: ['sam-e', 'sam e', 's-adenosyl', 'ademetionine', 'adenosylmethionine'] },
   omega3:       { label: 'Omega-3 (high dose)', tags: ['mild_antiplatelet'], aliases: ['omega-3', 'omega 3', 'omega3', 'fish oil', 'epa', 'dha'] },
   ginkgo:       { label: 'Ginkgo biloba', tags: ['mild_antiplatelet'], aliases: ['ginkgo'] },
   melatonin:    { label: 'Melatonin', tags: ['cns_depressant_mild'], aliases: ['melatonin'] },
@@ -374,7 +374,10 @@ export function resolveAgents(text = '') {
  *   'firstLine' | 'adjunct' | 'current' | 'supplement'
  * firstLine options are mutually-exclusive alternatives (physician picks one);
  * adjunct options are genuinely co-prescribed (augmentation). */
-export function buildPresentSet({ firstLineNames = [], adjunctNames = [], currentMeds = '', supplements = '' } = {}) {
+export function buildPresentSet({
+  firstLineNames = [], adjunctNames = [], currentMeds = '', supplements = '',
+  comorbidFirstLineNames = [], comorbidAdjunctNames = [],
+} = {}) {
   const all = new Map();
   const tag = (set, role) => set.forEach((id) => {
     if (!all.has(id)) all.set(id, new Set());
@@ -382,6 +385,12 @@ export function buildPresentSet({ firstLineNames = [], adjunctNames = [], curren
   });
   tag(resolveAgents(firstLineNames.join(' | ')), 'firstLine');
   tag(resolveAgents(adjunctNames.join(' | ')), 'adjunct');
+  // Comorbid-protocol drugs get DISTINCT roles: they are NOT mutually-exclusive
+  // alternatives of the primary plan, so a primary-firstLine × comorbid-firstLine
+  // pair (which WOULD be co-prescribed) must not be suppressed as "two firstLine
+  // alternatives". Within-comorbid pairs are dropped later by the activeIds filter.
+  tag(resolveAgents(comorbidFirstLineNames.join(' | ')), 'comorbidFirstLine');
+  tag(resolveAgents(comorbidAdjunctNames.join(' | ')), 'comorbidAdjunct');
   tag(resolveAgents(currentMeds), 'current');
   tag(resolveAgents(supplements), 'supplement');
   return all; // Map<agentId, Set<role>>
@@ -457,7 +466,7 @@ function pushMatch(out, seen, rule, agentIds, present) {
 /* Order a pair so the patient's EXISTING agent (current med / supplement) is
  * the visible anchor, then the recommended drug. This makes "trigger ↔ each
  * alternative" read as distinct, accurate pairs instead of one lumped list. */
-const ROLE_RANK = { current: 0, supplement: 1, adjunct: 2, firstLine: 3 };
+const ROLE_RANK = { current: 0, supplement: 1, adjunct: 2, firstLine: 3, comorbidAdjunct: 4, comorbidFirstLine: 5 };
 function agentRank(roles) {
   let r = 9;
   for (const role of roles || []) if (ROLE_RANK[role] < r) r = ROLE_RANK[role];
@@ -493,8 +502,9 @@ export function interactionSplitStructured({
 } = {}) {
   const primaryMatches = computeInteractions({ firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct, currentMeds, supplements });
   const wideMatches = computeInteractions({
-    firstLineNames: [...primaryFirstLine, ...comorbidFirstLine],
-    adjunctNames: [...primaryAdjunct, ...comorbidAdjunct], currentMeds, supplements,
+    firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct,
+    comorbidFirstLineNames: comorbidFirstLine, comorbidAdjunctNames: comorbidAdjunct,
+    currentMeds, supplements,
   });
   const primaryKeys = new Set(primaryMatches.map(matchKey));
   const crossRaw = wideMatches.filter((m) => !primaryKeys.has(matchKey(m)));
@@ -626,10 +636,12 @@ export function renderInteractionsReportSplit({
   const primaryMatches = computeInteractions({
     firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct, currentMeds, supplements,
   });
-  // (2) widened set, then keep only the NEW pairs the comorbid drugs introduced
+  // (2) widened set, then keep only the NEW pairs the comorbid drugs introduced.
+  // Comorbid drugs carry distinct roles so a primary×comorbid first-line pair is
+  // NOT suppressed as two mutually-exclusive alternatives (cross-protocol fix).
   const wideMatches = computeInteractions({
-    firstLineNames: [...primaryFirstLine, ...comorbidFirstLine],
-    adjunctNames: [...primaryAdjunct, ...comorbidAdjunct],
+    firstLineNames: primaryFirstLine, adjunctNames: primaryAdjunct,
+    comorbidFirstLineNames: comorbidFirstLine, comorbidAdjunctNames: comorbidAdjunct,
     currentMeds, supplements,
   });
   const primaryKeys = new Set(primaryMatches.map(matchKey));

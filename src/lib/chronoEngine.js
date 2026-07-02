@@ -270,7 +270,7 @@ export function renderChrono({ key, form = {}, lang = 'en' } = {}) {
   MECHANISMS.forEach((m) => {
     const t = isAr ? m.ar : m.en;
     const flag = m.gate === 'metabolic' && metab ? (isAr ? ' 🔴' : ' 🔴') : (m.gate === 'lithiumOrElderly' && (onLithium || isElderly) ? ' 🔴' : '');
-    if (showMech(m.gate) || m.gate) {
+    if (showMech(m.gate)) {
       const emphasised = (m.gate === 'metabolic' && metab) || (m.gate === 'lithiumOrElderly' && (onLithium || isElderly));
       L.push(`- **${t[0]}**${emphasised ? flag : ''} _(${m.grade})_: ${t[1]} → ${t[2]}`);
     }

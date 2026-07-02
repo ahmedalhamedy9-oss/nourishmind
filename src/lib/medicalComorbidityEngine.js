@@ -95,6 +95,13 @@ const MS = (k) => MED_SRC[k] || k;
 const norm = (s) => String(s || '').toLowerCase();
 const sj = (a) => (a || []).join('; ');
 
+/* Drop negated / family-history clauses so "no diabetes", "denies HTN",
+   "family history of cardiac disease" don't activate a medical-comorbidity unit
+   (dose ceilings / contraindications) for a condition the patient lacks. */
+const stripNegated = (text) => String(text || '')
+  .replace(/\b(?:no|not|non|never|denies|denied|deny|without|w\/o|negative for|neg for|r\/o|rule out|ruled out|free of|resolved|family history of|fam hx of|fhx of|fhx|fh of|father|mother|sibling|brother|sister|parent|maternal|paternal)\b[^,.;\n]*/gi, ' ')
+  .replace(/(?:لا يوجد|لا توجد|بدون|نفى|ينفى|نفي|سلبي|تاريخ عائلي|تاريخ أسري|تاريخ عائلى|والده|والدته|الأب|الأم|أخ|أخت|عائلي)[^،,.;\n]*/g, ' ');
+
 const CONCEPT_TERMS = {
   cardiac_qt: [
     // English
@@ -152,8 +159,10 @@ const CONCEPT_TERMS = {
     'المبايض المتعددة', 'كظرية', 'كوشينغ', 'غدد صماء',
   ],
 };
-const hasTerm = (text, concept) =>
-  (CONCEPT_TERMS[concept] || []).some((term) => norm(text).includes(norm(term)));
+const hasTerm = (text, concept) => {
+  const t = norm(stripNegated(text));
+  return (CONCEPT_TERMS[concept] || []).some((term) => t.includes(norm(term)));
+};
 
 /* ════════════════════════════════════════════════════════════════════════
    DATA MODEL — MED_COMORBIDITIES

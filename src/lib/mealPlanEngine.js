@@ -16,6 +16,7 @@
  * ========================================================================== */
 import { NUTRITION, NUTRITION_ACTIVE } from './nutritionFormulary';
 import { RX_ACTIVE } from './rxFormulary';
+import { edTextPresent, patientHasEatingDisorder } from './clinicalFormulary';
 
 export const MEALPLAN_VERSION = 'v0.1-DRAFT (2026-07-01)';
 export const MEALPLAN_ACTIVE = true;
@@ -34,8 +35,12 @@ const sj = (a) => (a || []).join('; ');
  * Detected from the comorbidity free-text; dialysis is excluded (different,
  * higher needs → specialist call, so we do not auto-cap there).
  */
-const RENAL_RE = /\b(ckd|chronic kidney|renal (impair|insufficien|failure)|kidney (disease|failure|impair)|nephropathy|egfr|قصور كلوي|قصور الكلى|فشل كلوي|مرض كلوي|اعتلال كلوي|كلى)\b/i;
-const DIALYSIS_RE = /\b(dialysis|haemodialysis|hemodialysis|غسيل كلوي|ديال)\b/i;
+// ASCII terms carry a leading \b (no TRAILING \b — it would break prefix matches
+// like "renal impair·ment" / "insufficien·cy"). Arabic terms carry NO \b at all,
+// because JS \b is ASCII-only and never matches beside Arabic letters (that bug
+// silently disabled every Arabic renal/dialysis term).
+const RENAL_RE = /\b(?:ckd|chronic kidney|renal\s+(?:impair|insufficien|failure)|kidney\s+(?:disease|failure|impair)|nephropath|egfr)|قصور كلوي|قصور الكلى|فشل كلوي|مرض كلوي|اعتلال كلوي|كلى/i;
+const DIALYSIS_RE = /\b(?:dialysis|haemodialysis|hemodialysis)\b|غسيل كلوي|ديال/i;
 
 export function hasRenalImpairment(comorbidities = '') {
   const t = String(comorbidities || '');
@@ -49,9 +54,12 @@ export function hasRenalImpairment(comorbidities = '') {
  * macro/meal layer WITHHOLDS caloric deficits and numeric macro/meal targets and
  * instead shows a safety+referral block: numeric restriction can trigger or
  * worsen disordered eating, so targets must be set by an ED-informed team. */
-const ED_RE = /\b(anorexi\w*|bulimi\w*|binge[- ]?eating|\bBED\b|\bED\b|EDNOS|OSFED|ARFID|purg(?:e|es|ing)|self[- ]?induced vomit\w*|laxative abuse|eating disorder|disordered eating|أنوريكسيا|بوليميا|النهام|القهم|الشره|اضطراب(?:ات)? الأكل|الأكل القهمي)\b/i;
+// Delegates to the SINGLE shared detector in clinicalFormulary (whole-word
+// keywords, Arabic-normalised, no bare "ED"/"BED"). Kept for API compatibility;
+// the form-level gate below (patientHasEatingDisorder) additionally honours the
+// explicit checkbox and the stopMed field.
 export function hasEatingDisorder(comorbidities = '', history = '') {
-  return ED_RE.test(`${comorbidities || ''} ${history || ''}`);
+  return edTextPresent(`${comorbidities || ''} ${history || ''}`);
 }
 
 /* Poor muscle: agreed threshold = low FFMI (ERS: <15 ♀ / <17 ♂) OR a high
@@ -260,7 +268,7 @@ export function renderMacrosAndMeals({ key, metrics, form = {}, lang = 'en' } = 
   const isAr = lang === 'ar';
   // SAFETY GATE: eating-disorder history/comorbidity → withhold deficit & numeric
   // targets; show structured-eating + referral guidance instead.
-  if (hasEatingDisorder(form.comorbidities, form.history)) {
+  if (patientHasEatingDisorder(form)) {
     return isAr
       ? ['\n**🍽️ التغذية — تنبيه أمان**',
          '⚠️ فيه إشارة لاضطراب أكل/تاريخ اضطراب أكل — لذلك **حُجبت أهداف السعرات/الماكروز الرقمية وأي عجز حراري** (الأرقام التقييدية ممكن تُحفّز أو تفاقم اضطراب الأكل).',

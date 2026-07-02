@@ -276,17 +276,30 @@ function healthyFatRange(male, age) {
 }
 
 /* Fail-safe eating-disorder detection from free-text history/comorbidities.
-   Only ever BLOCKS a deficit, so liberal matching is acceptable. */
-function edTextPresent(raw) {
+   Only ever BLOCKS a deficit / withholds numeric targets, so liberal matching is
+   acceptable. Uses whole-word keywords (never bare "ED"/"BED", which false-match
+   erectile dysfunction, emergency-department, and "bed rest"). Arabic is matched
+   after hamza/alef-maqsura/ta-marbuta normalisation. This is the SINGLE ED
+   detector — the meal-plan engine imports it too, so the two never diverge. */
+export function edTextPresent(raw) {
   const t = (raw || '').toLowerCase()
     .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه');
   const kw = [
-    'anorexia', 'bulimia', 'binge eating', 'binge-eating', 'eating disorder',
-    'arfid', 'ednos', 'osfed', 'orthorexia', 'purging',
-    'اضطراب اكل', 'اضطرابات الاكل', 'فقدان الشهيه العصبي', 'فقدان شهيه عصبي',
-    'قهم', 'نهام', 'بوليميا', 'انوريكسيا', 'الشره العصبي', 'شره الاكل',
+    'anorexia', 'anorexic', 'bulimia', 'bulimic', 'binge eating', 'binge-eating',
+    'eating disorder', 'disordered eating', 'arfid', 'ednos', 'osfed', 'orthorexia',
+    'purging', 'purge', 'laxative', 'self-induced vomit', 'self induced vomit',
+    'اضطراب اكل', 'اضطراب الاكل', 'اضطرابات الاكل', 'فقدان الشهيه العصبي', 'فقدان شهيه عصبي',
+    'فقدان الشهيه', 'قهم', 'نهام', 'النهام', 'بوليميا', 'انوريكسيا', 'الشره العصبي', 'شره الاكل',
   ];
   return kw.some((k) => t.includes(k));
+}
+
+/* Patient-level ED gate: the explicit checkbox OR any ED text across the three
+   free-text fields (comorbidities + history + stopMed). Both computeMetrics and
+   the meal-plan engine gate on THIS, so BODYCOMP and DIET can never disagree. */
+export function patientHasEatingDisorder(form = {}) {
+  return !!form.hasEatingDisorder ||
+    edTextPresent(`${form.history || ''} ${form.comorbidities || ''} ${form.stopMed || ''}`);
 }
 
 export function computeMetrics(form) {
@@ -331,8 +344,7 @@ export function computeMetrics(form) {
   const essentialFloor = male ? 6 : 14;   // ACE dangerous-low body fat %
   const ffmiLow = male ? 17 : 15;         // ERS low-FFMI (undernutrition) cut-off
 
-  const edFlag = !!form.hasEatingDisorder ||
-    edTextPresent(`${form.history || ''} ${form.comorbidities || ''} ${form.stopMed || ''}`);
+  const edFlag = patientHasEatingDisorder(form);
 
   const underweight = bmi < 18.5;                          // WHO
   const belowEssential = fatPct != null && fatPct < essentialFloor;
@@ -364,6 +376,11 @@ export function computeMetrics(form) {
   } else if (fatPct == null && bmi >= 30) {
     calDirection = 'maintenance';
     calRationale = `BMI ${bmi.toFixed(1)} ≥ 30 but no body-composition data → maintenance; measure DEXA/InBody before considering any deficit (weight alone does not justify restriction).`;
+  } else if (fatPct != null && fatPct < fatLow) {
+    // Below the healthy range but above the essential floor (essential-low is
+    // caught earlier as `depleted`). NOT "within range" — do not run a deficit.
+    calDirection = 'maintenance';
+    calRationale = `Fat ${fatPct}% is BELOW the healthy range for age/sex (${fatLow}–${fatHigh}%, Gallagher 2000) but above the essential floor → eucaloric maintenance; do not restrict.`;
   } else {
     calDirection = 'maintenance';
     calRationale = fatPct != null
