@@ -41,7 +41,10 @@ export function medicationAdvisories({ key, form = {}, lang = 'en' } = {}) {
 
   const recs = [...(RX[key].firstLine || []), ...(RX[key].adjunct || [])].filter((m) => m && m.drug);
   const currentMeds = String(form.currentMeds || '');
-  const currentAgents = resolveAgents(currentMeds);
+  // Screen the recommendation against BOTH current meds and current supplements
+  // (e.g. a recommended SSRI vs the patient's St John's Wort / 5-HTP / SAMe).
+  const patientRegimen = `${currentMeds} | ${String(form.supplements || '')}`;
+  const currentAgents = resolveAgents(patientRegimen);
   const flags = computeSafetyFlags(form, key) || [];
   const medUnits = getMedicalComorbidityUnits({ comorbidities: form.comorbidities, history: form.history }) || [];
   const maoiContra = flags.some((f) => f.level === 'CONTRAINDICATION' && /ssri\/snri/i.test(String(f.drug)));
@@ -73,14 +76,14 @@ export function medicationAdvisories({ key, form = {}, lang = 'en' } = {}) {
         ? 'المريض يتناول هذا الدواء بالفعل — راجِع الجرعة وحسّنها، لا تبدأه من جديد ولا تُضِف جرعة فوق جرعة.'
         : 'Patient already takes this — review/optimise the existing dose; do not restart it as new.');
 
-    // 3) CONTRAINDICATED / MAJOR interaction with a current med
-    computeInteractions({ firstLineNames: [drug], currentMeds })
+    // 3) CONTRAINDICATED / MAJOR interaction with a current med or supplement
+    computeInteractions({ firstLineNames: [drug], currentMeds: patientRegimen })
       .filter((ix) => (ix.severity === 'CONTRAINDICATED' || ix.severity === 'MAJOR')
         && ix.agents.some((a) => drugAgents.has(a.id))
         && ix.agents.some((a) => currentAgents.has(a.id)))
       .forEach((ix) => {
         const other = ix.agents.filter((a) => !drugAgents.has(a.id)).map((a) => a.label).join(', ');
-        add(drug, 'danger', `[${ix.severity}] ${isAr ? 'مع دواء المريض الحالي' : 'with current med'} ${other} — ${ix.mechanism}`);
+        add(drug, 'danger', `[${ix.severity}] ${isAr ? 'مع ما يتناوله المريض حالياً' : 'with current med/supplement'} ${other} — ${ix.mechanism}`);
       });
 
     // 4) MAOI serotonergic contraindication (applies to every serotonergic rec)

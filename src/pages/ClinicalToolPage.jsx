@@ -359,7 +359,7 @@ const SECTIONS_AR = [
 const EMPTY_FORM = {
   patientName:'', age:'', gender:'', weight:'', height:'',
   disorder:'', severity:'', comorbidities:'',
-  currentMeds:'', allergies:'', history:'', stopMed:'',
+  currentMeds:'', supplements:'', allergies:'', history:'', stopMed:'',
   hasDexa:false, dexaFat:'', dexaMuscle:'', dexaBone:'',
   hasInbody:false, inbodyFat:'', inbodyMuscle:'', inbodyWater:'',
   hasEatingDisorder:false,
@@ -472,7 +472,7 @@ function generatePDF(form, results, type, lang) {
       return renderInteractionsHTML({
         primaryFirstLine: cdn.primary.firstLine, primaryAdjunct: cdn.primary.adjunct,
         comorbidFirstLine: cdn.comorbid.firstLine, comorbidAdjunct: cdn.comorbid.adjunct,
-        currentMeds: form.currentMeds, supplements: '',
+        currentMeds: form.currentMeds, supplements: form.supplements,
         comorbidLabels: cdn.comorbid.keys, lang, pdf: true,
       }) || results.interactionsHTML || null;
     })(),
@@ -855,6 +855,8 @@ const ClinicalTool = () => {
     comorbPh:      isAr ? 'سكري، ضغط الدم، قصور الغدة...' : 'Diabetes, hypertension, hypothyroidism...',
     currentMeds:   isAr ? 'الأدوية الحالية'         : 'Current Medications',
     currentMedsPh: isAr ? 'ميتفورمين 500mg، أتينولول 50mg...' : 'Metformin 500mg, Atenolol 50mg...',
+    supplementsIn: isAr ? 'المكملات الحالية'         : 'Current Supplements',
+    supplementsPh: isAr ? 'أوميغا-3، مغنيسيوم، عشبة سانت جون...' : 'Omega-3, magnesium, St John\'s Wort...',
     allergies:     isAr ? 'الحساسية والموانع'        : 'Allergies & Contraindications',
     allergiesPh:   isAr ? 'حساسية من البنسلين...'   : 'Penicillin allergy...',
     history:       isAr ? 'التاريخ النفسي والعلاجي' : 'Psychiatric & Treatment History',
@@ -911,7 +913,7 @@ const ClinicalTool = () => {
     const fb = renderFormularyBlock(key, { cyclePhase: form.cyclePhase, chronotype: form.chronotype });
     const mt = renderMetrics(computeMetrics(form));
     const sg = renderSafetyGate(computeSafetyFlags(form, key));
-    const ig = renderInteractionGate({ formularyBlock: FORMULARY[key], currentMeds: form.currentMeds, supplements: '', lang });
+    const ig = renderInteractionGate({ formularyBlock: FORMULARY[key], currentMeds: form.currentMeds, supplements: form.supplements, lang });
     // Locked drug-data layer (selection #4 + monographs). INERT until clinically
     // signed off (DRUGDATA_ACTIVE=false → returns '' and is filtered out below).
     const dd = renderDrugDataGate({ disorderKey: key, lang });
@@ -922,8 +924,8 @@ const ClinicalTool = () => {
   };
 
   const buildContext = () => isAr
-    ? `بيانات المريض:\n- الاسم: ${form.patientName || 'غير مذكور'}\n- العمر: ${form.age} سنة | الجنس: ${form.gender} | الوزن: ${form.weight||'غير محدد'} كجم | الطول: ${form.height||'غير محدد'} سم\n- الاضطراب: ${form.disorder} | الشدة: ${form.severity||'غير محددة'}\n- الأمراض المصاحبة: ${form.comorbidities||'لا يوجد'}\n- الأدوية الحالية: ${form.currentMeds||'لا يوجد'}\n- الحساسية والموانع: ${form.allergies||'لا يوجد'}\n- التاريخ النفسي: ${form.history||'لا يوجد'}\n- طلب وقف دواء: ${form.stopMed||'لا يوجد'}\n${form.hasDexa?`- DEXA: دهون ${form.dexaFat||'—'}% | عضلات ${form.dexaMuscle||'—'}kg | كثافة عظام ${form.dexaBone||'—'}`:'- DEXA: غير متوفر'}\n${form.hasInbody?`- InBody: دهون ${form.inbodyFat||'—'}% | عضلات ${form.inbodyMuscle||'—'}kg | ماء ${form.inbodyWater||'—'}L`:'- InBody: غير متوفر'}\n- تغيرات جينية: ${form.knownGeneticVariants||'غير معروفة'}${form.disorder.includes('PMDD')?`\n- طور الدورة الشهرية: ${form.cyclePhase||'غير محدد'}`:''}\n- النمط الزمني (chronotype): ${form.chronotype||'غير محدد'}\n\n${clinicalLock()}`
-    : `Patient Data:\n- Name: ${form.patientName || 'Not provided'}\n- Age: ${form.age} yrs | Gender: ${form.gender} | Weight: ${form.weight||'N/A'} kg | Height: ${form.height||'N/A'} cm\n- Disorder: ${form.disorder} | Severity: ${form.severity||'Not specified'}\n- Comorbidities: ${form.comorbidities||'None'}\n- Current Medications: ${form.currentMeds||'None'}\n- Allergies/Contraindications: ${form.allergies||'None'}\n- Psychiatric/Treatment History: ${form.history||'None'}\n- Medication to stop: ${form.stopMed||'None'}\n${form.hasDexa?`- DEXA: Fat ${form.dexaFat||'—'}% | Muscle ${form.dexaMuscle||'—'}kg | Bone density ${form.dexaBone||'—'}`:'- DEXA: Not available'}\n${form.hasInbody?`- InBody: Fat ${form.inbodyFat||'—'}% | Muscle ${form.inbodyMuscle||'—'}kg | Water ${form.inbodyWater||'—'}L`:'- InBody: Not available'}\n- Known genetic variants: ${form.knownGeneticVariants||'Unknown'}${form.disorder.includes('PMDD')?`\n- Menstrual cycle phase: ${form.cyclePhase||'Not specified'}`:''}\n- Chronotype: ${form.chronotype||'Not specified'}\n\n${clinicalLock()}`;
+    ? `بيانات المريض:\n- الاسم: ${form.patientName || 'غير مذكور'}\n- العمر: ${form.age} سنة | الجنس: ${form.gender} | الوزن: ${form.weight||'غير محدد'} كجم | الطول: ${form.height||'غير محدد'} سم\n- الاضطراب: ${form.disorder} | الشدة: ${form.severity||'غير محددة'}\n- الأمراض المصاحبة: ${form.comorbidities||'لا يوجد'}\n- الأدوية الحالية: ${form.currentMeds||'لا يوجد'}\n- المكملات الحالية: ${form.supplements||'لا يوجد'}\n- الحساسية والموانع: ${form.allergies||'لا يوجد'}\n- التاريخ النفسي: ${form.history||'لا يوجد'}\n- طلب وقف دواء: ${form.stopMed||'لا يوجد'}\n${form.hasDexa?`- DEXA: دهون ${form.dexaFat||'—'}% | عضلات ${form.dexaMuscle||'—'}kg | كثافة عظام ${form.dexaBone||'—'}`:'- DEXA: غير متوفر'}\n${form.hasInbody?`- InBody: دهون ${form.inbodyFat||'—'}% | عضلات ${form.inbodyMuscle||'—'}kg | ماء ${form.inbodyWater||'—'}L`:'- InBody: غير متوفر'}\n- تغيرات جينية: ${form.knownGeneticVariants||'غير معروفة'}${form.disorder.includes('PMDD')?`\n- طور الدورة الشهرية: ${form.cyclePhase||'غير محدد'}`:''}\n- النمط الزمني (chronotype): ${form.chronotype||'غير محدد'}\n\n${clinicalLock()}`
+    : `Patient Data:\n- Name: ${form.patientName || 'Not provided'}\n- Age: ${form.age} yrs | Gender: ${form.gender} | Weight: ${form.weight||'N/A'} kg | Height: ${form.height||'N/A'} cm\n- Disorder: ${form.disorder} | Severity: ${form.severity||'Not specified'}\n- Comorbidities: ${form.comorbidities||'None'}\n- Current Medications: ${form.currentMeds||'None'}\n- Current Supplements: ${form.supplements||'None'}\n- Allergies/Contraindications: ${form.allergies||'None'}\n- Psychiatric/Treatment History: ${form.history||'None'}\n- Medication to stop: ${form.stopMed||'None'}\n${form.hasDexa?`- DEXA: Fat ${form.dexaFat||'—'}% | Muscle ${form.dexaMuscle||'—'}kg | Bone density ${form.dexaBone||'—'}`:'- DEXA: Not available'}\n${form.hasInbody?`- InBody: Fat ${form.inbodyFat||'—'}% | Muscle ${form.inbodyMuscle||'—'}kg | Water ${form.inbodyWater||'—'}L`:'- InBody: Not available'}\n- Known genetic variants: ${form.knownGeneticVariants||'Unknown'}${form.disorder.includes('PMDD')?`\n- Menstrual cycle phase: ${form.cyclePhase||'Not specified'}`:''}\n- Chronotype: ${form.chronotype||'Not specified'}\n\n${clinicalLock()}`;
 
   function validateForm() {
     if (!form.disorder || !form.age || !form.gender) return T.errRequired;
@@ -1018,7 +1020,7 @@ const ClinicalTool = () => {
           primaryAdjunct:   cdn.primary.adjunct,
           comorbidFirstLine: cdn.comorbid.firstLine,
           comorbidAdjunct:   cdn.comorbid.adjunct,
-          currentMeds: form.currentMeds, supplements: '',
+          currentMeds: form.currentMeds, supplements: form.supplements,
           comorbidLabels: cdn.comorbid.keys, lang,
         };
         parsed.interactions = renderInteractionsReportSplit(ixArgs);
@@ -1279,6 +1281,7 @@ const ClinicalTool = () => {
           {[
             { id:'comorbidities', label:T.comorbidities, ph:T.comorbPh },
             { id:'currentMeds',   label:T.currentMeds,   ph:T.currentMedsPh },
+            { id:'supplements',   label:T.supplementsIn,  ph:T.supplementsPh },
             { id:'allergies',     label:T.allergies,      ph:T.allergiesPh },
             { id:'history',       label:T.history,        ph:T.historyPh },
             { id:'stopMed',       label:T.stopMed,        ph:T.stopMedPh },
